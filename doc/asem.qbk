@@ -1,0 +1,14 @@
+[library Boost.asem
+    [quickbook 1.5]
+    [authors [Morgenstern, Klemens David], [Hodges, Richard]]
+    [copyright 2022 Klemens D. Morgenstern, Richard Hodges]
+    [id asem]
+    [dirname asem]
+    [license
+        Distributed under the Boost Software License, Version 1.0.
+        (See accompanying file LICENSE_1_0.txt or copy at
+        http://www.boost.org/LICENSE_1_0.txt)
+    ]
+]
+
+[xinclude autodoc.xml]

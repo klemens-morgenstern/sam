@@ -1,0 +1,16 @@
+{
+  "key": "asem",
+  "name": "asem",
+  "authors": [
+    "Klemens D. Morgenstern",
+    "Richard A. Hodges"
+  ],
+  "maintainers": [
+    "Richard Hodges"
+  ],
+  "description": "Library with primitives to use asio as the basis for application logic",
+  "category": [
+    "asio"
+  ],
+  "cxxstd": "11"
+}

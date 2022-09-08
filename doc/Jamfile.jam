@@ -1,0 +1,56 @@
+# Copyright (c) 2022 Klemens Morgenstern, Richard Hodges
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+using boostbook ;
+using quickbook ;
+using doxygen ;
+
+
+local images = [ glob images/*.svg ] ;
+install images      : $(images) : <location>html/boost_asem ;
+install images_glob : $(images) : <location>$(BOOST_ROOT)/doc/html/boost_asem ;
+
+import type ;
+type.register XMLPROCESSWORKAROUND : : XML ;
+import generators ;
+generators.register-standard common.copy : XML : XMLPROCESSWORKAROUND ; 
+
+path-constant INCLUDES : ../../.. ;
+
+doxygen autodoc
+:
+  $(INCLUDES)/boost/asem.hpp
+  [ glob $(INCLUDES)/boost/asem/*.hpp ]
+  :
+  <doxygen:param>EXCLUDE_SYMBOLS=BOOST_ASIO_INITFN_RESULT_TYPE
+  <doxygen:param>BOOST_ASEM_ASIO_NAMESPACE=boost::asio
+  <doxygen:param>PREDEFINED=GENERATING_DOCUMENTATION
+  <doxygen:param>HIDE_UNDOC_CLASSES=YES
+  <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+  <doxygen:param>EXAMPLE_PATH=.
+  <xsl:path>.
+;
+
+boostbook standalone
+:
+  asem.qbk
+:
+  <dependency>autodoc
+  <dependency>images
+  <dependency>images_glob
+  <xsl:param>boost.root=../../../..
+  <xsl:param>html.stylesheet=../../../../doc/src/boostbook.css
+;
+
+###############################################################################
+alias boostdoc
+    : standalone/<format>docbook
+    : 
+    : <dependency>images_glob
+    : ;
+
+explicit boostdoc ;
+alias boostrelease ;
+explicit boostrelease ;

@@ -29,7 +29,7 @@ semaphore_base::~semaphore_base()
 }
 
 void
-semaphore_base::add_waiter(detail::semaphore_wait_op *waiter)
+semaphore_base::add_waiter(detail::semaphore_wait_op *waiter) noexcept
 {
     waiter->link_before(&waiters_);
 }

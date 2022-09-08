@@ -59,15 +59,8 @@ struct basic_semaphore<Executor>::async_aquire_op
         using handler_type = std::decay_t< Handler >;
         using model_type = detail::semaphore_wait_op_model< decltype(e), handler_type >;
         model_type *model = model_type ::construct(self, std::move(e), std::forward< Handler >(handler));
-        try
-        {
-            self->add_waiter(model);
-        }
-        catch (...)
-        {
-            model_type::destroy(model);
-            throw;
-        }
+
+        self->add_waiter(model);
     }
 };
 
@@ -76,7 +69,7 @@ template < BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code)) CompletionHandler >
 BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionHandler, void(error_code))
 basic_semaphore< Executor >::async_acquire(CompletionHandler &&token)
 {
-    return asio::async_initiate< CompletionHandler, void(std::error_code) >(
+    return BOOST_ASEM_ASIO_NAMESPACE::async_initiate< CompletionHandler, void(std::error_code) >(
                 async_aquire_op{this}, token);
 }
 

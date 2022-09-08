@@ -70,7 +70,7 @@ struct semaphore_base
 
   protected:
     BOOST_ASEM_DECL void
-    add_waiter(detail::semaphore_wait_op *waiter);
+    add_waiter(detail::semaphore_wait_op *waiter) noexcept;
 
     BOOST_ASEM_DECL int
     decrement();

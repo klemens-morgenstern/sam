@@ -16,63 +16,42 @@ namespace detail
 {
 struct bilist_node
 {
-    inline bilist_node();
-
+    bilist_node() noexcept : next_(this), prev_(this) {}
     bilist_node(bilist_node const &) = delete;
 
     bilist_node &
     operator=(bilist_node const &) = delete;
 
-    inline ~bilist_node();
+    ~bilist_node() noexcept = default;
 
-    inline void
-    unlink();
+    void unlink() noexcept
+    {
+        auto p   = prev_;
+        auto n   = next_;
+        n->prev_ = p;
+        p->next_ = n;
+    }
 
-    inline void
-    link_before(bilist_node *next);
+    void
+    link_before(bilist_node *next) noexcept
+    {
+        next_        = next;
+        prev_        = next->prev_;
+        prev_->next_ = this;
+        next->prev_  = this;
+    }
 
-    inline std::size_t size() const;
+    std::size_t size() const
+    {
+        std::size_t sz = 0;
+        for (auto p = next_; p != this; p = p->next_)
+            sz++;
+        return sz;
+    }
 
     bilist_node *next_;
     bilist_node *prev_;
 };
-
-bilist_node::bilist_node()
-: next_(this)
-, prev_(this)
-{
-}
-
-bilist_node::~bilist_node()
-{
-}
-
-inline void
-bilist_node::unlink()
-{
-    auto p   = prev_;
-    auto n   = next_;
-    n->prev_ = p;
-    p->next_ = n;
-}
-
-void
-bilist_node::link_before(bilist_node *next)
-{
-    next_        = next;
-    prev_        = next->prev_;
-    prev_->next_ = this;
-    next->prev_  = this;
-}
-
-std::size_t
-bilist_node::size() const
-{
-    std::size_t sz = 0;
-    for (auto p = next_; p != this; p = p->next_)
-        sz++;
-    return sz;
-}
 
 }   // namespace detail
 BOOST_ASEM_END_NAMESPACE

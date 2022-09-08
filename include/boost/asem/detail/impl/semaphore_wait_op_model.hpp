@@ -9,7 +9,9 @@
 
 #ifndef BOOST_ASEM_DETAIL_IMPL_SEMAPHORE_WAIT_OP_MODEL_HPP
 #define BOOST_ASEM_DETAIL_IMPL_SEMAPHORE_WAIT_OP_MODEL_HPP
+
 #include <boost/asem/detail/semaphore_wait_op_model.hpp>
+#include <exception>
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/experimental/append.hpp>
@@ -30,21 +32,30 @@ semaphore_wait_op_model< Executor, Handler >::construct(
     Executor              e,
     Handler               handler)
 {
-    auto halloc = asio::get_associated_allocator(handler);
+    auto halloc = BOOST_ASEM_ASIO_NAMESPACE::get_associated_allocator(handler);
     auto alloc  = typename std::allocator_traits< decltype(halloc) >::
         template rebind_alloc< semaphore_wait_op_model >(halloc);
-    auto traits = std::allocator_traits< decltype(alloc) >();
-    auto pmem   = traits.allocate(alloc, 1);
-    try
+    using traits = std::allocator_traits< decltype(alloc) >;
+    auto pmem   = traits::allocate(alloc, 1);
+
+    struct dealloc
     {
-        return new (pmem)
+        ~dealloc()
+        {
+#if defined(__cpp_lib_uncaught_exceptions)
+            if (std::uncaught_exception() > 0)
+#else
+            if (std::uncaught_exception())
+#endif
+                traits::deallocate(alloc, pmem, 1);
+        }
+        decltype(alloc) alloc;
+        decltype(pmem) pmem;
+    };
+
+    dealloc dc{halloc, pmem};
+    return new (pmem)
             semaphore_wait_op_model(host, std::move(e), std::move(handler));
-    }
-    catch (...)
-    {
-        traits.deallocate(alloc, pmem, 1);
-        throw;
-    }
 }
 
 template < class Executor, class Handler >
@@ -74,9 +85,7 @@ semaphore_wait_op_model< Executor, Handler >::semaphore_wait_op_model(
         slot.assign(
             [this](BOOST_ASEM_ASIO_NAMESPACE::cancellation_type type)
             {
-                if (!!(type & (BOOST_ASEM_ASIO_NAMESPACE::cancellation_type::terminal |
-                               BOOST_ASEM_ASIO_NAMESPACE::cancellation_type::partial |
-                               BOOST_ASEM_ASIO_NAMESPACE::cancellation_type::total)))
+                if (type != BOOST_ASEM_ASIO_NAMESPACE::cancellation_type::none)
                 {
                     semaphore_wait_op_model *self = this;
                     self->complete(BOOST_ASEM_ASIO_NAMESPACE::error::operation_aborted);
@@ -93,7 +102,7 @@ semaphore_wait_op_model< Executor, Handler >::complete(error_code ec)
     auto h = std::move(handler_);
     unlink();
     destroy(this);
-    asio::post(g.get_executor(), BOOST_ASEM_ASIO_NAMESPACE::append(std::move(h), ec));
+    BOOST_ASEM_ASIO_NAMESPACE::post(g.get_executor(), BOOST_ASEM_ASIO_NAMESPACE::append(std::move(h), ec));
 }
 
 }   // namespace detail

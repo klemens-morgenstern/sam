@@ -55,19 +55,6 @@ semaphore_base::release()
         ->complete(std::error_code());
 }
 
-std::size_t semaphore_base::release_all()
-{
-    std::size_t sz = 0u;
-    auto & nx = waiters_.next_;
-    while (nx != &waiters_)
-    {
-        static_cast< detail::semaphore_wait_op * >(nx)->complete(error_code());
-        sz ++ ;
-    }
-    return sz;
-}
-
-
 BOOST_ASEM_NODISCARD int
 semaphore_base::value() const noexcept
 {

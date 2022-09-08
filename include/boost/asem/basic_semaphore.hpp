@@ -57,14 +57,6 @@ struct semaphore_base
     BOOST_ASEM_DECL void
     release();
 
-    /// @brief Release the sempahore to achieve a value of zero.
-    /// @returns The amount of releases.
-    /// @details This function immediately releases the semaphore. If there are
-    /// pending async_acquire operations, then the least recent operation will
-    /// commence completion.
-    BOOST_ASEM_DECL std::size_t
-    release_all();
-
     /// The current value of the semaphore
     BOOST_ASEM_NODISCARD BOOST_ASEM_DECL int
     value() const noexcept;

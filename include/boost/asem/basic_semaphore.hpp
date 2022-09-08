@@ -65,6 +65,7 @@ struct semaphore_base
     BOOST_ASEM_DECL std::size_t
     release_all();
 
+    /// The current value of the semaphore
     BOOST_ASEM_NODISCARD BOOST_ASEM_DECL int
     value() const noexcept;
 
@@ -141,15 +142,17 @@ struct basic_semaphore : semaphore_base
 
 using semaphore = basic_semaphore<>;
 
+#if !defined(BOOST_ASEM_HEADER_ONLY)
+extern template
+struct basic_semaphore<BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+#endif
 BOOST_ASEM_END_NAMESPACE
 
 #endif
 
 #if defined(BOOST_ASEM_HEADER_ONLY)
-
-
+#include <boost/asem/impl/semaphore_base.ipp>
 
 #endif
 
-#include <boost/asem/impl/semaphore_base.hpp>
 #include <boost/asem/impl/basic_semaphore.hpp>

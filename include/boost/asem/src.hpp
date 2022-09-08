@@ -13,5 +13,6 @@
 # error Do not compile Asem library source with BOOST_BEAST_HEADER_ONLY defined
 #endif
 
+#include <boost/asem/impl/semaphore_base.ipp>
 
 #endif //BOOST_ASEM_SRC_HPP

@@ -24,9 +24,11 @@ doxygen autodoc
   $(INCLUDES)/boost/asem.hpp
   [ glob $(INCLUDES)/boost/asem/*.hpp ]
   :
-  <doxygen:param>EXCLUDE_SYMBOLS=BOOST_ASIO_INITFN_RESULT_TYPE
-  <doxygen:param>BOOST_ASEM_ASIO_NAMESPACE=boost::asio
-  <doxygen:param>PREDEFINED=GENERATING_DOCUMENTATION
+  <doxygen:param>EXCLUDE_SYMBOLS=
+  <doxygen:param>EXCLUDE_SYMBOLS=BOOST_ASEM_SOURCE
+  <doxygen:param>"PREDEFINED=BOOST_ASEM_ASIO_NAMESPACE=boost::asio \\
+                             BOOST_ASEM_NAMESPACE=boost::asem \\
+                             GENERATING_DOCUMENTATION "
   <doxygen:param>HIDE_UNDOC_CLASSES=YES
   <doxygen:param>HIDE_UNDOC_MEMBERS=YES
   <doxygen:param>EXAMPLE_PATH=.

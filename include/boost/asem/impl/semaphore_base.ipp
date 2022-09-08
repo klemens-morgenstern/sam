@@ -12,6 +12,7 @@
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/semaphore_wait_op.hpp>
+#include <boost/asem/basic_semaphore.hpp>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
@@ -67,7 +68,7 @@ std::size_t semaphore_base::release_all()
 }
 
 
-BOOST_ASEM_NODISCARD inline int
+BOOST_ASEM_NODISCARD int
 semaphore_base::value() const noexcept
 {
     if (waiters_.next_ == &waiters_)
@@ -94,6 +95,10 @@ semaphore_base::decrement()
     BOOST_ASEM_ASSERT(count_ > 0);
     return --count_;
 }
+
+#if defined(BOOST_ASEM_SOURCE)
+template struct basic_semaphore<BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+#endif
 
 BOOST_ASEM_END_NAMESPACE
 

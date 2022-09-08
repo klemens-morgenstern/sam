@@ -43,14 +43,14 @@ semaphore_wait_op_model< Executor, Handler >::construct(
         ~dealloc()
         {
 #if defined(__cpp_lib_uncaught_exceptions)
-            if (std::uncaught_exception() > 0)
+            if (std::uncaught_exceptions() > 0)
 #else
             if (std::uncaught_exception())
 #endif
-                traits::deallocate(alloc, pmem, 1);
+                traits::deallocate(alloc_, pmem_, 1);
         }
-        decltype(alloc) alloc;
-        decltype(pmem) pmem;
+        decltype(alloc) alloc_;
+        decltype(pmem) pmem_;
     };
 
     dealloc dc{halloc, pmem};

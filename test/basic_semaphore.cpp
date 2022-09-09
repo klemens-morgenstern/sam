@@ -12,6 +12,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <boost/asem/mt.hpp>
 #include <boost/asem/st.hpp>
 #include <chrono>
 #include <random>
@@ -41,6 +42,24 @@ using namespace BOOST_ASEM_ASIO_NAMESPACE;
 using namespace BOOST_ASEM_ASIO_NAMESPACE::experimental;
 using namespace std::literals;
 using namespace BOOST_ASEM_NAMESPACE;
+
+using models = std::tuple<st, mt>;
+template<typename T>
+using context = typename std::conditional<
+        std::is_same<st, T>::value,
+        io_context,
+        thread_pool
+    >::type;
+
+inline void run_impl(io_context & ctx)
+{
+    ctx.run();
+}
+
+inline void run_impl(thread_pool & ctx)
+{
+    ctx.join();
+}
 
 struct bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
 {
@@ -114,12 +133,10 @@ struct bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
 
 BOOST_AUTO_TEST_SUITE(basic_semaphore_test)
 
-BOOST_AUTO_TEST_CASE(test_value)
+BOOST_AUTO_TEST_CASE_TEMPLATE(value, T, models)
 {
-
-    io_context ioc;
-    st::semaphore sem{ioc.get_executor(), 0};
-
+    context<T> ioc;
+    typename T::semaphore sem{ioc.get_executor(), 0};
 
     BOOST_CHECK_EQUAL(sem.value(), 0);
 
@@ -140,12 +157,10 @@ BOOST_AUTO_TEST_CASE(test_value)
     BOOST_CHECK_EQUAL(sem.value(), -2);
 }
 
-BOOST_AUTO_TEST_CASE(random)
+BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
 {
-    test_value();
-
-    auto ioc  = io_context();
-    auto sem  = st::semaphore(ioc.get_executor(), 10);
+    auto ioc  = context<T>{};
+    auto sem  = typename T::semaphore(ioc.get_executor(), 10);
     auto rng  = std::random_device();
     auto ss   = std::seed_seq { rng(), rng(), rng(), rng(), rng() };
     auto eng  = std::default_random_engine(ss);
@@ -155,7 +170,7 @@ BOOST_AUTO_TEST_CASE(random)
     { return std::chrono::milliseconds(dist(eng)); };
     for (int i = 0; i < 100; i += 2)
         post(ioc, bot(i, sem, random_time()));
-    ioc.run();
+    run_impl(ioc);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

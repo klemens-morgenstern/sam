@@ -47,10 +47,14 @@ struct basic_semaphore<Implementation ,Executor>::async_aquire_op
     void operator()(Handler &&handler)
     {
         auto e = get_associated_executor(handler, self->get_executor());
-        if (self->try_acquire())
-            return BOOST_ASEM_ASIO_NAMESPACE::post(std::move(e),
-                        BOOST_ASEM_ASIO_NAMESPACE::append(
-                               std::forward< Handler >(handler), error_code()));
+        auto l = self->impl_.lock();
+        if (self->impl_.count() != 0)
+        {
+            self->impl_.decrement();
+            BOOST_ASEM_ASIO_NAMESPACE::post(std::move(e),
+                                            BOOST_ASEM_ASIO_NAMESPACE::append(
+                                                std::forward< Handler >(handler), error_code()));
+        }
 
         using handler_type = std::decay_t< Handler >;
         using model_type = detail::basic_op_model< Implementation, decltype(e), handler_type, void(error_code)>;

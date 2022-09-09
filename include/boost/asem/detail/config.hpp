@@ -39,6 +39,7 @@
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_category.hpp>
 #include <boost/system/system_error.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #if defined(BOOST_WINDOWS_API)
 #define BOOST_ASEM_WINDOWS 1
@@ -83,8 +84,12 @@ using std::error_category ;
 using std::system_category ;
 using std::system_error ;
 
+template<typename T>
+inline void ignore_unused(const T& ) {}
+
 #else
 
+using boost::ignore_unused;
 using boost::system::error_code ;
 using boost::system::error_category ;
 using boost::system::system_category ;

@@ -18,12 +18,6 @@ semaphore_impl<st>::semaphore_impl(int initial_count)
 {
 }
 
-semaphore_impl<st>::~semaphore_impl()
-{
-    auto &nx = waiters_.next_;
-    while (nx != &waiters_)
-        static_cast< detail::wait_op * >(nx)->complete(BOOST_ASEM_ASIO_NAMESPACE::error::operation_aborted);
-}
 
 void
 semaphore_impl<st>::add_waiter(detail::wait_op *waiter) noexcept

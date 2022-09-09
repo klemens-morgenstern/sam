@@ -30,7 +30,6 @@ struct semaphore_impl<mt>
     semaphore_impl &
     operator=(semaphore_impl &&) = delete;
 
-    BOOST_ASEM_DECL ~semaphore_impl();
 
     BOOST_ASEM_DECL bool
     try_acquire();
@@ -53,7 +52,7 @@ struct semaphore_impl<mt>
     BOOST_ASEM_DECL std::lock_guard<std::mutex> lock();
 
   private:
-    detail::bilist_node waiters_;
+    detail::basic_bilist_holder<void(error_code)> waiters_;
     std::atomic<int> count_;
     mutable std::mutex mtx_;
 };

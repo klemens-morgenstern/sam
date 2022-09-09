@@ -33,5 +33,6 @@ lib test_impl : test_impl.cpp :
         ;
 
 test-suite standalone :
+    [ run basic_mutex.cpp test_impl ]
     [ run basic_semaphore.cpp test_impl ]
     ;

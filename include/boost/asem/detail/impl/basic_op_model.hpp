@@ -7,8 +7,8 @@
 // Official repository: https://github.com/madmongo1/asio_experiments
 //
 
-#ifndef BOOST_ASEM_DETAIL_IMPL_SEMAPHORE_WAIT_OP_MODEL_HPP
-#define BOOST_ASEM_DETAIL_IMPL_SEMAPHORE_WAIT_OP_MODEL_HPP
+#ifndef BOOST_ASEM_DETAIL_IMPL_BASIC_OP_MODEL_HPP
+#define BOOST_ASEM_DETAIL_IMPL_BASIC_OP_MODEL_HPP
 
 #include <boost/asem/detail/basic_op_model.hpp>
 #include <exception>
@@ -26,7 +26,6 @@ BOOST_ASEM_BEGIN_NAMESPACE
 namespace detail
 {
 template < class Implementation, class Executor, class Handler, class ... Ts >
-//basic_op_model< Implementation, Executor, Handler, Signature > *
 auto
 basic_op_model< Implementation, Executor, Handler, void(Ts...)>::construct(
     Executor              e,

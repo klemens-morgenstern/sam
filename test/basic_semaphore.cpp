@@ -39,7 +39,6 @@
 #endif
 
 using namespace BOOST_ASEM_ASIO_NAMESPACE;
-using namespace BOOST_ASEM_ASIO_NAMESPACE::experimental;
 using namespace std::literals;
 using namespace BOOST_ASEM_NAMESPACE;
 
@@ -61,17 +60,17 @@ inline void run_impl(thread_pool & ctx)
     ctx.join();
 }
 
-struct bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
+template<typename T>
+struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
 {
     int n;
-    st::semaphore &sem;
+    typename T::semaphore &sem;
     std::chrono::milliseconds deadline;
-    bot(int n, st::semaphore &sem, std::chrono::milliseconds deadline) : n(n), sem(sem), deadline(deadline) {}
+    basic_bot(int n, typename T::semaphore &sem, std::chrono::milliseconds deadline)
+        : n(n), sem(sem), deadline(deadline) {}
     std::string ident = "bot " + std::to_string(n) + " : ";
 
     steady_timer timer{sem.get_executor()};
-
-
     std::chrono::steady_clock::time_point then;
 
     template<typename ... Args>
@@ -169,7 +168,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
     auto random_time = [&eng, &dist]
     { return std::chrono::milliseconds(dist(eng)); };
     for (int i = 0; i < 100; i += 2)
-        post(ioc, bot(i, sem, random_time()));
+        post(ioc, basic_bot<T>(i, sem, random_time()));
     run_impl(ioc);
 }
 

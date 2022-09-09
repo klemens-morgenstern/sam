@@ -7,8 +7,8 @@
 // Official repository: https://github.com/madmongo1/asio_experiments
 //
 
-#ifndef BOOST_ASEM_IMPL_BASIC_ASYNC_SEMAPHORE_HPP
-#define BOOST_ASEM_IMPL_BASIC_ASYNC_SEMAPHORE_HPP
+#ifndef BOOST_ASEM_IMPL_BASIC_SEMAPHORE_HPP
+#define BOOST_ASEM_IMPL_BASIC_SEMAPHORE_HPP
 
 #include <boost/asem/basic_semaphore.hpp>
 #include <boost/asem/detail/basic_op_model.hpp>

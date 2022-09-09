@@ -5,4 +5,8 @@
 #ifndef BOOST_ASEM_HPP
 #define BOOST_ASEM_HPP
 
+#include <boost/asem/st.hpp>
+#include <boost/asem/mt.hpp>
+#include <boost/asem/lock_guard.hpp>
+
 #endif //BOOST_ASEM_HPP

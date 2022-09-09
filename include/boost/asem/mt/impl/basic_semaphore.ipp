@@ -7,7 +7,7 @@
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/basic_op.hpp>
-#include <boost/asem/st/basic_semaphore.hpp>
+#include <boost/asem/mt/basic_semaphore.hpp>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 namespace detail
@@ -16,13 +16,6 @@ namespace detail
 semaphore_impl<mt>::semaphore_impl(int initial_count)
     : waiters_(), count_(initial_count)
 {
-}
-
-semaphore_impl<mt>::~semaphore_impl()
-{
-    auto &nx = waiters_.next_;
-    while (nx != &waiters_)
-        static_cast< detail::wait_op * >(nx)->complete(BOOST_ASEM_ASIO_NAMESPACE::error::operation_aborted);
 }
 
 void
@@ -64,7 +57,6 @@ semaphore_impl<mt>::value() const noexcept
 bool
 semaphore_impl<mt>::try_acquire()
 {
-    bool acquired = false;
     if (count_.fetch_sub(1) >= 0)
         return true;
     else
@@ -75,7 +67,7 @@ semaphore_impl<mt>::try_acquire()
 int
 semaphore_impl<mt>::decrement()
 {
-    BOOST_ASEM_ASSERT(count_ > 0);
+    //BOOST_ASEM_ASSERT(count_ > 0);
     return --count_;
 }
 

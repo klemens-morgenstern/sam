@@ -86,4 +86,4 @@ BOOST_ASEM_END_NAMESPACE
 
 #endif
 
-#include <boost/asem/detail/impl/semaphore_wait_op_model.hpp>
+#include <boost/asem/detail/impl/basic_op_model.hpp>

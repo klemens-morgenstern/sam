@@ -28,8 +28,6 @@ struct semaphore_impl<st>
     semaphore_impl &
     operator=(semaphore_impl &&) = delete;
 
-    BOOST_ASEM_DECL ~semaphore_impl();
-
     BOOST_ASEM_DECL bool
     try_acquire();
 
@@ -51,7 +49,7 @@ struct semaphore_impl<st>
     std::nullptr_t lock() {return nullptr;}
 
   private:
-    detail::bilist_node waiters_;
+    detail::basic_bilist_holder<void(error_code)> waiters_;
     int count_;
 };
 

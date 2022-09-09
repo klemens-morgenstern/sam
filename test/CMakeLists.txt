@@ -12,7 +12,8 @@ target_compile_definitions(boost_asem_test_impl PUBLIC -DBOOST_asem_SEPARATE_COM
 function(boost_asem_standalone_test name)
     add_executable(boost_asem_${name} ${name}.cpp)
     target_link_libraries(boost_asem_${name} boost_asem_test_impl)
-    add_test(NAME boost_asem_${name} COMMAND $<TARGET_FILE:boost_asem_${name}> )
+    add_test(NAME boost_asem_${name} COMMAND $<TARGET_FILE:boost_asem_${name}>)
 endfunction()
 
 boost_asem_standalone_test(basic_semaphore)
+boost_asem_standalone_test(basic_mutex)

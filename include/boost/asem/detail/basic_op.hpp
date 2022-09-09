@@ -29,6 +29,26 @@ struct basic_op<void(Ts...)> : detail::bilist_node
 
 using wait_op = basic_op<void(error_code)>;
 
+
+template<typename Signature>
+struct basic_bilist_holder;
+
+template<typename ...Ts>
+struct basic_bilist_holder<void(error_code, Ts...)> : bilist_node
+{
+    ~basic_bilist_holder()
+    {
+        using op = basic_op<void(error_code, Ts...)>;
+        auto &nx = this->next_;
+        while (nx != this)
+        {
+            auto c = nx;
+            nx = nx->next_;
+            static_cast< op * >(c)->complete(BOOST_ASEM_ASIO_NAMESPACE::error::operation_aborted, Ts{}...);
+        }
+    }
+};
+
 }   // namespace detail
 BOOST_ASEM_END_NAMESPACE
 

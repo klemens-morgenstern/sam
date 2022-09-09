@@ -2,8 +2,8 @@
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-#ifndef BOOST_ASEM_IMPL_ST_IPP
-#define BOOST_ASEM_IMPL_ST_IPP
+#ifndef BOOST_ASEM_IMPL_MT_IPP
+#define BOOST_ASEM_IMPL_MT_IPP
 
 #include <boost/asem/mt.hpp>
 
@@ -11,8 +11,10 @@ BOOST_ASEM_BEGIN_NAMESPACE
 
 #if defined(BOOST_ASEM_SOURCE)
 template struct basic_semaphore<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+template struct basic_mutex<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+
 #endif
 
 BOOST_ASEM_END_NAMESPACE
 
-#endif //BOOST_ASEM_IMPL_ST_IPP
+#endif //BOOST_ASEM_IMPL_MT_IPP

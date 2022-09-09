@@ -12,7 +12,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <boost/asem/semaphore.hpp>
+#include <boost/asem/st.hpp>
 #include <chrono>
 #include <random>
 
@@ -45,9 +45,9 @@ using namespace BOOST_ASEM_NAMESPACE;
 struct bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
 {
     int n;
-    semaphore &sem;
+    st::semaphore &sem;
     std::chrono::milliseconds deadline;
-    bot(int n, semaphore &sem, std::chrono::milliseconds deadline) : n(n), sem(sem), deadline(deadline) {}
+    bot(int n, st::semaphore &sem, std::chrono::milliseconds deadline) : n(n), sem(sem), deadline(deadline) {}
     std::string ident = "bot " + std::to_string(n) + " : ";
 
     steady_timer timer{sem.get_executor()};
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(test_value)
 {
 
     io_context ioc;
-    semaphore sem{ioc.get_executor(), 0};
+    st::semaphore sem{ioc.get_executor(), 0};
 
 
     BOOST_CHECK_EQUAL(sem.value(), 0);
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(random)
     test_value();
 
     auto ioc  = io_context();
-    auto sem  = semaphore(ioc.get_executor(), 10);
+    auto sem  = st::semaphore(ioc.get_executor(), 10);
     auto rng  = std::random_device();
     auto ss   = std::seed_seq { rng(), rng(), rng(), rng(), rng() };
     auto eng  = std::default_random_engine(ss);

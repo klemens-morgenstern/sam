@@ -10,7 +10,7 @@
 #ifndef BOOST_ASEM_DETAIL_IMPL_SEMAPHORE_WAIT_OP_MODEL_HPP
 #define BOOST_ASEM_DETAIL_IMPL_SEMAPHORE_WAIT_OP_MODEL_HPP
 
-#include <boost/asem/detail/semaphore_wait_op_model.hpp>
+#include <boost/asem/detail/basic_op_model.hpp>
 #include <exception>
 
 #if defined(BOOST_ASEM_STANDALONE)
@@ -25,16 +25,17 @@ BOOST_ASEM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template < class Executor, class Handler >
-semaphore_wait_op_model< Executor, Handler > *
-semaphore_wait_op_model< Executor, Handler >::construct(
-    semaphore_base *host,
+template < class Implementation, class Executor, class Handler, class ... Ts >
+//basic_op_model< Implementation, Executor, Handler, Signature > *
+auto
+basic_op_model< Implementation, Executor, Handler, void(Ts...)>::construct(
     Executor              e,
     Handler               handler)
+    -> basic_op_model *
 {
     auto halloc = BOOST_ASEM_ASIO_NAMESPACE::get_associated_allocator(handler);
     auto alloc  = typename std::allocator_traits< decltype(halloc) >::
-        template rebind_alloc< semaphore_wait_op_model >(halloc);
+        template rebind_alloc< basic_op_model >(halloc);
     using traits = std::allocator_traits< decltype(alloc) >;
     auto pmem   = traits::allocate(alloc, 1);
 
@@ -55,29 +56,27 @@ semaphore_wait_op_model< Executor, Handler >::construct(
 
     dealloc dc{halloc, pmem};
     return new (pmem)
-            semaphore_wait_op_model(host, std::move(e), std::move(handler));
+            basic_op_model(std::move(e), std::move(handler));
 }
 
-template < class Executor, class Handler >
+template < class Implementation, class Executor, class Handler, class ... Ts >
 auto
-semaphore_wait_op_model< Executor, Handler >::destroy(
-    semaphore_wait_op_model *self) -> void
+basic_op_model< Implementation, Executor, Handler, void(Ts...) >::destroy(
+        basic_op_model *self) -> void
 {
     auto halloc = self->get_allocator();
     auto alloc  = typename std::allocator_traits< decltype(halloc) >::
-        template rebind_alloc< semaphore_wait_op_model >(halloc);
+        template rebind_alloc< basic_op_model >(halloc);
     std::destroy_at(self);
     auto traits = std::allocator_traits< decltype(alloc) >();
     traits.deallocate(alloc, self, 1);
 }
 
-template < class Executor, class Handler >
-semaphore_wait_op_model< Executor, Handler >::semaphore_wait_op_model(
-    semaphore_base *host,
+template < class Implementation, class Executor, class Handler, class ... Ts >
+basic_op_model< Implementation, Executor, Handler, void(Ts...) >::basic_op_model(
     Executor              e,
     Handler               handler)
-: semaphore_wait_op(host)
-, work_guard_(std::move(e))
+: work_guard_(std::move(e))
 , handler_(std::move(handler))
 {
     auto slot = get_cancellation_slot();
@@ -87,22 +86,23 @@ semaphore_wait_op_model< Executor, Handler >::semaphore_wait_op_model(
             {
                 if (type != BOOST_ASEM_ASIO_NAMESPACE::cancellation_type::none)
                 {
-                    semaphore_wait_op_model *self = this;
+                    basic_op_model *self = this;
                     self->complete(BOOST_ASEM_ASIO_NAMESPACE::error::operation_aborted);
                 }
             });
 }
 
-template < class Executor, class Handler >
+template < class Implementation, class Executor, class Handler, class ... Ts >
 void
-semaphore_wait_op_model< Executor, Handler >::complete(error_code ec)
+basic_op_model< Implementation, Executor, Handler, void(Ts...) >::complete(Ts ... args)
 {
     get_cancellation_slot().clear();
     auto g = std::move(work_guard_);
     auto h = std::move(handler_);
-    unlink();
+    this->unlink();
     destroy(this);
-    BOOST_ASEM_ASIO_NAMESPACE::post(g.get_executor(), BOOST_ASEM_ASIO_NAMESPACE::append(std::move(h), ec));
+    BOOST_ASEM_ASIO_NAMESPACE::post(g.get_executor(),
+                                    BOOST_ASEM_ASIO_NAMESPACE::append(std::move(h), std::move(args...)));
 }
 
 }   // namespace detail

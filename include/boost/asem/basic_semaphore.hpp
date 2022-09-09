@@ -21,64 +21,24 @@
 #endif
 
 BOOST_ASEM_BEGIN_NAMESPACE
+struct st;
+struct mt;
 
 namespace detail
 {
-struct semaphore_wait_op;
+
+template<typename Impl>
+struct semaphore_impl;
+
 }
 
-struct semaphore_base
+template < class Implementation,
+           class Executor = BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >
+struct basic_semaphore
 {
-    BOOST_ASEM_DECL semaphore_base(int initial_count = 1);
+    /// @brief The implementation type
+    using implementation_type = detail::semaphore_impl<Implementation>;
 
-    semaphore_base(semaphore_base const &) = delete;
-
-    semaphore_base &
-    operator=(semaphore_base const &)  = delete;
-
-    semaphore_base(semaphore_base &&)  = delete;
-
-    semaphore_base &
-    operator=(semaphore_base &&) = delete;
-
-    BOOST_ASEM_DECL ~semaphore_base();
-
-    /// @brief Attempt to immediately acquire the semaphore.
-    /// @details This function attempts to acquire the semaphore without
-    /// blocking or initiating an asynchronous operation.
-    /// @returns true if the semaphore was acquired, false otherwise
-    BOOST_ASEM_DECL bool
-    try_acquire();
-
-    /// @brief Release the sempahore.
-    /// @details This function immediately releases the semaphore. If there are
-    /// pending async_acquire operations, then the least recent operation will
-    /// commence completion.
-    BOOST_ASEM_DECL void
-    release();
-
-    /// The current value of the semaphore
-    BOOST_ASEM_NODISCARD BOOST_ASEM_DECL int
-    value() const noexcept;
-
-  protected:
-    BOOST_ASEM_DECL void
-    add_waiter(detail::semaphore_wait_op *waiter) noexcept;
-
-    BOOST_ASEM_DECL int
-    decrement();
-
-    BOOST_ASEM_NODISCARD BOOST_ASEM_DECL int
-    count() const noexcept;
-
-  private:
-    detail::bilist_node waiters_;
-    int                 count_;
-};
-
-template < class Executor = BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >
-struct basic_semaphore : semaphore_base
-{
     /// @brief The type of the default executor.
     using executor_type = Executor;
 
@@ -87,7 +47,7 @@ struct basic_semaphore : semaphore_base
     struct rebind_executor
     {
         /// The socket type when rebound to the specified executor.
-        typedef basic_semaphore< Executor1 > other;
+        typedef basic_semaphore< Implementation, Executor1 > other;
     };
 
     /// @brief Construct an async_sempaphore
@@ -127,24 +87,41 @@ struct basic_semaphore : semaphore_base
     BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionHandler, void(error_code))
     async_acquire( CompletionHandler &&token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(executor_type));
 
+    /// @brief Attempt to immediately acquire the semaphore.
+    /// @details This function attempts to acquire the semaphore without
+    /// blocking or initiating an asynchronous operation.
+    /// @returns true if the semaphore was acquired, false otherwise
+    BOOST_ASEM_DECL bool
+    try_acquire()
+    {
+        return impl_.try_acquire();
+    }
+
+    /// @brief Release the sempahore.
+    /// @details This function immediately releases the semaphore. If there are
+    /// pending async_acquire operations, then the least recent operation will
+    /// commence completion.
+    BOOST_ASEM_DECL void
+    release()
+    {
+        impl_.release();
+    }
+
+    /// The current value of the semaphore
+    BOOST_ASEM_NODISCARD BOOST_ASEM_DECL int
+    value() const noexcept
+    {
+        return impl_.value();
+    }
   private:
+    implementation_type impl_;
     executor_type exec_;
     struct async_aquire_op;
 };
 
-using semaphore = basic_semaphore<>;
 
-#if !defined(BOOST_ASEM_HEADER_ONLY)
-extern template
-struct basic_semaphore<BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
-#endif
 BOOST_ASEM_END_NAMESPACE
 
-#endif
-
-#if defined(BOOST_ASEM_HEADER_ONLY)
-#include <boost/asem/impl/semaphore_base.ipp>
-
-#endif
-
 #include <boost/asem/impl/basic_semaphore.hpp>
+
+#endif

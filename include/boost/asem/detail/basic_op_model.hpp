@@ -20,18 +20,21 @@
 #include <boost/asio/executor_work_guard.hpp>
 #endif
 
-#include <boost/asem/detail/semaphore_wait_op.hpp>
+#include <boost/asem/detail/basic_op.hpp>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template < class Executor, class Handler >
-struct semaphore_wait_op_model final : semaphore_wait_op
+template < class Implementation, class Executor, class Handler, class Signature>
+struct basic_op_model;
+
+
+template < class Implementation, class Executor, class Handler, class ... Ts>
+struct basic_op_model<Implementation, Executor, Handler, void(Ts...)> final : basic_op<void(Ts...)>
 {
     using executor_type = Executor;
-    using cancellation_slot_type =
-    BOOST_ASEM_ASIO_NAMESPACE::associated_cancellation_slot_t< Handler >;
+    using cancellation_slot_type = BOOST_ASEM_ASIO_NAMESPACE::associated_cancellation_slot_t< Handler >;
     using allocator_type = BOOST_ASEM_ASIO_NAMESPACE::associated_allocator_t< Handler >;
 
     allocator_type
@@ -52,23 +55,22 @@ struct semaphore_wait_op_model final : semaphore_wait_op
         return work_guard_.get_executor();
     }
 
-    static semaphore_wait_op_model *
-    construct(semaphore_base *host, Executor e, Handler handler);
+    static basic_op_model *
+    construct(Executor e, Handler handler);
 
     static void
-    destroy(semaphore_wait_op_model *self);
+    destroy(basic_op_model *self);
 
-    semaphore_wait_op_model(semaphore_base *host,
-                            Executor              e,
-                            Handler               handler);
+    basic_op_model(Executor              e,
+                   Handler               handler);
 
     virtual void
-    complete(error_code ec) override;
+    complete(Ts... ec) override;
 
   private:
     struct cancellation_handler
     {
-        semaphore_wait_op_model* self;
+        basic_op_model* self;
 
         void operator()(asio::cancellation_type type);
     };

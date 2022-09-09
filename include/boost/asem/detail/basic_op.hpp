@@ -15,18 +15,19 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-struct semaphore_base;
 
 namespace detail
 {
-struct semaphore_wait_op : detail::bilist_node
+template<typename Signature>
+struct basic_op;
+
+template<typename ... Ts>
+struct basic_op<void(Ts...)> : detail::bilist_node
 {
-    semaphore_wait_op(semaphore_base *host) : host_(host) {}
-
-    virtual void complete(error_code) = 0;
-
-    semaphore_base *host_;
+    virtual void complete(Ts...) = 0;
 };
+
+using wait_op = basic_op<void(error_code)>;
 
 }   // namespace detail
 BOOST_ASEM_END_NAMESPACE

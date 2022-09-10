@@ -18,8 +18,10 @@ void mutex_impl<st>::unlock()
 
     // release a pending operations
     if (waiters_.next_ == &waiters_)
+    {
+        locked_ = false;
         return;
-    locked_ = false;
+    }
     static_cast< detail::wait_op * >(waiters_.next_)->complete(std::error_code());
 }
 

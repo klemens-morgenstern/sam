@@ -32,7 +32,7 @@ basic_semaphore<  Implementation, Executor >::basic_semaphore(executor_type exec
 
 template < class  Implementation, class Executor >
 auto
-basic_semaphore< Implementation, Executor >::get_executor() const -> executor_type const &
+basic_semaphore< Implementation, Executor >::get_executor() const noexcept -> executor_type
 {
     return exec_;
 }
@@ -49,12 +49,14 @@ struct basic_semaphore<Implementation ,Executor>::async_aquire_op
         auto e = get_associated_executor(handler, self->get_executor());
         auto l = self->impl_.lock();
         ignore_unused(l);
+
         if (self->impl_.count() != 0)
         {
             self->impl_.decrement();
             BOOST_ASEM_ASIO_NAMESPACE::post(std::move(e),
                                             BOOST_ASEM_ASIO_NAMESPACE::append(
                                                 std::forward< Handler >(handler), error_code()));
+            return ;
         }
 
         using handler_type = std::decay_t< Handler >;

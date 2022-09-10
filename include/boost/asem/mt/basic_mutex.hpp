@@ -18,14 +18,13 @@ namespace detail
 template<>
 struct mutex_impl<mt>
 {
-    std::atomic<bool> locked_ = false;
     bool locked() const {return locked_;}
     void do_lock()   { locked_ = true; }
 
     BOOST_ASEM_DECL void unlock();
     bool try_lock()
     {
-        return locked_.exchange(true);
+        return !locked_.exchange(true);
     }
 
     BOOST_ASEM_DECL void
@@ -36,6 +35,7 @@ struct mutex_impl<mt>
         return std::lock_guard<std::mutex>{mtx_};
     }
 
+    std::atomic<bool> locked_ = false;
     std::mutex mtx_;
     detail::basic_bilist_holder<void(error_code)> waiters_;
 };

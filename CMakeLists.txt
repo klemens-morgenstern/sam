@@ -10,6 +10,8 @@ project(boost_asem VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 add_library(boost_asem INTERFACE)
 add_library(Boost::asem ALIAS boost_asem)
 
+add_compile_options("-fsanitize=address")
+add_link_options("-fsanitize=address")
 
 if (BOOST_ASEM_STANDALONE)
   add_compile_definitions(BOOST_ASEM_STANDALONE=1)

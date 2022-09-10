@@ -14,7 +14,6 @@
 #define BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(Token, Signature) ASIO_INITFN_AUTO_RESULT_TYPE(Token, Signature)
 #define BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(Executor) ASIO_DEFAULT_COMPLETION_TOKEN(Executor)
 
-
 #include <asio/error.hpp>
 #include <system_error>
 
@@ -22,6 +21,7 @@
 #define BOOST_ASEM_END_NAMESPACE  }
 #define BOOST_ASEM_NAMESPACE asem
 #define BOOST_ASEM_ASSERT(Condition) ASIO_ASSERT(Condition)
+
 
 #else
 

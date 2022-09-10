@@ -101,7 +101,7 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...) >::complete(Ts ..
     this->unlink();
     destroy(this);
     BOOST_ASEM_ASIO_NAMESPACE::post(g.get_executor(),
-                                    BOOST_ASEM_ASIO_NAMESPACE::append(std::move(h), std::move(args...)));
+                                    BOOST_ASEM_ASIO_NAMESPACE::append(std::move(h), std::move(args)...));
 }
 
 }   // namespace detail

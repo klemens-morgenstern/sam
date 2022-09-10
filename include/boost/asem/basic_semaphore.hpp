@@ -59,8 +59,8 @@ struct basic_semaphore
     basic_semaphore(executor_type exec, int initial_count = 1);
 
     /// @brief return the default executor.
-    executor_type const &
-    get_executor() const;
+    executor_type
+    get_executor() const noexcept;
 
     /// @brief Initiate an asynchronous acquire of the semaphore
     /// @details Multiple asynchronous acquire operations may be in progress at

@@ -8,5 +8,6 @@
 #include <boost/asem/st.hpp>
 #include <boost/asem/mt.hpp>
 #include <boost/asem/lock_guard.hpp>
+#include <boost/asem/guarded.hpp>
 
 #endif //BOOST_ASEM_HPP

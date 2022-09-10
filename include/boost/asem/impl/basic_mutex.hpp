@@ -38,7 +38,7 @@ struct basic_mutex<Implementation ,Executor>::async_lock_op
         auto l = self->impl_.lock();
         ignore_unused(l);
 
-        if (!self->impl_.try_lock())
+        if (self->impl_.try_lock())
             return BOOST_ASEM_ASIO_NAMESPACE::post(
                     std::move(e),
                     BOOST_ASEM_ASIO_NAMESPACE::append(

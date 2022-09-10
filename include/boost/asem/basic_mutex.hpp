@@ -67,8 +67,8 @@ struct basic_mutex
     };
 
     /// @brief return the default executor.
-    executor_type const &
-    get_executor() const {return exec_;}
+    executor_type
+    get_executor() const noexcept {return exec_;}
 
   private:
     detail::mutex_impl<Implementation> impl_;

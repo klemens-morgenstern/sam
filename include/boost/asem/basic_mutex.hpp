@@ -28,16 +28,29 @@ struct mutex_impl;
 
 }
 
+/** An asio based mutex modeled on `std::mutex`.
+ *
+ * @tparam Implementation The implementation, st or mt.
+ * @tparam Executor The executor to use as default completion.
+ */
 template<typename Implementation, typename Executor = BOOST_ASEM_ASIO_NAMESPACE::any_io_executor>
 struct basic_mutex
 {
+    /// The executor type.
     using executor_type = Executor;
 
+    /// The destructor. @param exec The executor to be used by
     explicit basic_mutex(executor_type exec)
             : exec_(std::move(exec))
     {
     }
 
+    /** Wait for the condition_variable to become lockable & lock it.
+     *
+     * @tparam CompletionToken The completion token type.
+     * @param token The token for completion.
+     * @return Deduced from the token.
+     */
     template < BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code)) CompletionToken
         BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type) >
         BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
@@ -47,12 +60,14 @@ struct basic_mutex
                 async_lock_op{this}, token);
     }
 
+    /// Unlock the mutex, and complete one pending lock if pending.
     void
     unlock()
     {
         impl_.unlock();
     }
 
+    ///  Try to lock the mutex.
     bool
     try_lock()
     {

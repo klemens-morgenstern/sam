@@ -47,7 +47,6 @@ struct condition_variable_impl<mt>
     mutable std::mutex mtx_;
 };
 
-
 }
 
 

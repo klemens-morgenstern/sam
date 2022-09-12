@@ -14,15 +14,14 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-namespace detail
-{
-
-}
-
+/// The single-threaded versions of the primitives.
 struct st
 {
+    /// The single threaded of a basic_semaphore. Use rebind_executor to change the executor.
     using semaphore = basic_semaphore<st>;
+    /// The single threaded of a basic_mutex. Use rebind_executor to change the executor.
     using mutex = basic_mutex<st>;
+    /// The single threaded of a basic_condition_variable. Use rebind_executor to change the executor.
     using condition_variable = basic_condition_variable<st>;
 };
 

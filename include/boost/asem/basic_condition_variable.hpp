@@ -26,24 +26,31 @@ namespace detail
 template<typename Impl>
 struct condition_variable_impl;
 
-struct true_predicate
-{
-    constexpr bool operator()() const noexcept {return true;}
-};
-
 }
 
-
+/** An asio based condition variable modeled on `std::condition_variable`.
+ *
+ * @tparam Implementation The implementation, st or mt.
+ * @tparam Executor The executor to use as default completion.
+ */
 template<typename Implementation, typename Executor = BOOST_ASEM_ASIO_NAMESPACE::any_io_executor>
 struct basic_condition_variable
 {
+    /// The executor type.
     using executor_type = Executor;
 
+    /// The destructor. @param exec The executor to be used by
     explicit basic_condition_variable(executor_type exec)
             : exec_(std::move(exec))
     {
     }
 
+    /** Wait for the condition_variable to become notified.
+     *
+     * @tparam CompletionToken The completion token type.
+     * @param token The token for completion.
+     * @return Deduced from the token.
+     */
     template < BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code)) CompletionToken
         BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type) >
             BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
@@ -53,6 +60,14 @@ struct basic_condition_variable
                 async_wait_op{this}, token);
     }
 
+    /** Wait for the condition_variable to become notified & the predicate to return true.
+     *
+     * The async_wait completes immediately if the condition is true when calling.
+     *
+     * @tparam CompletionToken The completion token type.
+     * @param token The token for completion.
+     * @return Deduced from the token.
+     */
     template < typename Predicate,
                BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code)) CompletionToken
                 BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type) >
@@ -67,12 +82,14 @@ struct basic_condition_variable
                         >{this, std::forward<Predicate>(predicate)}, token);
     }
 
+    /// Notify/wake up one waiting operations.
     void
     notify_one()
     {
         impl_.notify_one();
     }
 
+    /// Notify/wake up all waiting operations.
     void
     notify_all()
     {

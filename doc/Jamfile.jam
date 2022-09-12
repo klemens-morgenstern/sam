@@ -24,13 +24,27 @@ doxygen autodoc
   $(INCLUDES)/boost/asem.hpp
   [ glob $(INCLUDES)/boost/asem/*.hpp ]
   :
-  <doxygen:param>EXCLUDE_SYMBOLS=
+  <doxygen:param>PROJECT_NAME="Async SEMaphore"
+  <doxygen:param>PROJECT_BRIEF="C++ asio sync primitives"
+  <doxygen:param>ALIASES="esafe=\"@par Exception Safety\""
   <doxygen:param>EXCLUDE_SYMBOLS=BOOST_ASEM_SOURCE
-  <doxygen:param>"PREDEFINED=BOOST_ASEM_ASIO_NAMESPACE=boost::asio \\
-                             BOOST_ASEM_NAMESPACE=boost::asem \\
-                             GENERATING_DOCUMENTATION "
+  <doxygen:param>MACRO_EXPANSION=YES
+  <doxygen:param>PREDEFINED="\\
+    BOOST_ASEM_ASIO_NAMESPACE=boost::asio \\
+    BOOST_ASEM_NAMESPACE=boost::asem \\
+    GENERATING_DOCUMENTATION \\
+    BOOST_ASEM_COMPLETION_TOKEN_FOR(X)=typename \\
+    BOOST_ASEM_ASIO_NAMESPACE=boost::asio:: \\
+    BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE= = default \\
+    BOOST_ASEM_DEFAULT_COMPLETION_TOKEN= = default \\
+    BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(...)=deduced-from-token \\
+    BOOST_ASEM_BEGIN_NAMESPACE=namespace boost { namespace asem {
+    BOOST_ASEM_END_NAMESPACE=} }
+    }
+    "
   <doxygen:param>HIDE_UNDOC_CLASSES=YES
   <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+  <doxygen:param>JAVADOC_AUTOBRIEF=YES
   <doxygen:param>EXAMPLE_PATH=.
   <xsl:path>.
 ;

@@ -88,8 +88,17 @@ struct guard_by_semaphore_op<Implementation, Executor, Op, void (Err, Args...)>
 
 }
 
-/// Function to run OPs only when the semaphore can be acquired.
-/// That way an artificial number of processes can run in parallel.
+/** Function to run OPs only when the semaphore can be acquired.
+ *  That way an artificial number of processes can run in parallel.
+ *
+ *  @tparam Implementation The implementation of the semaphore, i.e. `st` or `mt`.
+ *  @tparam Executor The executor of the semaphore.
+ *  @tparam token The completion token
+ *
+ *  @param sm The semaphore to guard the protection
+ *  @param op The operation to guard.
+ *  @param completion_token The completion token to use for the async completion.
+ */
 template<typename Implementation,
          typename Executor, typename Op,
         BOOST_ASEM_COMPLETION_TOKEN_FOR(
@@ -166,21 +175,31 @@ struct guard_by_mutex_op<Implementation, Executor, Op, void(Err, Args...)>
 
 }
 
-/// Function to run OPs only when the semaphore can be acquired.
-/// That way an artificial number of processes can run in parallel.
+
+/** Function to run OPs only when the mutex can be locked.
+ * Unlocks the mutex on completion.
+ *
+ *  @tparam Implementation The implementation of the mutex, i.e. `st` or `mt`.
+ *  @tparam Executor The executor of the semaphore.
+ *  @tparam token The completion token
+ *
+ *  @param sm The mutex to guard the protection
+ *  @param op The operation to guard.
+ *  @param completion_token The completion token to use for the async completion.
+ */
 template<typename Implementation,
         typename Executor, typename Op,
         BOOST_ASEM_COMPLETION_TOKEN_FOR(
                 typename BOOST_ASEM_ASIO_NAMESPACE::completion_signature_of<Op>::type) CompletionToken
         BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
-auto guarded(basic_mutex<Implementation, Executor> & sm,
+auto guarded(basic_mutex<Implementation, Executor> & mtx,
              Op && op,
              CompletionToken && completion_token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
     using sig_t = typename decltype(std::declval<Op>()(BOOST_ASEM_ASIO_NAMESPACE::detail::completion_signature_probe{}))::type;
     using cop = detail::guard_by_mutex_op<Implementation, Executor, std::decay_t<Op>, sig_t>;
     return BOOST_ASEM_ASIO_NAMESPACE::async_compose<CompletionToken, sig_t>(
-            cop{sm, std::forward<Op>(op)}, completion_token, sm);
+            cop{mtx, std::forward<Op>(op)}, completion_token, mtx);
 }
 
 BOOST_ASEM_END_NAMESPACE

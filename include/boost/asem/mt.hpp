@@ -14,15 +14,15 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-namespace detail
-{
 
-}
-
+/// The multi threaded, i.e. thread-safe scope for the primitives.
 struct mt
 {
+    /// The multi threaded of a basic_semaphore. Use rebind_executor to change the executor.
     using semaphore = basic_semaphore<mt>;
+    /// The multi threaded of a basic_mutex. Use rebind_executor to change the executor.
     using mutex = basic_mutex<mt>;
+    /// The multi threaded of a basic_condition_variable. Use rebind_executor to change the executor.
     using condition_variable = basic_condition_variable<mt>;
 };
 

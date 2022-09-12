@@ -32,6 +32,11 @@ struct semaphore_impl;
 
 }
 
+/** An asio based semaphore.`
+ *
+ * @tparam Implementation The implementation, st or mt.
+ * @tparam Executor The executor to use as default completion.
+ */
 template < class Implementation,
            class Executor = BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >
 struct basic_semaphore

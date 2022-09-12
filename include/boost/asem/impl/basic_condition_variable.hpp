@@ -45,6 +45,12 @@ struct basic_condition_variable<Implementation, Executor>::async_wait_op
 {
     basic_condition_variable<Implementation, Executor> * self;
 
+    struct true_predicate
+    {
+        constexpr bool operator()() const noexcept {return true;}
+    };
+
+
     template< class Handler >
     void operator()(Handler &&handler)
     {
@@ -53,12 +59,12 @@ struct basic_condition_variable<Implementation, Executor>::async_wait_op
         ignore_unused(l);
 
         using handler_type = std::decay_t< Handler >;
-        using predicate_type = detail::true_predicate;
+        using predicate_type = true_predicate;
         using model_type = detail::predicate_op_model< Implementation, decltype(e), handler_type,
                 predicate_type, void(error_code)>;
         model_type *model = model_type::construct(std::move(e),
                                                   std::forward< Handler >(handler),
-                                                  detail::true_predicate{});
+                                                  true_predicate{});
         self->impl_.add_waiter(model);
     }
 };

@@ -21,9 +21,17 @@ BOOST_ASEM_BEGIN_NAMESPACE
 template<typename Implementation, typename Executor>
 struct basic_mutex;
 
+/** A lock-guard used as an RAII object that automatically unlocks on destruction
+ *
+ * To use with with async_clock.
+ *
+ *@tparam Mutex The underlying `basic_mutex`.
+ *
+ */
 template<typename Mutex>
 struct lock_guard
 {
+    /// Construct an empty lock_guard.
     lock_guard() = default;
     lock_guard(const lock_guard &) = delete;
     lock_guard(lock_guard &&lhs) : mtx_(lhs.mtx_)
@@ -40,6 +48,7 @@ struct lock_guard
         return *this;
     }
 
+    /// Unlock the underlying mutex.
     ~lock_guard()
     {
         if (mtx_ != nullptr)
@@ -58,6 +67,30 @@ struct lock_guard
     Mutex * mtx_ = nullptr;
 };
 
+/** Acquire a lock_guard asynchronously.
+ *
+ * @param mtx The mutex to lock.
+ * @param token The Completion Token.
+ *
+ * @returns The async_result deducedfrom the token.
+ *
+ * @tparam Implementation The mutex implementation
+ * @tparam Executor The executor type of the mutex
+ * @tparam CompletionToken The completion token.
+ *
+ * @example
+ * @code{.cpp}
+ *
+ * awaitable<std::string> protected_read(st::mutex & mtx, tcp::socker & sock)
+ * {
+ *  std::string buf;
+ *  auto l = co_await async_lock(mtx);
+ *  co_await socket.async_read(dynamic_buffer(buf), use_awaitable);
+ * }
+ *
+ * @endcode
+ *
+ */
 template<typename Implementation, typename Executor,
          BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard<basic_mutex<Implementation, Executor>>)) CompletionToken
              BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor) >

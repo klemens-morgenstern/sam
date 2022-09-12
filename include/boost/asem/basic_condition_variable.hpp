@@ -39,9 +39,22 @@ struct basic_condition_variable
     /// The executor type.
     using executor_type = Executor;
 
-    /// The destructor. @param exec The executor to be used by
+    /// The destructor. @param exec The executor to be used by the condition variable
     explicit basic_condition_variable(executor_type exec)
             : exec_(std::move(exec))
+    {
+    }
+
+    /// The destructor. @param ctx The execution context used by the condition variable.
+    template<typename ExecutionContext>
+    explicit basic_condition_variable(
+                        ExecutionContext & ctx,
+                        typename std::enable_if<
+                            std::is_convertible<
+                                     ExecutionContext&,
+                                     BOOST_ASEM_ASIO_NAMESPACE::execution_context&>::value
+                         >::type * = nullptr)
+            : exec_(ctx.get_executor())
     {
     }
 

@@ -63,6 +63,20 @@ struct basic_semaphore
     ///
     basic_semaphore(executor_type exec, int initial_count = 1);
 
+    /// The destructor. @param ctx The execution context used by the semaphore.
+    template<typename ExecutionContext>
+    explicit basic_semaphore(
+            ExecutionContext & ctx,
+            int initial_count = 1,
+            typename std::enable_if<
+                    std::is_convertible<
+                            ExecutionContext&,
+                            BOOST_ASEM_ASIO_NAMESPACE::execution_context&>::value
+            >::type * = nullptr)
+        : basic_semaphore(ctx.get_executor(), initial_count)
+    {
+    }
+
     /// @brief return the default executor.
     executor_type
     get_executor() const noexcept;

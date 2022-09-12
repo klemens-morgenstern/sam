@@ -70,7 +70,7 @@ struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
         : n(n), sem(sem), deadline(deadline) {}
     std::string ident = "bot " + std::to_string(n) + " : ";
 
-    steady_timer timer{sem.get_executor()};
+    std::shared_ptr<steady_timer> timer =  std::make_shared<steady_timer>(sem.get_executor());
     std::chrono::steady_clock::time_point then;
 
     template<typename ... Args>
@@ -89,19 +89,22 @@ struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
             say("approaching semaphore\n");
             if (!sem.try_acquire())
             {
-                timer.expires_after(deadline);
+                timer->expires_after(deadline);
                 say("waiting up to ", deadline.count(), "ms\n");
 
                 yield experimental::make_parallel_group(
                         sem.async_acquire(deferred),
-                        timer.async_wait(deferred)).
+                        timer->async_wait(deferred)).
                         async_wait(experimental::wait_for_one(),
                                 deferred([](std::array<std::size_t, 2u> seq, error_code ec_sem, error_code ec_tim)
                                 {
+                                    printf("Cpl [%d] [%s] [%s]\n",
+                                           seq[0], ec_sem.message().c_str(), ec_tim.message().c_str());
+
                                     return deferred.values(ec_sem, seq[0]);
                                 }))(std::move(*this));
 
-                if (index == 0u)
+                if (index == 1u)
                 {
                     say("got bored waiting after ", deadline.count(), "ms\n");
                     BOOST_FAIL("semaphore timeout");
@@ -111,8 +114,7 @@ struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
                 {
                     say("semaphore acquired after ",
                         std::chrono::duration_cast< std::chrono::milliseconds >(
-                                std::chrono::steady_clock::now() - then)
-                                .count(),
+                                std::chrono::steady_clock::now() - then).count(),
                         "ms\n");
                 }
 
@@ -120,8 +122,8 @@ struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
             else
                 say("semaphore acquired immediately\n");
 
-            timer.expires_after(500ms);
-            yield timer.async_wait(std::move(*this));
+            timer->expires_after(500ms);
+            yield timer->async_wait(std::move(*this));
             say("work done\n");
 
             sem.release();
@@ -135,7 +137,7 @@ BOOST_AUTO_TEST_SUITE(basic_semaphore_test)
 BOOST_AUTO_TEST_CASE_TEMPLATE(value, T, models)
 {
     context<T> ioc;
-    typename T::semaphore sem{ioc.get_executor(), 0};
+    typename T::semaphore sem{ioc, 0};
 
     BOOST_CHECK_EQUAL(sem.value(), 0);
 
@@ -159,7 +161,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(value, T, models)
 BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
 {
     auto ioc  = context<T>{};
-    auto sem  = typename T::semaphore(ioc.get_executor(), 10);
+    auto sem  = typename T::semaphore(ioc.get_executor(), 100);
     auto rng  = std::random_device();
     auto ss   = std::seed_seq { rng(), rng(), rng(), rng(), rng() };
     auto eng  = std::default_random_engine(ss);

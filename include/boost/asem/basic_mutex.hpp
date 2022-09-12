@@ -6,11 +6,12 @@
 #define BOOST_ASEM_BASIC_MUTEX_HPP
 
 #include <boost/asem/detail/config.hpp>
-#include <boost/asem/basic_semaphore.hpp>
 
 #if defined(BOOST_ASEM_STANDALONE)
+#include <asio/any_io_executor.hpp>
 #include <asio/compose.hpp>
 #else
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/compose.hpp>
 #endif
 

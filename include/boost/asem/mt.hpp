@@ -10,6 +10,7 @@
 #include <boost/asem/basic_mutex.hpp>
 #include <boost/asem/mt/basic_mutex.hpp>
 #include <boost/asem/mt/basic_semaphore.hpp>
+#include <boost/asem/mt/basic_condition_variable.hpp>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
@@ -22,6 +23,7 @@ struct mt
 {
     using semaphore = basic_semaphore<mt>;
     using mutex = basic_mutex<mt>;
+    using condition_variable = basic_condition_variable<mt>;
 };
 
 
@@ -30,6 +32,8 @@ extern template
 struct basic_semaphore<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
 extern template
 struct basic_mutex<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+extern template
+struct basic_condition_variable<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
 #endif
 
 BOOST_ASEM_END_NAMESPACE

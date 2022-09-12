@@ -17,4 +17,5 @@ endfunction()
 
 boost_asem_standalone_test(basic_semaphore)
 boost_asem_standalone_test(basic_mutex)
+boost_asem_standalone_test(basic_condition_variable)
 boost_asem_standalone_test(guarded)

@@ -24,8 +24,6 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-
-
 template < class  Implementation, class Executor >
 struct basic_mutex<Implementation ,Executor>::async_lock_op
 {

@@ -17,6 +17,8 @@
 #include <boost/asem/st/impl/basic_semaphore.ipp>
 #include <boost/asem/mt/impl/basic_mutex.ipp>
 #include <boost/asem/st/impl/basic_mutex.ipp>
+#include <boost/asem/mt/impl/basic_condition_variable.ipp>
+#include <boost/asem/st/impl/basic_condition_variable.ipp>
 #include <boost/asem/impl/st.ipp>
 #include <boost/asem/impl/mt.ipp>
 

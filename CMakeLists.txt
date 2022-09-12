@@ -10,9 +10,6 @@ project(boost_asem VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 add_library(boost_asem INTERFACE)
 add_library(Boost::asem ALIAS boost_asem)
 
-add_compile_options("-fsanitize=address")
-add_link_options("-fsanitize=address")
-
 if (BOOST_ASEM_STANDALONE)
   add_compile_definitions(BOOST_ASEM_STANDALONE=1)
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -28,5 +25,9 @@ endif()
 
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
   add_subdirectory(test)
+endif()
+
+if(BUILD_EXAMPLES AND NOT BOOST_ASEM_STANDALONE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/example/CMakeLists.txt")
+  add_subdirectory(example)
 endif()
 

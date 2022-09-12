@@ -9,10 +9,12 @@
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/async_result.hpp>
+#include <asio/associator.hpp>
 #include <asio/prepend.hpp>
 #include <asio/cancellation_signal.hpp>
 #include <asio/deferred.hpp>
 #else
+#include <boost/asio/associator.hpp>
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/prepend.hpp>
 #include <boost/asio/cancellation_signal.hpp>

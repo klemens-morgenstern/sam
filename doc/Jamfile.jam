@@ -37,10 +37,11 @@ doxygen autodoc
     BOOST_ASEM_ASIO_NAMESPACE=boost::asio:: \\
     BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE= = default \\
     BOOST_ASEM_DEFAULT_COMPLETION_TOKEN= = default \\
-    BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(...)=deduced-from-token \\
-    BOOST_ASEM_BEGIN_NAMESPACE=namespace boost { namespace asem {
-    BOOST_ASEM_END_NAMESPACE=} }
-    }
+    BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(...)=deduced \\
+    BOOST_ASEM_BEGIN_NAMESPACE=namespace boost { namespace asem { \\
+    BOOST_ASEM_END_NAMESPACE=} } \\
+    BOOST_ASEM_NODISCARD  \\
+    BOOST_ASEM_DECL \\
     "
   <doxygen:param>HIDE_UNDOC_CLASSES=YES
   <doxygen:param>HIDE_UNDOC_MEMBERS=YES

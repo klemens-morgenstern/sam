@@ -88,7 +88,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(notify_all, T, models)
     cv.async_wait([&](error_code ec){cnt |= 8; BOOST_CHECK(!ec);});
     post(ioc, [&]{cv.notify_all();});
     run_impl(ioc);
-    cv.notify_all();
 
     BOOST_CHECK_EQUAL(cnt, 15);
 }

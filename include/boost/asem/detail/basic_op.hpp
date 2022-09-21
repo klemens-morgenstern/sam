@@ -43,6 +43,14 @@ struct basic_bilist_holder<void(error_code, Ts...)> : bilist_node
         while (nx != this)
             static_cast< op * >(nx)->complete(asio::error::operation_aborted, Ts{}...);
     }
+
+    void complete_all(error_code ec, Ts ... ts)
+    {
+        using op = basic_op<void(error_code, Ts...)>;
+        auto & nx = this->next_;
+        while (nx != this)
+            static_cast< op * >(nx)->complete(ec, std::move(ts)...);
+    }
 };
 
 }   // namespace detail

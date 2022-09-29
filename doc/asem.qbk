@@ -11,4 +11,19 @@
     ]
 ]
 
+[section: Summary]
+The ASem (async semaphore) library provides synchronization primitives based on asio principles.
+
+The primitives, `barrier`, `mutex`, `semaphore` and `condition_variable` are based 
+on common implementations, such as `std::barrier`, `std::mutex`, `std::counting_sempahore` and `std::condition_variable`.
+
+This library is not meant for common asio usage in the application layer, but for implementation of complex composed operations.
+That means you should only consider this if an `asio::strand` does not suffice.
+
+Every primitive comes in two version, `st` for single threaded and `mt` for multi threaded.
+
+The `st` version is meant for applications that do utilize a single `asio::io_context` with a single thread.
+
+[endsection]
+
 [xinclude autodoc.xml]

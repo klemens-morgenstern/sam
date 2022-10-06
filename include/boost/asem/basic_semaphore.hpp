@@ -55,13 +55,21 @@ struct basic_semaphore
         typedef basic_semaphore< Implementation, Executor1 > other;
     };
 
-    /// @brief Construct an async_sempaphore
+    /// @brief Construct a semaphore
     /// @param exec is the default executor associated with the async_semaphore
     /// @param initial_count is the initial value of the internal counter.
     /// @pre initial_count >= 0
     /// @pre initial_count <= MAX_INT
     ///
     basic_semaphore(executor_type exec, int initial_count = 1);
+
+    /// @brief Rebind a semaphore to a new executor - this cancels all outstanding operations.
+    template<typename Executor_>
+    basic_semaphore(basic_semaphore<Implementation, Executor_> && sem,
+                    std::enable_if_t<std::is_convertible_v<Executor_, executor_type>> * = nullptr)
+        : exec_(sem.get_executor())
+    {
+    }
 
     /// The destructor. @param ctx The execution context used by the semaphore.
     template<typename ExecutionContext>

@@ -98,9 +98,6 @@ struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
                         async_wait(experimental::wait_for_one(),
                                 deferred([](std::array<std::size_t, 2u> seq, error_code ec_sem, error_code ec_tim)
                                 {
-                                    printf("Cpl [%d] [%s] [%s]\n",
-                                           seq[0], ec_sem.message().c_str(), ec_tim.message().c_str());
-
                                     return deferred.values(ec_sem, seq[0]);
                                 }))(std::move(*this));
 
@@ -172,6 +169,12 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
     for (int i = 0; i < 100; i += 2)
         post(ioc, basic_bot<T>(i, sem, random_time()));
     run_impl(ioc);
+}
+
+BOOST_AUTO_TEST_CASE(rebind_semaphore)
+{
+    asio::io_context ctx;
+    auto res = asio::deferred.as_default_on(asem::st::semaphore{ctx.get_executor()});
 }
 
 BOOST_AUTO_TEST_SUITE_END()

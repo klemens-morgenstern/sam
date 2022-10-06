@@ -57,6 +57,13 @@ struct basic_mutex
     {
     }
 
+    /// @brief Rebind a mutex to a new executor - this cancels all outstanding operations.
+    template<typename Executor_>
+    basic_mutex(basic_mutex<Implementation, Executor_> && sem,
+                std::enable_if_t<std::is_convertible_v<Executor_, executor_type>> * = nullptr)
+            : exec_(sem.get_executor())
+    {
+    }
 
     /** Wait for the condition_variable to become lockable & lock it.
      *

@@ -58,6 +58,13 @@ struct basic_barrier
     {
     }
 
+    /// @brief Rebind a barrier to a new executor - this cancels all outstanding operations.
+    template<typename Executor_>
+    basic_barrier(basic_barrier<Implementation, Executor_> && sem,
+                  std::enable_if_t<std::is_convertible_v<Executor_, executor_type>> * = nullptr)
+            : exec_(sem.get_executor()), impl_{sem.impl_.init_, sem.impl_.init_}
+    {
+    }
 
     /** Arrive at a barrier and wait for all other strands to arrive.
      *
@@ -92,6 +99,9 @@ struct basic_barrier
     get_executor() const noexcept {return exec_;}
 
   private:
+    template<typename, typename>
+    friend struct basic_barrier;
+
     detail::barrier_impl<Implementation> impl_;
     Executor exec_;
     struct async_arrive_op;

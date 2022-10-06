@@ -140,3 +140,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(random_mtx, T, models)
     BOOST_ASEM_ASIO_NAMESPACE::post(ctx, basic_main<T>{ctx.get_executor()});
     run_impl(ctx);
 }
+
+
+
+BOOST_AUTO_TEST_CASE(rebind_mutex)
+{
+    asio::io_context ctx;
+    auto res = asio::deferred.as_default_on(asem::st::mutex{ctx.get_executor()});
+}

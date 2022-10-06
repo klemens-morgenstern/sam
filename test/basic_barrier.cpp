@@ -94,3 +94,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(random_barrier, T, models)
     BOOST_ASEM_ASIO_NAMESPACE::post(ctx, basic_barrier_main<T>{ctx.get_executor()});
     run_impl(ctx);
 }
+
+
+BOOST_AUTO_TEST_CASE(rebind_barrier)
+{
+    asio::io_context ctx;
+    auto res = asio::deferred.as_default_on(asem::st::barrier{ctx.get_executor(), 4u});
+}

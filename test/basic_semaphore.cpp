@@ -177,4 +177,36 @@ BOOST_AUTO_TEST_CASE(rebind_semaphore)
     auto res = asio::deferred.as_default_on(asem::st::semaphore{ctx.get_executor()});
 }
 
+BOOST_AUTO_TEST_CASE(sync_acquire_st)
+{
+    asio::io_context ctx;
+    asem::st::semaphore mtx{ctx};
+
+    mtx.acquire();
+    BOOST_CHECK_THROW(mtx.acquire(), asem::system_error);
+
+    mtx.release();
+    mtx.acquire();
+}
+
+
+
+BOOST_AUTO_TEST_CASE(sync_acquire_mt)
+{
+    asio::io_context ctx;
+    asem::mt::semaphore mtx{ctx};
+
+    mtx.acquire();
+    asio::post(ctx, [&]{mtx.release();});
+    std::thread thr{
+            [&]{
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                ctx.run();
+
+            }};
+
+    mtx.acquire();
+    thr.join();
+}
+
 BOOST_AUTO_TEST_SUITE_END()

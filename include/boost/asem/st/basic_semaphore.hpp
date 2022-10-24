@@ -31,6 +31,12 @@ struct semaphore_impl<st>
     BOOST_ASEM_DECL bool
     try_acquire();
 
+    BOOST_ASEM_DECL void acquire(error_code & ec)
+    {
+        if (!try_acquire())
+            ec = asio::error::in_progress;
+    }
+
     BOOST_ASEM_DECL void
     release();
 
@@ -46,7 +52,7 @@ struct semaphore_impl<st>
     BOOST_ASEM_NODISCARD BOOST_ASEM_DECL int
     count() const noexcept;
 
-    std::nullptr_t lock() {return nullptr;}
+    std::nullptr_t internal_lock() {return nullptr;}
 
   private:
     detail::basic_bilist_holder<void(error_code)> waiters_;

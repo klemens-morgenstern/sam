@@ -34,6 +34,8 @@ struct semaphore_impl<mt>
     BOOST_ASEM_DECL bool
     try_acquire();
 
+    BOOST_ASEM_DECL void acquire(error_code & ec);
+
     BOOST_ASEM_DECL void
     release();
 
@@ -49,7 +51,7 @@ struct semaphore_impl<mt>
     BOOST_ASEM_NODISCARD BOOST_ASEM_DECL int
     count() const noexcept;
 
-    BOOST_ASEM_DECL std::lock_guard<std::mutex> lock();
+    BOOST_ASEM_DECL std::lock_guard<std::mutex> internal_lock();
 
   private:
     detail::basic_bilist_holder<void(error_code)> waiters_;

@@ -44,6 +44,46 @@ semaphore_impl<mt>::release()
     static_cast< detail::wait_op * >(waiters_.next_)->complete(std::error_code());
 }
 
+
+
+void
+semaphore_impl<mt>::acquire(error_code & ec)
+{
+    if (try_acquire())
+        return ;
+    struct op_t final : detail::wait_op
+    {
+        error_code ec;
+        semaphore_impl<mt> * this_;
+        bool done = false;
+        std::condition_variable var;
+        op_t(error_code & ec, semaphore_impl<mt> * this_) : ec(ec), this_(this_) {}
+
+        void complete(error_code ec) override
+        {
+            done = true;
+            this->ec = ec;
+            var.notify_all();
+            this_->decrement();
+            this->unlink();
+        }
+
+        ~op_t()
+        {
+        }
+
+        void wait(std::unique_lock<std::mutex> & lock)
+        {
+            var.wait(lock, [this]{ return done;});
+        }
+    };
+
+    op_t op{ec, this};
+    std::unique_lock<std::mutex> lock(mtx_);
+    add_waiter(&op);
+    op.wait(lock);
+}
+
 BOOST_ASEM_NODISCARD int
 semaphore_impl<mt>::value() const noexcept
 {
@@ -60,7 +100,7 @@ semaphore_impl<mt>::try_acquire()
     if (count_.fetch_sub(1) >= 0)
         return true;
     else
-        count_--;
+        count_++;
     return false;
 }
 
@@ -71,7 +111,7 @@ semaphore_impl<mt>::decrement()
     return --count_;
 }
 
-BOOST_ASEM_DECL std::lock_guard<std::mutex> semaphore_impl<mt>::lock()
+BOOST_ASEM_DECL std::lock_guard<std::mutex> semaphore_impl<mt>::internal_lock()
 {
     return std::lock_guard<std::mutex>{mtx_};
 }

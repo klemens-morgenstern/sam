@@ -114,6 +114,31 @@ struct basic_semaphore
     BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionHandler, void(error_code))
     async_acquire( CompletionHandler &&token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(executor_type));
 
+    /* Acquire synchronously. This may fail depending on the implementation.
+    *
+    * If the implementation is `st` this will generate an error if the semaphore
+    * cannot be acquired immediately.
+    *
+    * If the implementation is `mt` this function will block until another thread releases
+    * the semaphore. Note that this may lead to deadlocks.
+    *
+    * You should never use the synchronous functions from within an asio event-queue.
+    *
+    */
+    void acquire(error_code & ec)
+    {
+        impl_.acquire(ec);
+    }
+
+    /// Throwing @overload lock(error_code &);
+    void acquire()
+    {
+        error_code ec;
+        acquire(ec);
+        if (ec)
+            throw system_error(ec, "acquire");
+    }
+
     /// @brief Attempt to immediately acquire the semaphore.
     /// @details This function attempts to acquire the semaphore without
     /// blocking or initiating an asynchronous operation.

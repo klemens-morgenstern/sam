@@ -56,8 +56,16 @@ struct lock_guard
     }
     template<typename Implementation, typename Executor,
             BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard<basic_mutex<Implementation, Executor>>)) CompletionHandler>
-    friend BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionHandler, void(error_code, lock_guard<Mutex_>))
+    friend BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionHandler, void(error_code, lock_guard<basic_mutex<Implementation, Executor>>))
         async_lock(basic_mutex<Implementation, Executor> &mtx, CompletionHandler &&token);
+
+    template<typename Implementation, typename Executor>
+    friend lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementation, Executor> & mtx);
+
+    template<typename Implementation, typename Executor>
+    friend lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementation, Executor> & mtx, error_code & ec);
+
+    lock_guard(Mutex & mtx, const std::adopt_lock_t &) : mtx_(&mtx) {}
 
   private:
     lock_guard(Mutex *mtx) : mtx_(mtx)
@@ -67,12 +75,48 @@ struct lock_guard
     Mutex * mtx_ = nullptr;
 };
 
+/** Acquire a lock_guard synchronously.
+ *
+ * @param mtx The mutex to lock.
+ * @param token The Completion Token.
+ *
+ * @returns The lock_guard.
+ *
+ * @throws May throw a system_error if locking is not possible without a deadlock.
+ */
+template<typename Implementation, typename Executor>
+lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementation, Executor> & mtx)
+{
+    mtx.lock();
+    return lock_guard<basic_mutex<Implementation, Executor>>(&mtx);
+}
+
+
+/** Acquire a lock_guard synchronously.
+ *
+ * @param mtx The mutex to lock.
+ * @param token The Completion Token.
+ *
+ * @returns The lock_guard. It might be default constructed if locking   wasn't possible.
+ */
+template<typename Implementation, typename Executor>
+lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementation, Executor> & mtx,
+                                                       error_code & ec)
+{
+    mtx.lock(ec);
+    if (ec)
+        return lock_guard<basic_mutex<Implementation, Executor>>();
+    else
+        return lock_guard<basic_mutex<Implementation, Executor>>(&mtx);
+}
+
+
 /** Acquire a lock_guard asynchronously.
  *
  * @param mtx The mutex to lock.
  * @param token The Completion Token.
  *
- * @returns The async_result deducedfrom the token.
+ * @returns The async_result deduced from the token.
  *
  * @tparam Implementation The mutex implementation
  * @tparam Executor The executor type of the mutex

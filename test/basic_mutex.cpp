@@ -148,3 +148,35 @@ BOOST_AUTO_TEST_CASE(rebind_mutex)
     asio::io_context ctx;
     auto res = asio::deferred.as_default_on(asem::st::mutex{ctx.get_executor()});
 }
+
+BOOST_AUTO_TEST_CASE(sync_lock_st)
+{
+    asio::io_context ctx;
+    asem::st::mutex mtx{ctx};
+
+    mtx.lock();
+    BOOST_CHECK_THROW(mtx.lock(), asem::system_error);
+
+    mtx.unlock();
+    mtx.lock();
+}
+
+
+
+BOOST_AUTO_TEST_CASE(sync_lock_mt)
+{
+    asio::io_context ctx;
+    asem::mt::mutex mtx{ctx};
+
+    mtx.lock();
+    asio::post(ctx, [&]{mtx.unlock();});
+    std::thread thr{
+        [&]{
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            ctx.run();
+
+        }};
+
+    mtx.lock();
+    thr.join();
+}

@@ -22,8 +22,13 @@ struct mutex_impl<st>
     BOOST_ASEM_DECL void unlock();
     BOOST_ASEM_DECL bool try_lock();
     BOOST_ASEM_DECL void add_waiter(detail::wait_op *waiter) noexcept;
+    void lock(error_code & ec)
+    {
+        if (!try_lock())
+            ec = asio::error::in_progress;
+    }
 
-    std::nullptr_t lock()
+    std::nullptr_t internal_lock()
     {
         return nullptr;
     }

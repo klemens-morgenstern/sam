@@ -20,6 +20,42 @@ mutex_impl<mt>::add_waiter(detail::wait_op *waiter) noexcept
 }
 
 void
+mutex_impl<mt>::lock(error_code & ec)
+{
+    if (try_lock())
+        return ;
+    struct op_t final : detail::wait_op
+    {
+        error_code ec;
+        bool done = false;
+        std::condition_variable var;
+        op_t(error_code & ec) : ec(ec) {}
+
+        void complete(error_code ec) override
+        {
+            done = true;
+            this->ec = ec;
+            var.notify_all();
+            this->unlink();
+        }
+
+        ~op_t()
+        {
+        }
+
+        void wait(std::unique_lock<std::mutex> & lock)
+        {
+            var.wait(lock, [this]{ return done;});
+        }
+    };
+
+    op_t op{ec};
+    std::unique_lock<std::mutex> lock(mtx_);
+    add_waiter(&op);
+    op.wait(lock);
+}
+
+void
 mutex_impl<mt>::unlock()
 {
     std::lock_guard<std::mutex> lock_{mtx_};
@@ -30,6 +66,7 @@ mutex_impl<mt>::unlock()
         locked_ = false;
         return;
     }
+
     static_cast< detail::wait_op * >(waiters_.next_)->complete(std::error_code());
 }
 

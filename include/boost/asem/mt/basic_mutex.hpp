@@ -29,8 +29,9 @@ struct mutex_impl<mt>
 
     BOOST_ASEM_DECL void
     add_waiter(detail::wait_op *waiter) noexcept;
+    BOOST_ASEM_DECL void lock(error_code & ec);
 
-    auto lock() -> std::lock_guard<std::mutex>
+    auto internal_lock() -> std::lock_guard<std::mutex>
     {
         return std::lock_guard<std::mutex>{mtx_};
     }

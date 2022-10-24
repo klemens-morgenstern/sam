@@ -65,7 +65,7 @@ struct basic_mutex
     {
     }
 
-    /** Wait for the condition_variable to become lockable & lock it.
+    /** Wait for the mutex to become lockable & lock it.
      *
      * @tparam CompletionToken The completion token type.
      * @param token The token for completion.
@@ -80,6 +80,30 @@ struct basic_mutex
                 async_lock_op{this}, token);
     }
 
+    /* Lock synchronously. This may fail depending on the implementation.
+     *
+     * If the implementation is `st` this will generate an error if the mutex
+     * is already locked.
+     *
+     * If the implementation is `mt` this function will block until another thread releases
+     * the lock. Note that this may lead to deadlocks.
+     *
+     * You should never use the synchronous functions from within an asio event-queue.
+     *
+     */
+    void  lock(error_code & ec)
+    {
+        impl_.lock(ec);
+    }
+
+    /// Throwing @overload lock(error_code &);
+    void lock()
+    {
+        error_code ec;
+        lock(ec);
+        if (ec)
+            throw system_error(ec, "lock");
+    }
     /// Unlock the mutex, and complete one pending lock if pending.
     void
     unlock()

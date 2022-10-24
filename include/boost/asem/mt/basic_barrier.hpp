@@ -29,6 +29,7 @@ struct barrier_impl<mt>
     {
         counter_--;
     }
+    BOOST_ASEM_DECL void arrive(error_code & ec);
 
     auto internal_lock() -> std::lock_guard<std::mutex>
     {

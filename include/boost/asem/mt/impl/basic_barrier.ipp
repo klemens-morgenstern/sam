@@ -30,6 +30,44 @@ bool barrier_impl<mt>::try_arrive()
 
 }
 
+void barrier_impl<mt>::arrive(error_code &ec)
+{
+    if (try_arrive())
+        return;
+
+    struct op_t final : detail::wait_op
+    {
+        error_code ec;
+        bool done = false;
+        std::condition_variable var;
+        op_t(error_code & ec) : ec(ec) {}
+
+        void complete(error_code ec) override
+        {
+            done = true;
+            this->ec = ec;
+            var.notify_all();
+            this->unlink();
+        }
+
+        ~op_t()
+        {
+        }
+
+        void wait(std::unique_lock<std::mutex> & lock)
+        {
+            var.wait(lock, [this]{ return done;});
+        }
+    };
+
+    op_t op{ec};
+    std::unique_lock<std::mutex> lock(mtx_);
+    decrement();
+    add_waiter(&op);
+    op.wait(lock);
+
+}
+
 void
 barrier_impl<mt>::add_waiter(detail::wait_op *waiter) noexcept
 {

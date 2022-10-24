@@ -86,6 +86,31 @@ struct basic_barrier
         return impl_.try_arrive();
     }
 
+    /* Arrive synchronously. This may fail depending on the implementation.
+     *
+     * If the implementation is `st` this will generate an error if the barrier
+     * is not ready.
+     *
+     * If the implementation is `mt` this function will block until other threads arrive.
+     * Note that this may lead to deadlocks.
+     *
+     * You should never use the synchronous functions from within an asio event-queue.
+     *
+     */
+    void arrive(error_code & ec)
+    {
+        impl_.arrive(ec);
+    }
+
+    /// Throwing @overload arrive(error_code &);
+    void arrive()
+    {
+        error_code ec;
+        arrive(ec);
+        if (ec)
+            throw system_error(ec, "arrive");
+    }
+
     /// Rebinds the BARRIER type to another executor.
     template <typename Executor1>
     struct rebind_executor

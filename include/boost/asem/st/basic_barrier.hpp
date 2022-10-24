@@ -22,6 +22,12 @@ struct barrier_impl<st>
     BOOST_ASEM_DECL bool try_arrive();
     BOOST_ASEM_DECL void add_waiter(detail::wait_op *waiter) noexcept;
 
+    void arrive(error_code & ec)
+    {
+        if (!try_arrive())
+            ec = asio::error::in_progress;
+    }
+
     void decrement()
     {
         counter_--;

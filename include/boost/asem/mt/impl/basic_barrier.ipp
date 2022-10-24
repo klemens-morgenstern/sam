@@ -15,15 +15,19 @@ namespace detail
 
 bool barrier_impl<mt>::try_arrive()
 {
-    if (counter_.fetch_sub(1) == 1)
+    if (counter_.fetch_sub(1) <= 1)
     {
-        auto l = lock();
+        auto l = internal_lock();
         waiters_.complete_all({});
         counter_ = init_;
         return true;
     }
     else
+    {
+        counter_ ++;
         return false;
+    }
+
 }
 
 void

@@ -22,7 +22,11 @@ struct barrier_impl<st>
     BOOST_ASEM_DECL bool try_arrive();
     BOOST_ASEM_DECL void add_waiter(detail::wait_op *waiter) noexcept;
 
-    std::nullptr_t lock()
+    void decrement()
+    {
+        counter_--;
+    }
+    std::nullptr_t internal_lock()
     {
         return nullptr;
     }

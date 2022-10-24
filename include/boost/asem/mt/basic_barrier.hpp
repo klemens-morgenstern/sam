@@ -25,7 +25,12 @@ struct barrier_impl<mt>
     BOOST_ASEM_DECL void
     add_waiter(detail::wait_op *waiter) noexcept;
 
-    auto lock() -> std::lock_guard<std::mutex>
+    void decrement()
+    {
+        counter_--;
+    }
+
+    auto internal_lock() -> std::lock_guard<std::mutex>
     {
         return std::lock_guard<std::mutex>{mtx_};
     }

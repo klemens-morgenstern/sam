@@ -15,13 +15,14 @@ namespace detail
 
 bool barrier_impl<st>::try_arrive()
 {
-    counter_--;
-    if (counter_ == 0u)
+    if (--counter_ == 0u)
     {
         waiters_.complete_all({});
         counter_ = init_;
         return true;
     }
+    else
+        counter_++;
     return false;
 }
 

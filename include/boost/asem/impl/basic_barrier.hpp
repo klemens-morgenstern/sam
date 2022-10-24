@@ -40,7 +40,8 @@ struct basic_barrier<Implementation ,Executor>::async_arrive_op
                     BOOST_ASEM_ASIO_NAMESPACE::append(
                             std::forward< Handler >(handler), error_code()));
 
-        auto l = self->impl_.lock();
+        auto l = self->impl_.internal_lock();
+        self->impl_.decrement();
         ignore_unused(l);
         using handler_type = std::decay_t< Handler >;
         using model_type = detail::basic_op_model< Implementation, decltype(e), handler_type, void(error_code)>;

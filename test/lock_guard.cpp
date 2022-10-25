@@ -50,42 +50,37 @@ inline void run_impl(thread_pool & ctx)
 }
 
 static int concurrent = 0;
-static int cmp = 0;
 
 template<typename Mutex>
-struct impl
+struct impl : asio::coroutine
 {
     int id;
     using mutex = Mutex;
     mutex & mtx;
     std::shared_ptr<asio::steady_timer> tim{std::make_shared<asio::steady_timer>(mtx.get_executor())};
+
     impl(int id, bool & active, mutex & mtx) : id(id), mtx(mtx)
     {
     }
 
     template<typename Self>
-    void operator()(Self && self)
+    void operator()(Self && self, error_code ec = {}, asem::lock_guard<Mutex> lock = {})
     {
-        printf("Entered %d\n", id);
-        auto & mtx = this->mtx;
-        asem::async_lock(mtx, std::move(self));
-    }
-    template<typename Self>
-    void operator()(Self && self, error_code ec, asem::lock_guard<Mutex> lock)
-    {
-        BOOST_CHECK_LE(concurrent, cmp);
-        concurrent ++;
-        printf("Acquired lock %d\n", id);
-        tim->expires_after(std::chrono::milliseconds{10});
-        tim->async_wait(std::move(self));
-        concurrent --;
-    }
-    template<typename Self>
-    void operator()(Self && self, error_code ec)
-    {
-        BOOST_CHECK(!ec);
-        printf("Exited %d %d\n", id, ec.value());
-        self.complete(ec);
+        reenter(this)
+        {
+            printf("Entered %d\n", id);
+            yield asem::async_lock(this->mtx, std::move(self));
+            concurrent ++;
+            BOOST_CHECK_EQUAL(concurrent, 1);
+            printf("Acquired lock %d\n", id);
+            tim->expires_after(std::chrono::milliseconds{10});
+            yield tim->async_wait(asio::append(std::move(self), std::move(lock)));
+            concurrent --;
+            BOOST_CHECK_EQUAL(concurrent, 0);
+            BOOST_CHECK(!ec);
+            printf("Exited %d %d\n", id, ec.value());
+            self.complete(ec);
+        }
     }
 };
 
@@ -124,7 +119,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(lock_guard_t, T, models)
     context<T> ctx;
     std::vector<int> order;
     typename T::mutex mtx{ctx.get_executor()};
-    cmp = 1;
     test_sync<basic_mutex<T>>(mtx, order);
     run_impl(ctx);
 }

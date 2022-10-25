@@ -6,6 +6,7 @@
 #define BOOST_ASEM_LOCK_GUARD_HPP
 
 #include <boost/asem/detail/config.hpp>
+#include <mutex>
 #include <utility>
 
 #if defined(BOOST_ASEM_STANDALONE)

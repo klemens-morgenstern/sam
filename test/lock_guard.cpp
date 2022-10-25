@@ -23,6 +23,8 @@ namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
 #include <asio/compose.hpp>
 #include <asio/yield.hpp>
 #include <asio/experimental/parallel_group.hpp>
+#include <boost/asem/lock_guard.hpp>
+
 #endif
 
 using namespace BOOST_ASEM_NAMESPACE;
@@ -35,7 +37,7 @@ using context = typename std::conditional<
         std::is_same<st, T>::value,
         io_context,
         thread_pool
-    >::type;
+>::type;
 
 inline void run_impl(io_context & ctx)
 {
@@ -49,76 +51,75 @@ inline void run_impl(thread_pool & ctx)
 
 static int concurrent = 0;
 static int cmp = 0;
+
+template<typename Mutex>
 struct impl
 {
     int id;
-    std::shared_ptr<asio::steady_timer> tim;
-    impl(int id, bool & active,
-         asio::any_io_executor exec) : id(id), tim{std::make_shared<asio::steady_timer>(exec)}
+    using mutex = Mutex;
+    mutex & mtx;
+    std::shared_ptr<asio::steady_timer> tim{std::make_shared<asio::steady_timer>(mtx.get_executor())};
+    impl(int id, bool & active, mutex & mtx) : id(id), mtx(mtx)
     {
-        assert(exec);
     }
 
     template<typename Self>
     void operator()(Self && self)
     {
+        printf("Entered %d\n", id);
+        auto & mtx = this->mtx;
+        asem::async_lock(mtx, std::move(self));
+    }
+    template<typename Self>
+    void operator()(Self && self, error_code ec, asem::lock_guard<Mutex> lock)
+    {
         BOOST_CHECK_LE(concurrent, cmp);
         concurrent ++;
-        printf("Entered %d\n", id);
+        printf("Acquired lock %d\n", id);
         tim->expires_after(std::chrono::milliseconds{10});
         tim->async_wait(std::move(self));
+        concurrent --;
     }
     template<typename Self>
     void operator()(Self && self, error_code ec)
     {
         BOOST_CHECK(!ec);
         printf("Exited %d %d\n", id, ec.value());
-        concurrent --;
         self.complete(ec);
     }
 };
 
 template<typename T, typename CompletionToken>
-auto async_impl(T & se, int i, bool & active,  CompletionToken && completion_token)
+auto async_impl(T & mtx, int i, bool & active,  CompletionToken && completion_token)
 {
     return BOOST_ASEM_ASIO_NAMESPACE::async_compose<CompletionToken, void(error_code)>(
-            impl(i, active, se.get_executor()), completion_token, se.get_executor());
+            impl<T>(i, active, mtx), completion_token, mtx);
 }
 
 template<typename T>
-void test_sync(T & se2, std::vector<int> & order)
+void test_sync(T & mtx, std::vector<int> & order)
 {
     bool active = false;
     auto op =
             [&](auto && token)
             {
                 static int i = 0;
-                return async_impl(se2, i ++, active, std::move(token));
+                return async_impl(mtx, i ++, active, std::move(token));
             };
+    static int i = 0;
+    async_impl(mtx, i ++, active, asio::detached);
+    async_impl(mtx, i ++, active, asio::detached);
+    async_impl(mtx, i ++, active, asio::detached);
+    async_impl(mtx, i ++, active, asio::detached);
+    async_impl(mtx, i ++, active, asio::detached);
+    async_impl(mtx, i ++, active, asio::detached);
+    async_impl(mtx, i ++, active, asio::detached);
+    async_impl(mtx, i ++, active, asio::detached);
+    async_impl(mtx, i ++, active, asio::detached);
 
-
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
 }
 
-
-BOOST_AUTO_TEST_CASE_TEMPLATE(guarded_semaphore_test, T, models)
-{
-    context<T> ctx;
-    typename T::semaphore se{ctx.get_executor(), 3};
-    cmp = 3;
-    std::vector<int> order;
-    test_sync<basic_semaphore<T>>(se, order);
-    run_impl(ctx);
-}
-
-BOOST_AUTO_TEST_CASE_TEMPLATE(guarded_mutex_test, T, models)
+BOOST_AUTO_TEST_CASE_TEMPLATE(lock_guard_t, T, models)
 {
     context<T> ctx;
     std::vector<int> order;

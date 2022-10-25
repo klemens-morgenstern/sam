@@ -31,12 +31,12 @@ struct mutex_impl<mt>
     add_waiter(detail::wait_op *waiter) noexcept;
     BOOST_ASEM_DECL void lock(error_code & ec);
 
-    auto internal_lock() -> std::lock_guard<std::mutex>
+    auto internal_lock() -> std::unique_lock<std::mutex>
     {
-        return std::lock_guard<std::mutex>{mtx_};
+        return std::unique_lock<std::mutex>{mtx_};
     }
 
-    std::atomic<bool> locked_ = false;
+    std::atomic<bool> locked_{false};
     std::mutex mtx_;
     detail::basic_bilist_holder<void(error_code)> waiters_;
 };

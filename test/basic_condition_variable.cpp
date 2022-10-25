@@ -63,7 +63,7 @@ inline void run_impl(thread_pool & ctx)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_all, T, models)
 {
-    auto ioc  = context<T>{};
+    context<T> ioc{};
     auto l =
             [&]
             {
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_all, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(notify_all, T, models)
 {
-    auto ioc  = context<T>{};
+    context<T> ioc{};
     auto cv  = typename T::condition_variable(ioc.get_executor());
     int cnt = 0;
     cv.async_wait([&](error_code ec){cnt |= 1; BOOST_CHECK(!ec);});
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(notify_all, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(notify_one, T, models)
 {
-    auto ioc  = context<T>{};
+    context<T> ioc{};
     boost::optional<typename T::condition_variable> store{ioc.get_executor()};
     auto & cv = *store;
     int cnt = 0;
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(notify_one, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(notify_some, T, models)
 {
-    auto ioc  = context<T>{};
+    context<T> ioc{};
     auto store  = boost::optional<typename T::condition_variable>(ioc.get_executor());
     auto & cv = *store;
 
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(notify_some, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(notify_some_more, T, models)
 {
-    auto ioc  = context<T>{};
+    context<T> ioc{};
     auto store  = boost::optional<typename T::condition_variable>(ioc.get_executor());
     auto & cv = *store;
 

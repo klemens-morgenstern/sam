@@ -19,7 +19,7 @@ template<>
 struct barrier_impl<mt>
 {
     std::ptrdiff_t init_;
-    std::atomic<std::ptrdiff_t> counter_ = init_;
+    std::atomic<std::ptrdiff_t> counter_{init_};
 
     BOOST_ASEM_DECL bool try_arrive();
     BOOST_ASEM_DECL void
@@ -31,12 +31,12 @@ struct barrier_impl<mt>
     }
     BOOST_ASEM_DECL void arrive(error_code & ec);
 
-    auto internal_lock() -> std::lock_guard<std::mutex>
+    auto internal_lock() -> std::unique_lock<std::mutex>
     {
-        return std::lock_guard<std::mutex>{mtx_};
+        return std::unique_lock<std::mutex>{mtx_};
     }
 
-    std::atomic<bool> locked_ = false;
+    std::atomic<bool> locked_{false};
     std::mutex mtx_;
     detail::basic_bilist_holder<void(error_code)> waiters_;
 };

@@ -61,7 +61,7 @@ struct basic_barrier
     /// @brief Rebind a barrier to a new executor - this cancels all outstanding operations.
     template<typename Executor_>
     basic_barrier(basic_barrier<Implementation, Executor_> && sem,
-                  std::enable_if_t<std::is_convertible_v<Executor_, executor_type>> * = nullptr)
+                  std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
             : exec_(sem.get_executor()), impl_{sem.impl_.init_, sem.impl_.init_}
     {
     }

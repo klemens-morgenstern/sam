@@ -66,7 +66,7 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...) >::destroy(
     auto halloc = self->get_allocator();
     auto alloc  = typename std::allocator_traits< decltype(halloc) >::
         template rebind_alloc< basic_op_model >(halloc);
-    std::destroy_at(self);
+    self->~basic_op_model();
     auto traits = std::allocator_traits< decltype(alloc) >();
     traits.deallocate(alloc, self, 1);
 }

@@ -49,8 +49,7 @@ struct basic_semaphore<Implementation ,Executor>::async_aquire_op
         auto e = get_associated_executor(handler, self->get_executor());
         auto l = self->impl_.internal_lock();
         ignore_unused(l);
-
-        if (self->impl_.count() != 0)
+        if (self->impl_.count() > 0)
         {
             self->impl_.decrement();
             BOOST_ASEM_ASIO_NAMESPACE::post(std::move(e),

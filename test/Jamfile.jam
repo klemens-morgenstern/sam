@@ -38,4 +38,5 @@ test-suite standalone :
     [ run basic_semaphore.cpp test_impl ]
     [ run basic_condition_variable.cpp test_impl ]
     [ run guarded.cpp test_impl ]
+    [ run lock_guard.cpp test_impl ]
     ;

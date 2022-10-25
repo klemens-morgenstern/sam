@@ -9,6 +9,8 @@
 #include <boost/asem/detail/basic_op.hpp>
 #include <boost/asem/mt/basic_mutex.hpp>
 
+#include <condition_variable>
+
 BOOST_ASEM_BEGIN_NAMESPACE
 namespace detail
 {

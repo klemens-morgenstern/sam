@@ -9,6 +9,8 @@
 #include <boost/asem/detail/basic_op.hpp>
 #include <boost/asem/mt/basic_semaphore.hpp>
 
+#include <condition_variable>
+
 BOOST_ASEM_BEGIN_NAMESPACE
 namespace detail
 {
@@ -111,9 +113,9 @@ semaphore_impl<mt>::decrement()
     return --count_;
 }
 
-BOOST_ASEM_DECL std::lock_guard<std::mutex> semaphore_impl<mt>::internal_lock()
+BOOST_ASEM_DECL std::unique_lock<std::mutex> semaphore_impl<mt>::internal_lock()
 {
-    return std::lock_guard<std::mutex>{mtx_};
+    return std::unique_lock<std::mutex>{mtx_};
 }
 
 }

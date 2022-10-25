@@ -49,7 +49,7 @@ inline void run_impl(thread_pool & ctx)
 template<typename T>
 struct basic_barrier_main_impl
 {
-    std::atomic<int> done = 0;
+    std::atomic<int> done{0};
     typename T::barrier barrier;
     asio::steady_timer tim{barrier.get_executor()};
     basic_barrier_main_impl(BOOST_ASEM_ASIO_NAMESPACE::any_io_executor exec) : barrier{exec, 5} {}
@@ -68,7 +68,7 @@ struct basic_barrier_main : BOOST_ASEM_ASIO_NAMESPACE::coroutine
     void operator()(error_code = {})
     {
         auto p = impl_.get();
-        int val = impl_->done;
+        int val = impl_->done.load();
         reenter (this)
         {
             impl_->barrier.async_arrive([p](error_code ec){BOOST_CHECK(!ec); p->done |= 1;});

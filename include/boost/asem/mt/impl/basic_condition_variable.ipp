@@ -47,9 +47,9 @@ condition_variable_impl<mt>::notify_all()
     }
 }
 
-BOOST_ASEM_DECL std::lock_guard<std::mutex> condition_variable_impl<mt>::lock()
+BOOST_ASEM_DECL std::unique_lock<std::mutex> condition_variable_impl<mt>::lock()
 {
-    return std::lock_guard<std::mutex>{mtx_};
+    return std::unique_lock<std::mutex>{mtx_};
 }
 
 }

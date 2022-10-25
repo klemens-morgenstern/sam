@@ -40,7 +40,7 @@ struct condition_variable_impl<mt>
     BOOST_ASEM_DECL void
     add_waiter(detail::predicate_wait_op *waiter) noexcept;
 
-    BOOST_ASEM_DECL std::lock_guard<std::mutex> lock();
+    BOOST_ASEM_DECL std::unique_lock<std::mutex> lock();
 
   private:
     detail::predicate_bilist_holder<void(error_code)> waiters_;

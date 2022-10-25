@@ -16,6 +16,7 @@
 #include <boost/asem/st.hpp>
 #include <chrono>
 #include <random>
+#include <thread>
 
 
 #if defined(BOOST_ASEM_STANDALONE)
@@ -73,11 +74,13 @@ struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
     std::shared_ptr<steady_timer> timer =  std::make_shared<steady_timer>(sem.get_executor());
     std::chrono::steady_clock::time_point then;
 
+    ;
+
     template<typename ... Args>
     void say(Args &&...args)
     {
         std::cout << ident;
-        ((std::cout << args), ...);
+        std::array<std::ostream*, sizeof...(Args)> res{&(std::cout << args)...};
     };
 
     void operator()(error_code = {}, std::size_t index = 0u)
@@ -103,7 +106,7 @@ struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
 
                 if (index == 1u)
                 {
-                    say("got bored waiting after ", deadline.count(), "ms\n");
+                    say("got bored waiting after ", deadline.count(), "ms -> Cnt: ", sem.value() , "\n");
                     BOOST_FAIL("semaphore timeout");
                     return ;
                 }
@@ -112,15 +115,17 @@ struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
                     say("semaphore acquired after ",
                         std::chrono::duration_cast< std::chrono::milliseconds >(
                                 std::chrono::steady_clock::now() - then).count(),
-                        "ms\n");
+                        "ms -> Cnt: ", sem.value() , "\n");
                 }
 
             }
             else
+            {
+                timer->expires_after(10ms);
+                yield timer->async_wait(std::move(*this));
                 say("semaphore acquired immediately\n");
+            }
 
-            timer->expires_after(500ms);
-            yield timer->async_wait(std::move(*this));
             say("work done\n");
 
             sem.release();
@@ -157,16 +162,16 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(value, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
 {
-    auto ioc  = context<T>{};
-    auto sem  = typename T::semaphore(ioc.get_executor(), 100);
-    auto rng  = std::random_device();
-    auto ss   = std::seed_seq { rng(), rng(), rng(), rng(), rng() };
+    context<T> ioc{};
+    auto sem  = typename T::semaphore(ioc.get_executor(), 1);
+    std::random_device rng;
+    std::seed_seq ss{ rng(), rng(), rng(), rng(), rng() };
     auto eng  = std::default_random_engine(ss);
     auto dist = std::uniform_int_distribution< unsigned int >(1000, 10000);
 
     auto random_time = [&eng, &dist]
     { return std::chrono::milliseconds(dist(eng)); };
-    for (int i = 0; i < 100; i += 2)
+    for (int i = 0; i < 100; i ++)
         post(ioc, basic_bot<T>(i, sem, random_time()));
     run_impl(ioc);
 }

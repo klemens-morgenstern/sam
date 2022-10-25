@@ -22,6 +22,8 @@ namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
 #include <asio/compose.hpp>
 #include <asio/yield.hpp>
 #include <asio/experimental/parallel_group.hpp>
+#include <thread>
+
 #endif
 
 using namespace BOOST_ASEM_NAMESPACE;
@@ -180,3 +182,13 @@ BOOST_AUTO_TEST_CASE(sync_lock_mt)
     mtx.lock();
     thr.join();
 }
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(multi_lock, T, models)
+{
+    context<T> ctx;
+    typename T::mutex mtx{ctx};
+
+
+    run_impl(ctx);
+}
+

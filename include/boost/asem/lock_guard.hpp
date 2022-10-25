@@ -89,7 +89,7 @@ template<typename Implementation, typename Executor>
 lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementation, Executor> & mtx)
 {
     mtx.lock();
-    return lock_guard<basic_mutex<Implementation, Executor>>(&mtx);
+    return lock_guard<basic_mutex<Implementation, Executor>>(std::adopt_lock, mtx);
 }
 
 
@@ -148,10 +148,10 @@ inline BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock
     return mtx.async_lock(
             deferred([&](error_code ec)
             {
-               if (ec)
-                   return deferred.values(ec, lg_t{});
-               else
-                   return deferred.values(ec, lg_t{&mtx});
+                if (ec)
+                    return deferred.values(ec, lg_t{});
+                else
+                    return deferred.values(ec, lg_t{&mtx});
             }))(std::forward<CompletionToken>(token));
 }
 

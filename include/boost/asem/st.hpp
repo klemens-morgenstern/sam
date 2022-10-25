@@ -9,10 +9,10 @@
 #include <boost/asem/basic_mutex.hpp>
 #include <boost/asem/basic_semaphore.hpp>
 #include <boost/asem/basic_barrier.hpp>
+#include <boost/asem/st/basic_barrier.hpp>
+#include <boost/asem/st/basic_condition_variable.hpp>
 #include <boost/asem/st/basic_mutex.hpp>
 #include <boost/asem/st/basic_semaphore.hpp>
-#include <boost/asem/st/basic_condition_variable.hpp>
-#include <boost/asem/st/basic_barrier.hpp>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 

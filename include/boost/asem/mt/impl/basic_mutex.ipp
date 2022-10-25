@@ -41,10 +41,6 @@ mutex_impl<mt>::lock(error_code & ec)
             this->unlink();
         }
 
-        ~op_t()
-        {
-        }
-
         void wait(std::unique_lock<std::mutex> & lock)
         {
             var.wait(lock, [this]{ return done;});
@@ -68,7 +64,7 @@ mutex_impl<mt>::unlock()
         locked_ = false;
         return;
     }
-
+    assert(waiters_.next_ != nullptr);
     static_cast< detail::wait_op * >(waiters_.next_)->complete(std::error_code());
 }
 

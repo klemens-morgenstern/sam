@@ -192,3 +192,31 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(multi_lock, T, models)
     run_impl(ctx);
 }
 
+
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
+{
+    asio::io_context ctx;
+
+    std::vector<error_code> ecs;
+    auto res = [&](error_code ec){ecs.push_back(ec);};
+
+    {
+        typename T::mutex mtx{ctx};
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        ctx.run_for(std::chrono::milliseconds(10));
+    }
+    ctx.run_for(std::chrono::milliseconds(10));
+
+    BOOST_CHECK_EQUAL(ecs.size(), 7u);
+    BOOST_CHECK_EQUAL(ecs.front(), error_code());
+
+    BOOST_CHECK_EQUAL(6u, std::count(ecs.begin(), ecs.end(), error::operation_aborted));
+}
+

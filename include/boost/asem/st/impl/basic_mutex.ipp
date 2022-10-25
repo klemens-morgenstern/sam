@@ -15,7 +15,6 @@ namespace detail
 
 void mutex_impl<st>::unlock()
 {
-
     // release a pending operations
     if (waiters_.next_ == &waiters_)
     {

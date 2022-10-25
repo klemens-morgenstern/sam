@@ -9,10 +9,10 @@
 #include <boost/asem/basic_semaphore.hpp>
 #include <boost/asem/basic_mutex.hpp>
 #include <boost/asem/basic_barrier.hpp>
+#include <boost/asem/mt/basic_barrier.hpp>
 #include <boost/asem/mt/basic_mutex.hpp>
 #include <boost/asem/mt/basic_semaphore.hpp>
 #include <boost/asem/mt/basic_condition_variable.hpp>
-#include <boost/asem/mt/basic_barrier.hpp>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
@@ -39,7 +39,7 @@ struct basic_mutex<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
 extern template
 struct basic_condition_variable<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
 extern template
-struct barrier<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+struct basic_barrier<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
 #endif
 
 BOOST_ASEM_END_NAMESPACE

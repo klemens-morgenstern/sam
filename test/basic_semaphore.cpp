@@ -80,7 +80,8 @@ struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
     void say(Args &&...args)
     {
         std::cout << ident;
-        std::array<std::ostream*, sizeof...(Args)> res{&(std::cout << args)...};
+        std::array<std::ostream*, sizeof...(Args)>{&(std::cout << args)...};
+
     };
 
     void operator()(error_code = {}, std::size_t index = 0u)
@@ -178,17 +179,17 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
 
 BOOST_AUTO_TEST_CASE(rebind_semaphore)
 {
-    asio::io_context ctx;
-    auto res = asio::deferred.as_default_on(asem::st::semaphore{ctx.get_executor()});
+    io_context ctx;
+    auto res = deferred.as_default_on(st::semaphore{ctx.get_executor()});
 }
 
 BOOST_AUTO_TEST_CASE(sync_acquire_st)
 {
-    asio::io_context ctx;
-    asem::st::semaphore mtx{ctx};
+    io_context ctx;
+    st::semaphore mtx{ctx};
 
     mtx.acquire();
-    BOOST_CHECK_THROW(mtx.acquire(), asem::system_error);
+    BOOST_CHECK_THROW(mtx.acquire(), system_error);
 
     mtx.release();
     mtx.acquire();
@@ -198,11 +199,11 @@ BOOST_AUTO_TEST_CASE(sync_acquire_st)
 
 BOOST_AUTO_TEST_CASE(sync_acquire_mt)
 {
-    asio::io_context ctx;
-    asem::mt::semaphore mtx{ctx};
+    io_context ctx;
+    mt::semaphore mtx{ctx};
 
     mtx.acquire();
-    asio::post(ctx, [&]{mtx.release();});
+    post(ctx, [&]{mtx.release();});
     std::thread thr{
             [&]{
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));

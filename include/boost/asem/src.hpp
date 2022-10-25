@@ -13,12 +13,14 @@
 # error Do not compile Asem library source with BOOST_BEAST_HEADER_ONLY defined
 #endif
 
-#include <boost/asem/mt/impl/basic_semaphore.ipp>
-#include <boost/asem/st/impl/basic_semaphore.ipp>
-#include <boost/asem/mt/impl/basic_mutex.ipp>
-#include <boost/asem/st/impl/basic_mutex.ipp>
+#include <boost/asem/mt/impl/basic_barrier.ipp>
+#include <boost/asem/st/impl/basic_barrier.ipp>
 #include <boost/asem/mt/impl/basic_condition_variable.ipp>
 #include <boost/asem/st/impl/basic_condition_variable.ipp>
+#include <boost/asem/mt/impl/basic_mutex.ipp>
+#include <boost/asem/st/impl/basic_mutex.ipp>
+#include <boost/asem/mt/impl/basic_semaphore.ipp>
+#include <boost/asem/st/impl/basic_semaphore.ipp>
 #include <boost/asem/impl/st.ipp>
 #include <boost/asem/impl/mt.ipp>
 

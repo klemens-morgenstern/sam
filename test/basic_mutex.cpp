@@ -22,9 +22,9 @@ namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
 #include <asio/compose.hpp>
 #include <asio/yield.hpp>
 #include <asio/experimental/parallel_group.hpp>
-#include <thread>
-
 #endif
+
+#include <thread>
 
 using namespace BOOST_ASEM_NAMESPACE;
 using namespace BOOST_ASEM_ASIO_NAMESPACE;
@@ -148,16 +148,16 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(random_mtx, T, models)
 BOOST_AUTO_TEST_CASE(rebind_mutex)
 {
     asio::io_context ctx;
-    auto res = asio::deferred.as_default_on(asem::st::mutex{ctx.get_executor()});
+    auto res = asio::deferred.as_default_on(st::mutex{ctx.get_executor()});
 }
 
 BOOST_AUTO_TEST_CASE(sync_lock_st)
 {
     asio::io_context ctx;
-    asem::st::mutex mtx{ctx};
+    st::mutex mtx{ctx};
 
     mtx.lock();
-    BOOST_CHECK_THROW(mtx.lock(), asem::system_error);
+    BOOST_CHECK_THROW(mtx.lock(), system_error);
 
     mtx.unlock();
     mtx.lock();
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(sync_lock_st)
 BOOST_AUTO_TEST_CASE(sync_lock_mt)
 {
     asio::io_context ctx;
-    asem::mt::mutex mtx{ctx};
+    mt::mutex mtx{ctx};
 
     mtx.lock();
     asio::post(ctx, [&]{mtx.unlock();});

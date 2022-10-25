@@ -5,10 +5,12 @@
 #ifndef BOOST_ASEM_MT_BASIC_BARRIER_HPP
 #define BOOST_ASEM_MT_BASIC_BARRIER_HPP
 
+#include <boost/asem/basic_barrier.hpp>
+#include <boost/asem/detail/config.hpp>
+
 #include <atomic>
 #include <barrier>
-#include <boost/asem/detail/config.hpp>
-#include <boost/asem/basic_barrier.hpp>
+#include <mutex>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
@@ -55,6 +57,5 @@ BOOST_ASEM_END_NAMESPACE
 #if defined(BOOST_ASEM_HEADER_ONLY)
 #include <boost/asem/mt/impl/basic_barrier.ipp>
 #endif
-
 
 #endif //BOOST_ASEM_MT_BASIC_BARRIER_HPP

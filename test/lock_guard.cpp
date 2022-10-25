@@ -11,6 +11,7 @@
 #include <chrono>
 #include <random>
 #include <vector>
+#include <boost/asem/lock_guard.hpp>
 
 #if !defined(BOOST_ASEM_STANDALONE)
 namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
@@ -23,8 +24,6 @@ namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
 #include <asio/compose.hpp>
 #include <asio/yield.hpp>
 #include <asio/experimental/parallel_group.hpp>
-#include <boost/asem/lock_guard.hpp>
-
 #endif
 
 using namespace BOOST_ASEM_NAMESPACE;
@@ -64,12 +63,12 @@ struct impl : asio::coroutine
     }
 
     template<typename Self>
-    void operator()(Self && self, error_code ec = {}, asem::lock_guard<Mutex> lock = {})
+    void operator()(Self && self, error_code ec = {}, lock_guard<Mutex> lock = {})
     {
         reenter(this)
         {
             printf("Entered %d\n", id);
-            yield asem::async_lock(this->mtx, std::move(self));
+            yield async_lock(this->mtx, std::move(self));
             concurrent ++;
             BOOST_CHECK_EQUAL(concurrent, 1);
             printf("Acquired lock %d\n", id);
@@ -95,12 +94,7 @@ template<typename T>
 void test_sync(T & mtx, std::vector<int> & order)
 {
     bool active = false;
-    auto op =
-            [&](auto && token)
-            {
-                static int i = 0;
-                return async_impl(mtx, i ++, active, std::move(token));
-            };
+
     static int i = 0;
     async_impl(mtx, i ++, active, asio::detached);
     async_impl(mtx, i ++, active, asio::detached);

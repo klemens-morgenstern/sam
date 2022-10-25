@@ -8,6 +8,7 @@
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/basic_op.hpp>
 #include <boost/asem/mt/basic_barrier.hpp>
+#include <condition_variable>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 namespace detail

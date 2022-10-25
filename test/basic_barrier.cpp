@@ -100,17 +100,17 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(random_barrier, T, models)
 BOOST_AUTO_TEST_CASE(rebind_barrier)
 {
     asio::io_context ctx;
-    auto res = asio::deferred.as_default_on(asem::st::barrier{ctx.get_executor(), 4u});
+    auto res = asio::deferred.as_default_on(st::barrier{ctx.get_executor(), 4u});
 }
 
 
 BOOST_AUTO_TEST_CASE(sync_barrier_st)
 {
     asio::io_context ctx;
-    asem::st::barrier b{ctx.get_executor(), 4u};
+    st::barrier b{ctx.get_executor(), 4u};
     BOOST_CHECK_THROW(b.arrive(), system_error);
 
-    asem::st::barrier b2{ctx.get_executor(), 1u};
+    st::barrier b2{ctx.get_executor(), 1u};
     BOOST_CHECK_NO_THROW(b2.arrive());
 }
 
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(sync_barrier_st)
 BOOST_AUTO_TEST_CASE(sync_barrier_m)
 {
     asio::io_context ctx;
-    asem::mt::barrier b{ctx.get_executor(), 2u};
+    mt::barrier b{ctx.get_executor(), 2u};
 
     asio::post(ctx, [&]{b.arrive();});
 

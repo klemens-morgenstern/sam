@@ -51,6 +51,39 @@ struct bilist_node
 
     bilist_node *next_;
     bilist_node *prev_;
+
+    // for the root node
+    bilist_node(bilist_node && lhs) noexcept
+        : next_(lhs.next_)
+        , prev_(lhs.prev_)
+    {
+        lhs.next_ = &lhs;
+        lhs.prev_ = &lhs;
+
+        if (next_ == &lhs)
+            next_ = this;
+        else
+            next_->prev_ = this;
+
+        if (prev_ == &lhs)
+            prev_ = this;
+        else
+            prev_->next_ = this;
+    }
+
+    bilist_node& operator=(bilist_node && lhs)
+    {
+        if (lhs.next_ == &lhs)
+            next_ = this;
+        else
+            next_->prev_ = this;
+
+        if (lhs.prev_ == &lhs)
+            prev_ = this;
+        else
+            prev_->next_ = this;
+        return *this;
+    }
 };
 
 }   // namespace detail

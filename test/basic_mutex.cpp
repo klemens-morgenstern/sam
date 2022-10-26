@@ -192,12 +192,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(multi_lock, T, models)
     run_impl(ctx);
 }
 
-
-
-BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
+BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_twice, T, models)
 {
     asio::io_context ctx;
-
     std::vector<error_code> ecs;
     auto res = [&](error_code ec){ecs.push_back(ec);};
 
@@ -210,13 +207,62 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
         mtx.async_lock(res);
         mtx.async_lock(res);
         mtx.async_lock(res);
+
         ctx.run_for(std::chrono::milliseconds(10));
+
+        mtx.unlock();
+        ctx.run_for(std::chrono::milliseconds(10));
+
+        mtx.unlock();
+        ctx.run_for(std::chrono::milliseconds(10));
+
     }
     ctx.run_for(std::chrono::milliseconds(10));
 
-    BOOST_CHECK_EQUAL(ecs.size(), 7u);
-    BOOST_CHECK_EQUAL(ecs.front(), error_code());
 
-    BOOST_CHECK_EQUAL(6u, std::count(ecs.begin(), ecs.end(), error::operation_aborted));
+    BOOST_CHECK_EQUAL(ecs.size(), 7u);
+    BOOST_CHECK(!ecs.at(0));
+    BOOST_CHECK(!ecs.at(1));
+    BOOST_CHECK(!ecs.at(2));
+
+    BOOST_CHECK_EQUAL(4u, std::count(ecs.begin(), ecs.end(), error::operation_aborted));
+}
+
+
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
+{
+    asio::io_context ctx;
+
+    std::vector<error_code> ecs;
+    auto res = [&](error_code ec){ecs.push_back(ec);};
+
+    {
+        typename T::mutex::template rebind_executor<asio::io_context::executor_type>::other mtx{ctx};
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        mtx.async_lock(res);
+        ctx.run_for(std::chrono::milliseconds(10));
+
+        mtx.unlock();
+        typename T::mutex mt2{std::move(mtx)};
+        ctx.run_for(std::chrono::milliseconds(10));
+
+        mt2.unlock();
+        mtx.unlock(); // should do nothing
+    }
+    ctx.run_for(std::chrono::milliseconds(10));
+
+
+    BOOST_CHECK_EQUAL(ecs.size(), 7u);
+    BOOST_CHECK(!ecs.at(0));
+    BOOST_CHECK(!ecs.at(1));
+    BOOST_CHECK(!ecs.at(2));
+
+    BOOST_CHECK_EQUAL(4u, std::count(ecs.begin(), ecs.end(), error::operation_aborted));
 }
 

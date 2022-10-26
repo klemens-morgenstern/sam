@@ -74,13 +74,19 @@ struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
     std::shared_ptr<steady_timer> timer =  std::make_shared<steady_timer>(sem.get_executor());
     std::chrono::steady_clock::time_point then;
 
-    ;
+    void say_impl() {}
 
-    template<typename ... Args>
+    template<typename First, typename ... Args>
+    void say_impl(First && first, Args &&...args)
+    {
+        std::cout << first;
+        say_impl(std::forward<Args>(args)...);
+    }
+    template< typename ... Args>
     void say(Args &&...args)
     {
         std::cout << ident;
-        std::array<std::ostream*, sizeof...(Args)>{&(std::cout << args)...};
+        say_impl(args...);
 
     };
 
@@ -181,6 +187,7 @@ BOOST_AUTO_TEST_CASE(rebind_semaphore)
 {
     io_context ctx;
     auto res = deferred.as_default_on(st::semaphore{ctx.get_executor()});
+    res = st::semaphore::rebind_executor<io_context::executor_type>::other{ctx.get_executor()};
 }
 
 BOOST_AUTO_TEST_CASE(sync_acquire_st)
@@ -213,6 +220,43 @@ BOOST_AUTO_TEST_CASE(sync_acquire_mt)
 
     mtx.acquire();
     thr.join();
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_acquire, T, models)
+{
+    io_context ctx;
+
+    std::vector<error_code> ecs;
+    auto res = [&](error_code ec){ecs.push_back(ec);};
+
+    {
+        typename T::semaphore::template rebind_executor<io_context::executor_type>::other mtx{ctx, 2};
+        mtx.async_acquire(res);
+        mtx.async_acquire(res);
+        mtx.async_acquire(res);
+        mtx.async_acquire(res);
+        mtx.async_acquire(res);
+        mtx.async_acquire(res);
+        mtx.async_acquire(res);
+        ctx.run_for(std::chrono::milliseconds(10));
+
+        mtx.release();
+        typename T::semaphore mt2{std::move(mtx)};
+        ctx.run_for(std::chrono::milliseconds(10));
+
+        mt2.release();
+        mtx.release(); // should do nothing
+    }
+    ctx.run_for(std::chrono::milliseconds(10));
+
+
+    BOOST_CHECK_EQUAL(ecs.size(), 7u);
+    BOOST_CHECK(!ecs.at(0));
+    BOOST_CHECK(!ecs.at(1));
+    BOOST_CHECK(!ecs.at(2));
+    BOOST_CHECK(!ecs.at(3));
+
+    BOOST_CHECK_EQUAL(3u, std::count(ecs.begin(), ecs.end(), error::operation_aborted));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

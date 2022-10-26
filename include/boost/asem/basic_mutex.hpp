@@ -61,7 +61,7 @@ struct basic_mutex
     template<typename Executor_>
     basic_mutex(basic_mutex<Implementation, Executor_> && sem,
                 std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
-            : exec_(sem.get_executor())
+            : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
     {
     }
 
@@ -80,7 +80,22 @@ struct basic_mutex
                 async_lock_op{this}, token);
     }
 
-    /* Lock synchronously. This may fail depending on the implementation.
+    /// Move assign a mutex.
+    basic_mutex& operator=(basic_mutex&&) noexcept = default;
+
+    /// Move assign a mutex with a different executor.
+    template<typename Executor_>
+    auto operator=(basic_mutex<Implementation, Executor_> && sem)
+        -> std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_mutex>  &
+    {
+        std::swap(exec_, sem.exec_);
+        std::swap(impl_, sem.impl_);
+        return *this;
+    }
+
+    basic_mutex& operator=(const basic_mutex&) = delete;
+
+    /** Lock synchronously. This may fail depending on the implementation.
      *
      * If the implementation is `st` this will generate an error if the mutex
      * is already locked.
@@ -91,7 +106,7 @@ struct basic_mutex
      * You should never use the synchronous functions from within an asio event-queue.
      *
      */
-    void  lock(error_code & ec)
+    void lock(error_code & ec)
     {
         impl_.lock(ec);
     }
@@ -131,6 +146,9 @@ struct basic_mutex
     get_executor() const noexcept {return exec_;}
 
   private:
+    template<typename, typename>
+    friend struct basic_mutex;
+
     detail::mutex_impl<Implementation> impl_;
     Executor exec_;
     struct async_lock_op;

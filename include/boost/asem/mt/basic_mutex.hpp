@@ -39,6 +39,20 @@ struct mutex_impl<mt>
     std::atomic<bool> locked_{false};
     std::mutex mtx_;
     detail::basic_bilist_holder<void(error_code)> waiters_;
+
+    mutex_impl() = default;
+    mutex_impl(const mutex_impl &) = delete;
+    mutex_impl(mutex_impl && mi) : locked_(mi.locked_.exchange(false)), waiters_(std::move(mi.waiters_)) {}
+
+    mutex_impl& operator=(const mutex_impl & lhs) = delete;
+    mutex_impl& operator=(mutex_impl && lhs) noexcept
+    {
+        std::lock_guard<std::mutex> _(mtx_);
+
+        lhs.locked_ = locked_.exchange(lhs.locked_.load());
+        lhs.waiters_ = std::move(waiters_);
+        return *this;
+    }
 };
 
 }

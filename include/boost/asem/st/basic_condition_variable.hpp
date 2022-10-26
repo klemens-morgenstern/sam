@@ -20,14 +20,14 @@ struct condition_variable_impl<st>
     BOOST_ASEM_DECL condition_variable_impl();
 
     condition_variable_impl(condition_variable_impl const &) = delete;
+    condition_variable_impl(condition_variable_impl && lhs) noexcept : waiters_(std::move(lhs.waiters_)) {}
 
-    condition_variable_impl &
-    operator=(condition_variable_impl const &) = delete;
-
-    condition_variable_impl(condition_variable_impl &&) = delete;
-
-    condition_variable_impl &
-    operator=(condition_variable_impl &&) = delete;
+    condition_variable_impl & operator=(condition_variable_impl const &) = delete;
+    condition_variable_impl & operator=(condition_variable_impl && lhs) noexcept
+    {
+        std::swap(lhs.waiters_, waiters_);
+        return *this;
+    }
 
     BOOST_ASEM_DECL void
     notify_one();

@@ -101,6 +101,8 @@ BOOST_AUTO_TEST_CASE(rebind_barrier)
 {
     asio::io_context ctx;
     auto res = asio::deferred.as_default_on(st::barrier{ctx.get_executor(), 4u});
+    res = typename st::barrier::rebind_executor<io_context::executor_type>::other{ctx.get_executor(), 2u};
+
 }
 
 

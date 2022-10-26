@@ -51,6 +51,12 @@ struct basic_bilist_holder<void(error_code, Ts...)> : bilist_node
         while (nx != this)
             static_cast< op * >(nx)->complete(ec, std::move(ts)...);
     }
+
+    basic_bilist_holder() noexcept = default;
+    basic_bilist_holder(basic_bilist_holder &&) = default;
+    basic_bilist_holder(basic_bilist_holder const &) = delete;
+    basic_bilist_holder& operator=(basic_bilist_holder &&) = default;
+    basic_bilist_holder& operator=(basic_bilist_holder const &) = delete;
 };
 
 }   // namespace detail

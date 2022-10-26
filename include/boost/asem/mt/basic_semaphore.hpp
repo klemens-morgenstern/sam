@@ -20,16 +20,20 @@ struct semaphore_impl<mt>
 {
     BOOST_ASEM_DECL semaphore_impl(int initial_count = 1);
 
-    semaphore_impl(semaphore_impl const &) = delete;
 
-    semaphore_impl &
-    operator=(semaphore_impl const &) = delete;
+    semaphore_impl() = default;
+    semaphore_impl(const semaphore_impl &) = delete;
+    semaphore_impl(semaphore_impl && mi) : count_(mi.count_.exchange(1)), waiters_(std::move(mi.waiters_)) {}
 
-    semaphore_impl(semaphore_impl &&) = delete;
+    semaphore_impl& operator=(const semaphore_impl &) = delete;
+    semaphore_impl& operator=(semaphore_impl && lhs) noexcept
+    {
+        std::lock_guard<std::mutex> _(mtx_);
 
-    semaphore_impl &
-    operator=(semaphore_impl &&) = delete;
-
+        lhs.count_ = count_.exchange(lhs.count_.load());
+        std::swap(lhs.waiters_, waiters_);
+        return *this;
+    }
 
     BOOST_ASEM_DECL bool
     try_acquire();
@@ -54,8 +58,8 @@ struct semaphore_impl<mt>
     BOOST_ASEM_DECL std::unique_lock<std::mutex> internal_lock();
 
   private:
-    detail::basic_bilist_holder<void(error_code)> waiters_;
     std::atomic<int> count_;
+    detail::basic_bilist_holder<void(error_code)> waiters_;
     mutable std::mutex mtx_;
 };
 

@@ -54,7 +54,7 @@ struct basic_condition_variable
                                      ExecutionContext&,
                                      BOOST_ASEM_ASIO_NAMESPACE::execution_context&>::value
                          >::type * = nullptr)
-            : exec_(ctx.get_executor())
+            : exec_(ctx.get_executor()), impl_(std::move(impl_))
     {
     }
 
@@ -103,6 +103,21 @@ struct basic_condition_variable
                         >{this, std::forward<Predicate>(predicate)}, token);
     }
 
+    /// Move assign a condition_variable.
+    basic_condition_variable& operator=(basic_condition_variable&&) noexcept = default;
+
+    /// Move assign a condition_variable with a different executor.
+    template<typename Executor_>
+    auto operator=(basic_condition_variable<Implementation, Executor_> && sem)
+        ->std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_condition_variable>  &
+    {
+        exec_ = std::move(sem.exec_);
+        impl_ = std::move(sem.impl_);
+        return *this;
+    }
+
+    basic_condition_variable& operator=(const basic_condition_variable&) = delete;
+
     /// Notify/wake up one waiting operations.
     void
     notify_one()
@@ -130,9 +145,11 @@ struct basic_condition_variable
     get_executor() const noexcept {return exec_;}
 
   private:
+    template<typename, typename>
+    friend struct basic_condition_variable;
+
     detail::condition_variable_impl<Implementation> impl_;
     Executor exec_;
-
 
     template<typename Predicate>
     struct async_predicate_wait_op;

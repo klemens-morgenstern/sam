@@ -34,6 +34,22 @@ struct mutex_impl<st>
     }
 
     detail::basic_bilist_holder<void(error_code)> waiters_;
+
+    mutex_impl() = default;
+    mutex_impl(const mutex_impl &) = delete;
+    mutex_impl(mutex_impl && mi) : locked_(mi.locked_), waiters_(std::move(mi.waiters_))
+    {
+        mi.locked_ = false;
+    }
+
+    mutex_impl& operator=(const mutex_impl &) = delete;
+    mutex_impl& operator=(mutex_impl && lhs) noexcept
+    {
+        std::swap(lhs.locked_, locked_);
+        std::swap(lhs.waiters_, waiters_);
+        return *this;
+    }
+
 };
 
 }

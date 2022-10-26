@@ -44,6 +44,12 @@ struct predicate_bilist_holder<void(error_code, Ts...)> : bilist_node
         while (nx != this)
             static_cast< op * >(nx)->complete(asio::error::operation_aborted, Ts{}...);
     }
+    predicate_bilist_holder() = default;
+    predicate_bilist_holder(const predicate_bilist_holder &) = delete;
+    predicate_bilist_holder(predicate_bilist_holder &&) = default;
+
+    predicate_bilist_holder& operator=(const predicate_bilist_holder &) = delete;
+    predicate_bilist_holder& operator=(predicate_bilist_holder &&) = default;
 };
 
 }   // namespace detail

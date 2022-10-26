@@ -62,7 +62,7 @@ struct basic_barrier
     template<typename Executor_>
     basic_barrier(basic_barrier<Implementation, Executor_> && sem,
                   std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
-            : exec_(sem.get_executor()), impl_{sem.impl_.init_, sem.impl_.init_}
+            : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
     {
     }
 
@@ -81,12 +81,27 @@ struct basic_barrier
                 async_arrive_op{this}, token);
     }
 
+    /// Move assign a barrier.
+    basic_barrier& operator=(basic_barrier&&) noexcept = default;
+
+    /// Move assign a barrier with a different executor.
+    template<typename Executor_>
+    auto operator=(basic_barrier<Implementation, Executor_> && sem)
+        ->std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_barrier>  &
+    {
+        exec_ = std::move(sem.exec_);
+        impl_ = std::move(sem.impl_);
+        return *this;
+    }
+
+    basic_barrier& operator=(const basic_barrier&) = delete;
+    
     bool try_arrive()
     {
         return impl_.try_arrive();
     }
 
-    /* Arrive synchronously. This may fail depending on the implementation.
+    /** Arrive synchronously. This may fail depending on the implementation.
      *
      * If the implementation is `st` this will generate an error if the barrier
      * is not ready.

@@ -67,9 +67,24 @@ struct basic_semaphore
     template<typename Executor_>
     basic_semaphore(basic_semaphore<Implementation, Executor_> && sem,
                     std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
-        : exec_(sem.get_executor())
+        : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
     {
     }
+
+    /// Move assign a semaphore.
+    basic_semaphore& operator=(basic_semaphore&&) noexcept = default;
+
+    /// Move assign a semaphore with a different executor.
+    template<typename Executor_>
+    auto operator=(basic_semaphore<Implementation, Executor_> && sem)
+        -> std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_semaphore>  &
+    {
+        exec_ = std::move(sem.exec_);
+        impl_ = std::move(sem.impl_);
+        return *this;
+    }
+
+    basic_semaphore& operator=(const basic_semaphore&) = delete;
 
     /// The destructor. @param ctx The execution context used by the semaphore.
     template<typename ExecutionContext>
@@ -114,7 +129,7 @@ struct basic_semaphore
     BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionHandler, void(error_code))
     async_acquire( CompletionHandler &&token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(executor_type));
 
-    /* Acquire synchronously. This may fail depending on the implementation.
+    /** Acquire synchronously. This may fail depending on the implementation.
     *
     * If the implementation is `st` this will generate an error if the semaphore
     * cannot be acquired immediately.
@@ -166,8 +181,11 @@ struct basic_semaphore
         return impl_.value();
     }
   private:
-    implementation_type impl_;
+    template<typename, typename>
+    friend struct basic_semaphore;
+
     executor_type exec_;
+    implementation_type impl_;
     struct async_aquire_op;
 };
 

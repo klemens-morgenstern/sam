@@ -163,4 +163,6 @@ BOOST_AUTO_TEST_CASE(rebind_condition_variable)
 {
     asio::io_context ctx;
     auto res = asio::deferred.as_default_on(st::condition_variable{ctx.get_executor()});
+
+    res = st::condition_variable{ctx.get_executor()};
 }

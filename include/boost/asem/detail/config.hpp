@@ -61,11 +61,9 @@
 
 #if defined(BOOST_PROCESS_USE_STD_FS)
 #include <filesystem>
-#include <optional>
 #else
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/optional.hpp>
 #endif
 
 #define BOOST_ASEM_BEGIN_NAMESPACE namespace boost { namespace asem {
@@ -89,12 +87,11 @@ inline void ignore_unused(const T& ) {}
 
 #else
 
-using boost::ignore_unused;
+using boost::ignore_unused ;
 using boost::system::error_code ;
 using boost::system::error_category ;
 using boost::system::system_category ;
 using boost::system::system_error ;
-
 
 #endif
 

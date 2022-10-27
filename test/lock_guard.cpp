@@ -116,3 +116,47 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(lock_guard_t, T, models)
     test_sync<basic_mutex<T>>(mtx, order);
     run_impl(ctx);
 }
+
+
+template<typename Mutex>
+struct impl_t : asio::coroutine
+{
+    using mutex = Mutex;
+    mutex & mtx;
+
+    impl_t(mutex & mtx) : mtx(mtx)
+    {
+    }
+
+    template<typename Self>
+    void operator()(Self && self, error_code ec = {}, lock_guard<Mutex> lock = {})
+    {
+        reenter(this)
+        {
+            yield async_lock(this->mtx, std::move(self)); BOOST_CHECK(!ec);
+            yield async_lock(this->mtx, std::move(self)); BOOST_CHECK(!ec);
+            yield async_lock(this->mtx, std::move(self)); BOOST_CHECK(!ec);
+            yield async_lock(this->mtx, std::move(self)); BOOST_CHECK(!ec);
+            yield async_lock(this->mtx, std::move(self)); BOOST_CHECK(!ec);
+            self.complete(ec);
+        }
+    }
+};
+
+template<typename T, typename CompletionToken>
+auto async_impl(T & mtx, CompletionToken && completion_token)
+{
+    return BOOST_ASEM_ASIO_NAMESPACE::async_compose<CompletionToken, void(error_code)>(
+            impl_t<T>(mtx), completion_token, mtx);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(lock_series_t, T, models)
+{
+    context<T> ctx;
+    typename T::mutex mtx{ctx.get_executor()};
+    bool called = false;
+    async_impl(mtx, [&](error_code ec) {BOOST_CHECK(!ec); called = true;});
+    run_impl(ctx);
+    mtx.lock();
+    BOOST_CHECK(called);
+}

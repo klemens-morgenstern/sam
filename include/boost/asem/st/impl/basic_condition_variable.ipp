@@ -13,8 +13,10 @@ BOOST_ASEM_BEGIN_NAMESPACE
 namespace detail
 {
 
-condition_variable_impl<st>::condition_variable_impl() = default;
-
+condition_variable_impl<st>::condition_variable_impl(
+    BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx) : detail::service_member<st>(ctx)
+{
+}
 
 void
 condition_variable_impl<st>::add_waiter(detail::predicate_wait_op *waiter) noexcept

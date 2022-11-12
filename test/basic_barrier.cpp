@@ -88,6 +88,8 @@ struct basic_barrier_main : BOOST_ASEM_ASIO_NAMESPACE::coroutine
 
 };
 
+BOOST_AUTO_TEST_SUITE(basic_barrier_test)
+
 BOOST_AUTO_TEST_CASE_TEMPLATE(random_barrier, T, models)
 {
     context<T> ctx;
@@ -128,5 +130,31 @@ BOOST_AUTO_TEST_CASE(sync_barrier_m)
 
     BOOST_CHECK_NO_THROW(b.arrive());
     thr.join();
-
 }
+
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_wp, T, models)
+{
+  asio::io_context ctx;
+  auto smtx = std::make_shared<typename T::barrier>(ctx, 2);
+  auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
+
+  smtx->async_arrive(l);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
+{
+  std::weak_ptr<typename T::barrier> wp;
+  {
+    asio::io_context ctx;
+    auto smtx = std::make_shared<typename T::barrier>(ctx, 2);
+    wp = smtx;
+    auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
+
+    smtx->async_arrive(l);
+  }
+
+  BOOST_CHECK(wp.expired());
+}
+
+BOOST_AUTO_TEST_SUITE_END()

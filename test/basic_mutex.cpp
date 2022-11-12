@@ -136,6 +136,8 @@ struct basic_main : BOOST_ASEM_ASIO_NAMESPACE::coroutine
 
 };
 
+BOOST_AUTO_TEST_SUITE(basic_mutex_test)
+
 BOOST_AUTO_TEST_CASE_TEMPLATE(random_mtx, T, models)
 {
     context<T> ctx;
@@ -266,3 +268,15 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
     BOOST_CHECK_EQUAL(4u, std::count(ecs.begin(), ecs.end(), error::operation_aborted));
 }
 
+BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
+{
+  asio::io_context ctx;
+  auto smtx = std::make_shared<typename T::mutex>(ctx);
+
+  auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
+
+  smtx->async_lock(l);
+  smtx->async_lock(l);
+}
+
+BOOST_AUTO_TEST_SUITE_END()

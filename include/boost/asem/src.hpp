@@ -13,6 +13,7 @@
 # error Do not compile Asem library source with BOOST_BEAST_HEADER_ONLY defined
 #endif
 
+#include <boost/asem/detail/impl/service.ipp>
 #include <boost/asem/mt/impl/basic_barrier.ipp>
 #include <boost/asem/st/impl/basic_barrier.ipp>
 #include <boost/asem/mt/impl/basic_condition_variable.ipp>

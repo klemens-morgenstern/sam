@@ -15,18 +15,26 @@ namespace detail
 {
 
 template<>
-struct condition_variable_impl<st>
+struct condition_variable_impl<st> : detail::service_member<st>
 {
-    BOOST_ASEM_DECL condition_variable_impl();
+    BOOST_ASEM_DECL condition_variable_impl(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx);
 
     condition_variable_impl(condition_variable_impl const &) = delete;
-    condition_variable_impl(condition_variable_impl && lhs) noexcept : waiters_(std::move(lhs.waiters_)) {}
+    condition_variable_impl(condition_variable_impl && lhs) noexcept
+        : detail::service_member<st>(std::move(lhs)), waiters_(std::move(lhs.waiters_)) {}
 
     condition_variable_impl & operator=(condition_variable_impl const &) = delete;
     condition_variable_impl & operator=(condition_variable_impl && lhs) noexcept
     {
+        detail::service_member<st>::operator=(std::move(lhs));
         std::swap(lhs.waiters_, waiters_);
         return *this;
+    }
+
+    void shutdown() override
+    {
+      auto w = std::move(waiters_);
+      w.shutdown();
     }
 
     BOOST_ASEM_DECL void

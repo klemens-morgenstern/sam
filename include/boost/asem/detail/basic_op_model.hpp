@@ -67,6 +67,9 @@ struct basic_op_model<Implementation, Executor, Handler, void(Ts...)> final : ba
     virtual void
     complete(Ts... ec) override;
 
+    virtual void
+    shutdown() override;
+
   private:
     struct cancellation_handler
     {

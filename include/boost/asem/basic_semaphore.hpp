@@ -96,7 +96,8 @@ struct basic_semaphore
                             ExecutionContext&,
                             BOOST_ASEM_ASIO_NAMESPACE::execution_context&>::value
             >::type * = nullptr)
-        : basic_semaphore(ctx.get_executor(), initial_count)
+        : exec_(ctx.get_executor())
+        , impl_(ctx, initial_count)
     {
     }
 

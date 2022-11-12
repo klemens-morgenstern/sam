@@ -259,4 +259,17 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_acquire, T, models)
     BOOST_CHECK_EQUAL(3u, std::count(ecs.begin(), ecs.end(), error::operation_aborted));
 }
 
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
+{
+  asio::io_context ctx;
+  auto smtx = std::make_shared<typename T::semaphore>(ctx, 1);
+
+  auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
+
+  smtx->async_acquire(l);
+  smtx->async_acquire(l);
+  smtx->async_acquire(l);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

@@ -42,6 +42,7 @@ struct basic_mutex
     /// The destructor. @param exec The executor to be used by the mutex.
     explicit basic_mutex(executor_type exec)
             : exec_(std::move(exec))
+            , impl_{{BOOST_ASEM_ASIO_NAMESPACE::query(exec_, BOOST_ASEM_ASIO_NAMESPACE::execution::context)}}
     {
     }
 
@@ -53,7 +54,7 @@ struct basic_mutex
                                          ExecutionContext&,
                                          BOOST_ASEM_ASIO_NAMESPACE::execution_context&>::value
                                  >::type * = nullptr)
-            : exec_(ctx.get_executor())
+            : exec_(ctx.get_executor()), impl_(ctx)
     {
     }
 
@@ -149,8 +150,8 @@ struct basic_mutex
     template<typename, typename>
     friend struct basic_mutex;
 
-    detail::mutex_impl<Implementation> impl_;
     Executor exec_;
+    detail::mutex_impl<Implementation> impl_;
     struct async_lock_op;
 };
 

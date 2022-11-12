@@ -14,13 +14,14 @@ namespace detail
 {
 
 template<>
-struct semaphore_impl<st>
+struct semaphore_impl<st> : detail::service_member<st>
 {
-    BOOST_ASEM_DECL semaphore_impl(int initial_count = 1);
+    BOOST_ASEM_DECL semaphore_impl(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx, int initial_count = 1);
 
-    semaphore_impl() = default;
     semaphore_impl(const semaphore_impl &) = delete;
-    semaphore_impl(semaphore_impl && mi) : count_(mi.count_), waiters_(std::move(mi.waiters_))
+    semaphore_impl(semaphore_impl && mi)
+        : detail::service_member<st>(std::move(mi))
+        , count_(mi.count_), waiters_(std::move(mi.waiters_))
     {
         mi.count_= 1;
     }
@@ -31,6 +32,12 @@ struct semaphore_impl<st>
         std::swap(lhs.count_, count_);
         std::swap(lhs.waiters_, waiters_);
         return *this;
+    }
+
+    void shutdown() override
+    {
+        auto w = std::move(waiters_);
+        w.shutdown();
     }
 
     BOOST_ASEM_DECL bool

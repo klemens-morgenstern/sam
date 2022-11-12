@@ -104,6 +104,15 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...) >::complete(Ts ..
                                     BOOST_ASEM_ASIO_NAMESPACE::append(std::move(h), std::move(args)...));
 }
 
+template < class Implementation, class Executor, class Handler, class ... Ts >
+void
+basic_op_model< Implementation, Executor, Handler, void(Ts...) >::shutdown()
+{
+  get_cancellation_slot().clear();
+  this->unlink();
+  destroy(this);
+}
+
 }   // namespace detail
 
 BOOST_ASEM_END_NAMESPACE

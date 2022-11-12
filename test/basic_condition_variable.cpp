@@ -61,6 +61,8 @@ inline void run_impl(thread_pool & ctx)
     ctx.join();
 }
 
+BOOST_AUTO_TEST_SUITE(basic_condition_variable_test)
+
 BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_all, T, models)
 {
     context<T> ioc{};
@@ -166,3 +168,15 @@ BOOST_AUTO_TEST_CASE(rebind_condition_variable)
 
     res = st::condition_variable{ctx.get_executor()};
 }
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
+{
+  asio::io_context ctx;
+  auto smtx = std::make_shared<typename T::condition_variable>(ctx);
+
+  auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
+
+  smtx->async_wait(l);
+}
+
+BOOST_AUTO_TEST_SUITE_END()

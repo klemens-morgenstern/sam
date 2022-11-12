@@ -15,8 +15,8 @@ BOOST_ASEM_BEGIN_NAMESPACE
 namespace detail
 {
 
-semaphore_impl<mt>::semaphore_impl(int initial_count)
-    : waiters_(), count_(initial_count)
+semaphore_impl<mt>::semaphore_impl(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx, int initial_count)
+    : detail::service_member<mt>(ctx), waiters_(), count_(initial_count)
 {
 }
 
@@ -68,6 +68,15 @@ semaphore_impl<mt>::acquire(error_code & ec)
             var.notify_all();
             this_->decrement();
             this->unlink();
+        }
+
+        void shutdown() override
+        {
+          done = true;
+          this->ec = BOOST_ASEM_ASIO_NAMESPACE::error::shut_down;
+          var.notify_all();
+          this_->decrement();
+          this->unlink();
         }
 
         ~op_t()

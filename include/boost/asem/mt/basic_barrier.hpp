@@ -18,8 +18,11 @@ namespace detail
 {
 
 template<>
-struct barrier_impl<mt>
+struct barrier_impl<mt> : detail::service_member<mt>
 {
+    barrier_impl(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx,
+                 std::ptrdiff_t init) : detail::service_member<mt>(ctx), init_(init) {}
+
     std::ptrdiff_t init_;
     std::atomic<std::ptrdiff_t> counter_{init_};
 
@@ -32,6 +35,12 @@ struct barrier_impl<mt>
         counter_--;
     }
     BOOST_ASEM_DECL void arrive(error_code & ec);
+
+    void shutdown() override
+    {
+      auto w = std::move(waiters_);
+      w.shutdown();
+    }
 
     auto internal_lock() -> std::unique_lock<std::mutex>
     {

@@ -6,10 +6,12 @@
 #define BOOST_ASEM_basic_barrier_HPP
 
 #include <boost/asem/detail/config.hpp>
+#include <boost/asem/detail/service.hpp>
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/any_io_executor.hpp>
 #include <asio/compose.hpp>
+
 #else
 #include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/compose.hpp>
@@ -41,7 +43,8 @@ struct basic_barrier
 
     /// The destructor. @param exec The executor to be used by the BARRIER.
     explicit basic_barrier(executor_type exec, std::ptrdiff_t init_count)
-            : exec_(std::move(exec)), impl_{init_count}
+            : exec_(std::move(exec))
+            , impl_{BOOST_ASEM_ASIO_NAMESPACE::query(exec_, BOOST_ASEM_ASIO_NAMESPACE::execution::context), init_count}
     {
     }
 
@@ -54,7 +57,7 @@ struct basic_barrier
                                          BOOST_ASEM_ASIO_NAMESPACE::execution_context&>::value,
                                      std::ptrdiff_t
                                  >::type init_count)
-            : exec_(ctx.get_executor()), impl_{init_count}
+            : exec_(ctx.get_executor()), impl_{ctx, init_count}
     {
     }
 
@@ -142,8 +145,8 @@ struct basic_barrier
     template<typename, typename>
     friend struct basic_barrier;
 
-    detail::barrier_impl<Implementation> impl_;
     Executor exec_;
+    detail::barrier_impl<Implementation> impl_;
     struct async_arrive_op;
 };
 

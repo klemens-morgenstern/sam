@@ -25,8 +25,8 @@ BOOST_ASEM_BEGIN_NAMESPACE
 template < class Implementation, class Executor >
 basic_semaphore<  Implementation, Executor >::basic_semaphore(executor_type exec,
                                                          int initial_count)
-: impl_(initial_count)
-, exec_(std::move(exec))
+: exec_(std::move(exec))
+, impl_(BOOST_ASEM_ASIO_NAMESPACE::query(exec_, BOOST_ASEM_ASIO_NAMESPACE::execution::context), initial_count)
 {
 }
 

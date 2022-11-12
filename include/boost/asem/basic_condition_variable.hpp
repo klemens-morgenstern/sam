@@ -42,6 +42,7 @@ struct basic_condition_variable
     /// The destructor. @param exec The executor to be used by the condition variable
     explicit basic_condition_variable(executor_type exec)
             : exec_(std::move(exec))
+            , impl_{{BOOST_ASEM_ASIO_NAMESPACE::query(exec_, BOOST_ASEM_ASIO_NAMESPACE::execution::context)}}
     {
     }
 
@@ -54,7 +55,7 @@ struct basic_condition_variable
                                      ExecutionContext&,
                                      BOOST_ASEM_ASIO_NAMESPACE::execution_context&>::value
                          >::type * = nullptr)
-            : exec_(ctx.get_executor()), impl_(std::move(impl_))
+            : exec_(ctx.get_executor()), impl_(ctx)
     {
     }
 
@@ -62,7 +63,7 @@ struct basic_condition_variable
     template<typename Executor_>
     basic_condition_variable(basic_condition_variable<Implementation, Executor_> && sem,
                              std::enable_if<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
-            : exec_(sem.get_executor())
+            : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
     {
     }
 
@@ -148,8 +149,8 @@ struct basic_condition_variable
     template<typename, typename>
     friend struct basic_condition_variable;
 
-    detail::condition_variable_impl<Implementation> impl_;
     Executor exec_;
+    detail::condition_variable_impl<Implementation> impl_;
 
     template<typename Predicate>
     struct async_predicate_wait_op;

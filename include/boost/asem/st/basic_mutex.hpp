@@ -14,8 +14,10 @@ namespace detail
 {
 
 template<>
-struct mutex_impl<st>
+struct mutex_impl<st> : detail::service_member<st>
 {
+    mutex_impl(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx) : detail::service_member<st>(ctx) {}
+
     bool locked_ = false;
     bool locked() const {return locked_;}
     void do_lock()   { locked_ = true; }
@@ -32,12 +34,20 @@ struct mutex_impl<st>
     {
         return nullptr;
     }
+    int i = 0;
+    void shutdown() override
+    {
+        auto w = std::move(waiters_);
+        w.shutdown();
+    }
 
     detail::basic_bilist_holder<void(error_code)> waiters_;
 
-    mutex_impl() = default;
+    mutex_impl() = delete;
     mutex_impl(const mutex_impl &) = delete;
-    mutex_impl(mutex_impl && mi) : locked_(mi.locked_), waiters_(std::move(mi.waiters_))
+    mutex_impl(mutex_impl && mi)
+        : detail::service_member<st>(std::move(mi))
+        , locked_(mi.locked_), waiters_(std::move(mi.waiters_))
     {
         mi.locked_ = false;
     }

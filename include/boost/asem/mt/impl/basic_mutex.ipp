@@ -41,6 +41,14 @@ mutex_impl<mt>::lock(error_code & ec)
             this->unlink();
         }
 
+        void shutdown() override
+        {
+          done = true;
+          this->ec = BOOST_ASEM_ASIO_NAMESPACE::error::shut_down;
+          var.notify_all();
+          this->unlink();
+        }
+
         void wait(std::unique_lock<std::mutex> & lock)
         {
             var.wait(lock, [this]{ return done;});

@@ -24,6 +24,7 @@ struct predicate_op;
 template<typename ... Ts>
 struct predicate_op<void(Ts...)> : detail::bilist_node
 {
+    virtual void shutdown() = 0;
     virtual void complete(Ts...) = 0;
     virtual bool done() = 0;
 };
@@ -44,6 +45,22 @@ struct predicate_bilist_holder<void(error_code, Ts...)> : bilist_node
         while (nx != this)
             static_cast< op * >(nx)->complete(asio::error::operation_aborted, Ts{}...);
     }
+
+    void shutdown()
+    {
+        using op = predicate_op<void(error_code, Ts...)>;
+        bilist_node bn{std::move(*this)};
+
+        auto & nx = bn.next_;
+        while (nx != &bn)
+        {
+          auto nx2 = nx->next_;
+          static_cast< op * >(nx)->shutdown();
+          nx = nx2;
+        }
+
+    }
+
     predicate_bilist_holder() = default;
     predicate_bilist_holder(const predicate_bilist_holder &) = delete;
     predicate_bilist_holder(predicate_bilist_holder &&) = default;

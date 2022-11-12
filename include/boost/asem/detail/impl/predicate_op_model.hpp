@@ -107,6 +107,15 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
                                     BOOST_ASEM_ASIO_NAMESPACE::append(std::move(h), ec, std::move(args)...));
 }
 
+template < class Implementation, class Executor, class Handler, class Predicate, class ... Ts >
+void
+predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_code ec, Ts...) >::shutdown()
+{
+  get_cancellation_slot().clear();
+  this->unlink();
+  destroy(this);
+}
+
 }   // namespace detail
 
 BOOST_ASEM_END_NAMESPACE

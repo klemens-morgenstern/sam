@@ -69,6 +69,7 @@ struct predicate_op_model<Implementation, Executor, Handler, Predicate, void(err
     virtual void
     complete(error_code ec, Ts... val) override;
 
+    virtual void shutdown() override;
     virtual bool done() override
     {
         return predicate_();

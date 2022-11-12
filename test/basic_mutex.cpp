@@ -12,7 +12,7 @@
 #include <random>
 
 #if !defined(BOOST_ASEM_STANDALONE)
-namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
+namespace asio = boost::asio;
 #include <boost/asio.hpp>
 #include <boost/asio/compose.hpp>
 #include <boost/asio/yield.hpp>
@@ -27,8 +27,8 @@ namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
 #include <thread>
 
 using namespace BOOST_ASEM_NAMESPACE;
-using namespace BOOST_ASEM_ASIO_NAMESPACE;
-using namespace BOOST_ASEM_ASIO_NAMESPACE::experimental;
+using namespace net;
+using namespace net::experimental;
 
 using models = std::tuple<st, mt>;
 template<typename T>
@@ -54,12 +54,12 @@ struct basic_main_impl
     typename T::mutex mtx;
     std::vector< int > seq;
 
-    basic_main_impl(BOOST_ASEM_ASIO_NAMESPACE::any_io_executor exec) : mtx{exec} {}
+    basic_main_impl(net::any_io_executor exec) : mtx{exec} {}
 
 };
 
 template<typename T>
-struct basic_main : BOOST_ASEM_ASIO_NAMESPACE::coroutine
+struct basic_main : net::coroutine
 {
     struct step_impl
     {
@@ -90,7 +90,7 @@ struct basic_main : BOOST_ASEM_ASIO_NAMESPACE::coroutine
         }
     };
 
-    basic_main(BOOST_ASEM_ASIO_NAMESPACE::any_io_executor exec) : impl_(std::make_unique<basic_main_impl<T>>(exec)) {}
+    basic_main(net::any_io_executor exec) : impl_(std::make_unique<basic_main_impl<T>>(exec)) {}
 
     std::unique_ptr<basic_main_impl<T>> impl_;
 
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_SUITE(basic_mutex_test)
 BOOST_AUTO_TEST_CASE_TEMPLATE(random_mtx, T, models)
 {
     context<T> ctx;
-    BOOST_ASEM_ASIO_NAMESPACE::post(ctx, basic_main<T>{ctx.get_executor()});
+    net::post(ctx, basic_main<T>{ctx.get_executor()});
     run_impl(ctx);
 }
 
@@ -270,7 +270,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
 {
-  asio::io_context ctx;
+  io_context ctx;
   auto smtx = std::make_shared<typename T::mutex>(ctx);
 
   auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };

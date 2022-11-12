@@ -38,7 +38,7 @@ struct semaphore_impl;
  * @tparam Executor The executor to use as default completion.
  */
 template < class Implementation,
-           class Executor = BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >
+           class Executor = net::any_io_executor >
 struct basic_semaphore
 {
     /// @brief The implementation type
@@ -94,7 +94,7 @@ struct basic_semaphore
             typename std::enable_if<
                     std::is_convertible<
                             ExecutionContext&,
-                            BOOST_ASEM_ASIO_NAMESPACE::execution_context&>::value
+                            net::execution_context&>::value
             >::type * = nullptr)
         : exec_(ctx.get_executor())
         , impl_(ctx, initial_count)

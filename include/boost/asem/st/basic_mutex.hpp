@@ -16,7 +16,7 @@ namespace detail
 template<>
 struct mutex_impl<st> : detail::service_member<st>
 {
-    mutex_impl(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx) : detail::service_member<st>(ctx) {}
+    mutex_impl(net::execution_context & ctx) : detail::service_member<st>(ctx) {}
 
     bool locked_ = false;
     bool locked() const {return locked_;}
@@ -67,7 +67,7 @@ struct mutex_impl<st> : detail::service_member<st>
 
 #if !defined(BOOST_ASEM_HEADER_ONLY)
 extern template
-struct basic_mutex<st, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+struct basic_mutex<st, net::any_io_executor >;
 #endif
 
 BOOST_ASEM_END_NAMESPACE

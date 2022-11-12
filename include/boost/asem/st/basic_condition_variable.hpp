@@ -17,7 +17,7 @@ namespace detail
 template<>
 struct condition_variable_impl<st> : detail::service_member<st>
 {
-    BOOST_ASEM_DECL condition_variable_impl(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx);
+    BOOST_ASEM_DECL condition_variable_impl(net::execution_context & ctx);
 
     condition_variable_impl(condition_variable_impl const &) = delete;
     condition_variable_impl(condition_variable_impl && lhs) noexcept
@@ -58,7 +58,7 @@ struct condition_variable_impl<st> : detail::service_member<st>
 
 #if !defined(BOOST_ASEM_HEADER_ONLY)
 extern template
-struct basic_condition_variable<st, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+struct basic_condition_variable<st, net::any_io_executor >;
 #endif
 
 BOOST_ASEM_END_NAMESPACE

@@ -10,10 +10,10 @@
 BOOST_ASEM_BEGIN_NAMESPACE
 
 #if defined(BOOST_ASEM_SOURCE)
-template struct basic_barrier<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
-template struct basic_condition_variable<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
-template struct basic_mutex<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
-template struct basic_semaphore<mt, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+template struct basic_barrier<mt, net::any_io_executor >;
+template struct basic_condition_variable<mt, net::any_io_executor >;
+template struct basic_mutex<mt, net::any_io_executor >;
+template struct basic_semaphore<mt, net::any_io_executor >;
 #endif
 
 BOOST_ASEM_END_NAMESPACE

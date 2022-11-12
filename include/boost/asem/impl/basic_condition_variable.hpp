@@ -24,9 +24,9 @@ struct basic_condition_variable<Implementation, Executor>::async_predicate_wait_
         ignore_unused(l);
 
         if (predicate())
-            return BOOST_ASEM_ASIO_NAMESPACE::post(
+            return net::post(
                     std::move(e),
-                    BOOST_ASEM_ASIO_NAMESPACE::append(
+                    net::append(
                             std::forward< Handler >(handler), error_code()));
 
         using handler_type = std::decay_t< Handler >;

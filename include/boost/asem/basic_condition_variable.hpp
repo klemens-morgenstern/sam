@@ -33,7 +33,7 @@ struct condition_variable_impl;
  * @tparam Implementation The implementation, st or mt.
  * @tparam Executor The executor to use as default completion.
  */
-template<typename Implementation, typename Executor = BOOST_ASEM_ASIO_NAMESPACE::any_io_executor>
+template<typename Implementation, typename Executor = net::any_io_executor>
 struct basic_condition_variable
 {
     /// The executor type.
@@ -42,7 +42,7 @@ struct basic_condition_variable
     /// The destructor. @param exec The executor to be used by the condition variable
     explicit basic_condition_variable(executor_type exec)
             : exec_(std::move(exec))
-            , impl_{{BOOST_ASEM_ASIO_NAMESPACE::query(exec_, BOOST_ASEM_ASIO_NAMESPACE::execution::context)}}
+            , impl_{{net::query(exec_, net::execution::context)}}
     {
     }
 
@@ -53,7 +53,7 @@ struct basic_condition_variable
                         typename std::enable_if<
                             std::is_convertible<
                                      ExecutionContext&,
-                                     BOOST_ASEM_ASIO_NAMESPACE::execution_context&>::value
+                                     net::execution_context&>::value
                          >::type * = nullptr)
             : exec_(ctx.get_executor()), impl_(ctx)
     {
@@ -78,7 +78,7 @@ struct basic_condition_variable
             BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
     async_wait(CompletionToken &&token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(executor_type))
     {
-        return BOOST_ASEM_ASIO_NAMESPACE::async_initiate<CompletionToken, void(error_code)>(
+        return net::async_initiate<CompletionToken, void(error_code)>(
                 async_wait_op{this}, token);
     }
 
@@ -98,7 +98,7 @@ struct basic_condition_variable
                CompletionToken &&token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(executor_type),
                typename std::enable_if<std::is_same<decltype(std::declval<Predicate>()()), bool>::value>::type * = nullptr)
     {
-        return BOOST_ASEM_ASIO_NAMESPACE::async_initiate<CompletionToken, void(error_code)>(
+        return net::async_initiate<CompletionToken, void(error_code)>(
                 async_predicate_wait_op<
                         typename std::decay<Predicate>::type
                         >{this, std::forward<Predicate>(predicate)}, token);

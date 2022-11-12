@@ -37,9 +37,9 @@ struct basic_mutex<Implementation ,Executor>::async_lock_op
         ignore_unused(l);
 
         if (self->impl_.try_lock())
-            return BOOST_ASEM_ASIO_NAMESPACE::post(
+            return net::post(
                     std::move(e),
-                    BOOST_ASEM_ASIO_NAMESPACE::append(
+                    net::append(
                             std::forward< Handler >(handler), error_code()));
 
         using handler_type = std::decay_t< Handler >;

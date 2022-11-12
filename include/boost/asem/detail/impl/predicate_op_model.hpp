@@ -33,7 +33,7 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
     Predicate             predicate)
     -> predicate_op_model *
 {
-    auto halloc = BOOST_ASEM_ASIO_NAMESPACE::get_associated_allocator(handler);
+    auto halloc = net::get_associated_allocator(handler);
     auto alloc  = typename std::allocator_traits< decltype(halloc) >::
         template rebind_alloc< predicate_op_model >(halloc);
     using traits = std::allocator_traits< decltype(alloc) >;
@@ -84,12 +84,12 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
     auto slot = get_cancellation_slot();
     if (slot.is_connected())
         slot.assign(
-            [this](BOOST_ASEM_ASIO_NAMESPACE::cancellation_type type)
+            [this](net::cancellation_type type)
             {
-                if (type != BOOST_ASEM_ASIO_NAMESPACE::cancellation_type::none)
+                if (type != net::cancellation_type::none)
                 {
                     predicate_op_model *self = this;
-                    self->complete(BOOST_ASEM_ASIO_NAMESPACE::error::operation_aborted);
+                    self->complete(net::error::operation_aborted);
                 }
             });
 }
@@ -103,8 +103,8 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
     auto h = std::move(handler_);
     this->unlink();
     destroy(this);
-    BOOST_ASEM_ASIO_NAMESPACE::post(g.get_executor(),
-                                    BOOST_ASEM_ASIO_NAMESPACE::append(std::move(h), ec, std::move(args)...));
+    net::post(g.get_executor(),
+                                    net::append(std::move(h), ec, std::move(args)...));
 }
 
 template < class Implementation, class Executor, class Handler, class Predicate, class ... Ts >

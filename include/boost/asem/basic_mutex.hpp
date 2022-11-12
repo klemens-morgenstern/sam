@@ -33,7 +33,7 @@ struct mutex_impl;
  * @tparam Implementation The implementation, st or mt.
  * @tparam Executor The executor to use as default completion.
  */
-template<typename Implementation, typename Executor = BOOST_ASEM_ASIO_NAMESPACE::any_io_executor>
+template<typename Implementation, typename Executor = net::any_io_executor>
 struct basic_mutex
 {
     /// The executor type.
@@ -42,7 +42,7 @@ struct basic_mutex
     /// The destructor. @param exec The executor to be used by the mutex.
     explicit basic_mutex(executor_type exec)
             : exec_(std::move(exec))
-            , impl_{{BOOST_ASEM_ASIO_NAMESPACE::query(exec_, BOOST_ASEM_ASIO_NAMESPACE::execution::context)}}
+            , impl_{{net::query(exec_, net::execution::context)}}
     {
     }
 
@@ -52,7 +52,7 @@ struct basic_mutex
                          typename std::enable_if<
                                  std::is_convertible<
                                          ExecutionContext&,
-                                         BOOST_ASEM_ASIO_NAMESPACE::execution_context&>::value
+                                         net::execution_context&>::value
                                  >::type * = nullptr)
             : exec_(ctx.get_executor()), impl_(ctx)
     {
@@ -77,7 +77,7 @@ struct basic_mutex
         BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
     async_lock(CompletionToken &&token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(executor_type))
     {
-        return BOOST_ASEM_ASIO_NAMESPACE::async_initiate<CompletionToken, void(std::error_code)>(
+        return net::async_initiate<CompletionToken, void(std::error_code)>(
                 async_lock_op{this}, token);
     }
 

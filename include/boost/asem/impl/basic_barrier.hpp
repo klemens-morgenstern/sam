@@ -35,9 +35,9 @@ struct basic_barrier<Implementation ,Executor>::async_arrive_op
         auto e = get_associated_executor(handler, self->get_executor());
 
         if (self->impl_.try_arrive())
-            return BOOST_ASEM_ASIO_NAMESPACE::post(
+            return net::post(
                     std::move(e),
-                    BOOST_ASEM_ASIO_NAMESPACE::append(
+                    net::append(
                             std::forward< Handler >(handler), error_code()));
 
         auto l = self->impl_.internal_lock();

@@ -16,7 +16,7 @@ namespace detail
 template<>
 struct semaphore_impl<st> : detail::service_member<st>
 {
-    BOOST_ASEM_DECL semaphore_impl(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx, int initial_count = 1);
+    BOOST_ASEM_DECL semaphore_impl(net::execution_context & ctx, int initial_count = 1);
 
     semaphore_impl(const semaphore_impl &) = delete;
     semaphore_impl(semaphore_impl && mi)
@@ -78,7 +78,7 @@ struct semaphore_impl<st> : detail::service_member<st>
 
 #if !defined(BOOST_ASEM_HEADER_ONLY)
 extern template
-struct basic_semaphore<st, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+struct basic_semaphore<st, net::any_io_executor >;
 #endif
 
 BOOST_ASEM_END_NAMESPACE

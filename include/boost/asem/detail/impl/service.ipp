@@ -15,10 +15,10 @@ namespace detail
 {
 
 #if defined(BOOST_ASEM_SOURCE)
-extern template struct op_list_service<st>;
-extern template struct op_list_service<mt>;
-extern template struct service_member<st>;
-extern template struct service_member<mt>;
+template struct op_list_service<st>;
+template struct op_list_service<mt>;
+template struct service_member<st>;
+template struct service_member<mt>;
 #endif
 
 }

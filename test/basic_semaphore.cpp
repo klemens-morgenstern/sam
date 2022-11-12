@@ -29,6 +29,8 @@
 #include <asio/as_tuple.hpp>
 #include <asio/experimental/parallel_group.hpp>
 
+namespace net = ::asio;
+
 #else
 
 #include <boost/asio.hpp>
@@ -37,9 +39,12 @@
 #include <boost/asio/append.hpp>
 #include <boost/asio/experimental/as_tuple.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+
+namespace net = boost::asio;
+
 #endif
 
-using namespace BOOST_ASEM_ASIO_NAMESPACE;
+using namespace net;
 using namespace std::literals;
 using namespace BOOST_ASEM_NAMESPACE;
 
@@ -62,7 +67,7 @@ inline void run_impl(thread_pool & ctx)
 }
 
 template<typename T>
-struct basic_bot : BOOST_ASEM_ASIO_NAMESPACE::coroutine
+struct basic_bot : net::coroutine
 {
     int n;
     typename T::semaphore &sem;
@@ -262,7 +267,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_acquire, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
 {
-  asio::io_context ctx;
+  io_context ctx;
   auto smtx = std::make_shared<typename T::semaphore>(ctx, 1);
 
   auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };

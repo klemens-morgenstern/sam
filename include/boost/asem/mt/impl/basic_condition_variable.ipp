@@ -14,7 +14,7 @@ namespace detail
 {
 
 condition_variable_impl<mt>::condition_variable_impl(
-    BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx) : detail::service_member<mt>(ctx)
+    net::execution_context & ctx) : detail::service_member<mt>(ctx)
 {
 }
 

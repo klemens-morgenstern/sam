@@ -54,7 +54,7 @@ void barrier_impl<mt>::arrive(error_code &ec)
         void shutdown() override
         {
           done = true;
-          this->ec = BOOST_ASEM_ASIO_NAMESPACE::error::shut_down;
+          this->ec = net::error::shut_down;
           var.notify_all();
           this->unlink();
         }

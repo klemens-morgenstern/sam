@@ -26,7 +26,7 @@ template < class Implementation, class Executor >
 basic_semaphore<  Implementation, Executor >::basic_semaphore(executor_type exec,
                                                          int initial_count)
 : exec_(std::move(exec))
-, impl_(BOOST_ASEM_ASIO_NAMESPACE::query(exec_, BOOST_ASEM_ASIO_NAMESPACE::execution::context), initial_count)
+, impl_(net::query(exec_, net::execution::context), initial_count)
 {
 }
 
@@ -52,8 +52,8 @@ struct basic_semaphore<Implementation ,Executor>::async_aquire_op
         if (self->impl_.count() > 0)
         {
             self->impl_.decrement();
-            BOOST_ASEM_ASIO_NAMESPACE::post(std::move(e),
-                                            BOOST_ASEM_ASIO_NAMESPACE::append(
+            net::post(std::move(e),
+                                            net::append(
                                                 std::forward< Handler >(handler), error_code()));
             return ;
         }
@@ -70,7 +70,7 @@ template < BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code)) CompletionHandler >
 BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionHandler, void(error_code))
 basic_semaphore<Implementation, Executor >::async_acquire(CompletionHandler &&token)
 {
-    return BOOST_ASEM_ASIO_NAMESPACE::async_initiate< CompletionHandler, void(std::error_code) >(
+    return net::async_initiate< CompletionHandler, void(std::error_code) >(
                 async_aquire_op{this}, token);
 }
 

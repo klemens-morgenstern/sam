@@ -32,7 +32,7 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...)>::construct(
     Handler               handler)
     -> basic_op_model *
 {
-    auto halloc = BOOST_ASEM_ASIO_NAMESPACE::get_associated_allocator(handler);
+    auto halloc = net::get_associated_allocator(handler);
     auto alloc  = typename std::allocator_traits< decltype(halloc) >::
         template rebind_alloc< basic_op_model >(halloc);
     using traits = std::allocator_traits< decltype(alloc) >;
@@ -81,12 +81,12 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...) >::basic_op_model
     auto slot = get_cancellation_slot();
     if (slot.is_connected())
         slot.assign(
-            [this](BOOST_ASEM_ASIO_NAMESPACE::cancellation_type type)
+            [this](net::cancellation_type type)
             {
-                if (type != BOOST_ASEM_ASIO_NAMESPACE::cancellation_type::none)
+                if (type != net::cancellation_type::none)
                 {
                     basic_op_model *self = this;
-                    self->complete(BOOST_ASEM_ASIO_NAMESPACE::error::operation_aborted);
+                    self->complete(net::error::operation_aborted);
                 }
             });
 }
@@ -100,8 +100,8 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...) >::complete(Ts ..
     auto h = std::move(handler_);
     this->unlink();
     destroy(this);
-    BOOST_ASEM_ASIO_NAMESPACE::post(g.get_executor(),
-                                    BOOST_ASEM_ASIO_NAMESPACE::append(std::move(h), std::move(args)...));
+    net::post(g.get_executor(),
+                                    net::append(std::move(h), std::move(args)...));
 }
 
 template < class Implementation, class Executor, class Handler, class ... Ts >

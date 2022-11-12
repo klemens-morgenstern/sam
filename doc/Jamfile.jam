@@ -30,11 +30,11 @@ doxygen autodoc
   <doxygen:param>EXCLUDE_SYMBOLS=BOOST_ASEM_SOURCE
   <doxygen:param>MACRO_EXPANSION=YES
   <doxygen:param>PREDEFINED="\\
-    BOOST_ASEM_ASIO_NAMESPACE=boost::asio \\
+    net=boost::asio \\
     BOOST_ASEM_NAMESPACE=boost::asem \\
     GENERATING_DOCUMENTATION \\
     BOOST_ASEM_COMPLETION_TOKEN_FOR(X)=typename \\
-    BOOST_ASEM_ASIO_NAMESPACE=boost::asio:: \\
+    net=boost::asio:: \\
     BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE= = default \\
     BOOST_ASEM_DEFAULT_COMPLETION_TOKEN= = default \\
     BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(...)=deduced \\

@@ -7,7 +7,6 @@
 
 #if defined(BOOST_ASEM_STANDALONE)
 
-#define BOOST_ASEM_ASIO_NAMESPACE ::asio
 #define BOOST_ASEM_NODISCARD ASIO_NODISCARD
 #define BOOST_ASEM_COMPLETION_TOKEN_FOR(Sig) ASIO_COMPLETION_TOKEN_FOR(Sig)
 #define BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor) ASIO_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)
@@ -25,7 +24,6 @@
 
 #else
 
-#define BOOST_ASEM_ASIO_NAMESPACE ::boost::asio
 #define BOOST_ASEM_NODISCARD BOOST_ATTRIBUTE_NODISCARD
 
 #define BOOST_ASEM_COMPLETION_TOKEN_FOR(Sig) BOOST_ASIO_COMPLETION_TOKEN_FOR(Sig)
@@ -85,6 +83,8 @@ using std::system_error ;
 template<typename T>
 inline void ignore_unused(const T& ) {}
 
+namespace net = ::asio;
+
 #else
 
 using boost::ignore_unused ;
@@ -92,6 +92,8 @@ using boost::system::error_code ;
 using boost::system::error_category ;
 using boost::system::system_category ;
 using boost::system::system_error ;
+
+namespace net = ::boost::asio;
 
 #endif
 

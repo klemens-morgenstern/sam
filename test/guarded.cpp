@@ -13,7 +13,7 @@
 #include <vector>
 
 #if !defined(BOOST_ASEM_STANDALONE)
-namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
+namespace asio = boost::asio;
 #include <boost/asio.hpp>
 #include <boost/asio/compose.hpp>
 #include <boost/asio/yield.hpp>
@@ -26,8 +26,8 @@ namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
 #endif
 
 using namespace BOOST_ASEM_NAMESPACE;
-using namespace BOOST_ASEM_ASIO_NAMESPACE;
-using namespace BOOST_ASEM_ASIO_NAMESPACE::experimental;
+using namespace net;
+using namespace net::experimental;
 
 using models = std::tuple<st, mt>;
 template<typename T>
@@ -81,7 +81,7 @@ struct impl
 template<typename T, typename CompletionToken>
 auto async_impl(T & se, int i, bool & active,  CompletionToken && completion_token)
 {
-    return BOOST_ASEM_ASIO_NAMESPACE::async_compose<CompletionToken, void(error_code)>(
+    return net::async_compose<CompletionToken, void(error_code)>(
             impl(i, active, se.get_executor()), completion_token, se.get_executor());
 }
 

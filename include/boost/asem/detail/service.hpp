@@ -34,16 +34,16 @@ struct service_member;
 template<typename Impl>
 using mutex = typename std::conditional<
     std::is_same<st, Impl>::value,
-    BOOST_ASEM_ASIO_NAMESPACE::detail::null_mutex,
+    net::detail::null_mutex,
     std::mutex>::type;
 
 // Default service implementation for a strand.
 template<typename Impl>
 struct op_list_service final
-  : BOOST_ASEM_ASIO_NAMESPACE::detail::execution_context_service_base<op_list_service<Impl>>
+  : net::detail::execution_context_service_base<op_list_service<Impl>>
 {
   op_list_service(asio::execution_context& ctx)
-    : BOOST_ASEM_ASIO_NAMESPACE::detail::execution_context_service_base<op_list_service<Impl>>(ctx)
+    : net::detail::execution_context_service_base<op_list_service<Impl>>(ctx)
   {
   }
 
@@ -88,8 +88,8 @@ struct service_member : bilist_node
 
   op_list_service<Impl> * service;
 
-  service_member(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx)
-    : service(&BOOST_ASEM_ASIO_NAMESPACE::use_service<op_list_service<Impl>>(ctx))
+  service_member(net::execution_context & ctx)
+    : service(&net::use_service<op_list_service<Impl>>(ctx))
   {
     service->register_queue(this);
   }

@@ -29,7 +29,10 @@
 #include <asio/as_tuple.hpp>
 #include <asio/experimental/parallel_group.hpp>
 
+namespace net = ::asio;
+
 #else
+
 namespace asio = boost::asio;
 #include <boost/asio.hpp>
 #include <boost/asio/coroutine.hpp>
@@ -37,9 +40,12 @@ namespace asio = boost::asio;
 #include <boost/asio/append.hpp>
 #include <boost/asio/experimental/as_tuple.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+
+namespace net = boost::asio;
+
 #endif
 
-using namespace BOOST_ASEM_ASIO_NAMESPACE;
+using namespace asio;
 using namespace std::literals;
 using namespace BOOST_ASEM_NAMESPACE;
 
@@ -171,7 +177,7 @@ BOOST_AUTO_TEST_CASE(rebind_condition_variable)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
 {
-  asio::io_context ctx;
+  io_context ctx;
   auto smtx = std::make_shared<typename T::condition_variable>(ctx);
 
   auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };

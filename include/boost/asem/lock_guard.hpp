@@ -143,7 +143,7 @@ inline BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock
     async_lock(basic_mutex<Implementation, Executor> &mtx,
                 CompletionToken &&token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
-    using BOOST_ASEM_ASIO_NAMESPACE::deferred;
+    using net::deferred;
     using lg_t = lock_guard<basic_mutex<Implementation, Executor>>;
     return mtx.async_lock(
             deferred([&](error_code ec)

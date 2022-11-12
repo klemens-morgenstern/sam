@@ -12,7 +12,7 @@
 #include <random>
 
 #if !defined(BOOST_ASEM_STANDALONE)
-namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
+namespace asio = boost::asio;
 #include <boost/asio.hpp>
 #include <boost/asio/compose.hpp>
 #include <boost/asio/yield.hpp>
@@ -25,8 +25,8 @@ namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
 #endif
 
 using namespace BOOST_ASEM_NAMESPACE;
-using namespace BOOST_ASEM_ASIO_NAMESPACE;
-using namespace BOOST_ASEM_ASIO_NAMESPACE::experimental;
+using namespace net;
+using namespace net::experimental;
 
 using models = std::tuple<st, mt>;
 template<typename T>
@@ -52,15 +52,15 @@ struct basic_barrier_main_impl
     std::atomic<int> done{0};
     typename T::barrier barrier;
     asio::steady_timer tim{barrier.get_executor()};
-    basic_barrier_main_impl(BOOST_ASEM_ASIO_NAMESPACE::any_io_executor exec) : barrier{exec, 5} {}
+    basic_barrier_main_impl(net::any_io_executor exec) : barrier{exec, 5} {}
 
 };
 
 template<typename T>
-struct basic_barrier_main : BOOST_ASEM_ASIO_NAMESPACE::coroutine
+struct basic_barrier_main : net::coroutine
 {
 
-    basic_barrier_main(BOOST_ASEM_ASIO_NAMESPACE::any_io_executor exec)
+    basic_barrier_main(net::any_io_executor exec)
         : impl_(std::make_unique<basic_barrier_main_impl<T>>(exec)) {}
 
     std::unique_ptr<basic_barrier_main_impl<T>> impl_;
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_SUITE(basic_barrier_test)
 BOOST_AUTO_TEST_CASE_TEMPLATE(random_barrier, T, models)
 {
     context<T> ctx;
-    BOOST_ASEM_ASIO_NAMESPACE::post(ctx, basic_barrier_main<T>{ctx.get_executor()});
+    net::post(ctx, basic_barrier_main<T>{ctx.get_executor()});
     run_impl(ctx);
 }
 
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
 {
   std::weak_ptr<typename T::barrier> wp;
   {
-    asio::io_context ctx;
+    io_context ctx;
     auto smtx = std::make_shared<typename T::barrier>(ctx, 2);
     wp = smtx;
     auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };

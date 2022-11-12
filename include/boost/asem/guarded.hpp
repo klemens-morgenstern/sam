@@ -66,10 +66,10 @@ struct guard_by_semaphore_op<Implementation, Executor, Op, void (Err, Args...)>
     template<typename Self>
     void operator()(Self && self) // init
     {
-        if (self.get_cancellation_state().cancelled() != BOOST_ASEM_ASIO_NAMESPACE::cancellation_type::none)
-            return std::move(self).complete(make_error(BOOST_ASEM_ASIO_NAMESPACE::error::operation_aborted), Args{}...);
+        if (self.get_cancellation_state().cancelled() != net::cancellation_type::none)
+            return std::move(self).complete(make_error(net::error::operation_aborted), Args{}...);
 
-        auto h2 =  BOOST_ASEM_ASIO_NAMESPACE::prepend(std::move(self), semaphore_tag{});
+        auto h2 =  net::prepend(std::move(self), semaphore_tag{});
         sm.async_acquire(std::move(h2));
     }
 
@@ -79,7 +79,7 @@ struct guard_by_semaphore_op<Implementation, Executor, Op, void (Err, Args...)>
         if (ec)
             self.complete(make_error(ec), Args{}...);
         else
-            std::move(op)(BOOST_ASEM_ASIO_NAMESPACE::prepend(std::move(self), op_tag{}));
+            std::move(op)(net::prepend(std::move(self), op_tag{}));
     }
 
     template<typename Self, typename ... Args_>
@@ -106,14 +106,14 @@ struct guard_by_semaphore_op<Implementation, Executor, Op, void (Err, Args...)>
 template<typename Implementation,
          typename Executor, typename Op,
         BOOST_ASEM_COMPLETION_TOKEN_FOR(
-                typename BOOST_ASEM_ASIO_NAMESPACE::completion_signature_of<Op>::type) CompletionToken
+                typename net::completion_signature_of<Op>::type) CompletionToken
         BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
 auto guarded(basic_semaphore<Implementation, Executor> & sm, Op && op,
              CompletionToken && completion_token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
-    using sig_t = typename decltype(std::declval<Op>()(BOOST_ASEM_ASIO_NAMESPACE::detail::completion_signature_probe{}))::type;
+    using sig_t = typename decltype(std::declval<Op>()(net::detail::completion_signature_probe{}))::type;
     using cop = detail::guard_by_semaphore_op<Implementation, Executor, std::decay_t<Op>, sig_t>;
-    return BOOST_ASEM_ASIO_NAMESPACE::async_compose<CompletionToken, sig_t>(
+    return net::async_compose<CompletionToken, sig_t>(
             cop{sm, std::forward<Op>(op)}, completion_token, sm);
 }
 
@@ -153,10 +153,10 @@ struct guard_by_mutex_op<Implementation, Executor, Op, void(Err, Args...)>
     template<typename Self>
     void operator()(Self &&self) // init
     {
-        if (self.get_cancellation_state().cancelled() != BOOST_ASEM_ASIO_NAMESPACE::cancellation_type::none)
-            return std::move(self).complete(make_error(BOOST_ASEM_ASIO_NAMESPACE::error::operation_aborted), Args{}...);
+        if (self.get_cancellation_state().cancelled() != net::cancellation_type::none)
+            return std::move(self).complete(make_error(net::error::operation_aborted), Args{}...);
 
-        sm.async_lock(BOOST_ASEM_ASIO_NAMESPACE::prepend(std::move(self), semaphore_tag{}));
+        sm.async_lock(net::prepend(std::move(self), semaphore_tag{}));
     }
 
     template<typename Self>
@@ -166,7 +166,7 @@ struct guard_by_mutex_op<Implementation, Executor, Op, void(Err, Args...)>
         if (ec)
             self.complete(make_error(ec), Args{}...);
         else
-            std::move(op)(BOOST_ASEM_ASIO_NAMESPACE::prepend(std::move(self), op_tag{}));
+            std::move(op)(net::prepend(std::move(self), op_tag{}));
     }
 
     template<typename Self, typename ... Args_>
@@ -194,15 +194,15 @@ struct guard_by_mutex_op<Implementation, Executor, Op, void(Err, Args...)>
 template<typename Implementation,
         typename Executor, typename Op,
         BOOST_ASEM_COMPLETION_TOKEN_FOR(
-                typename BOOST_ASEM_ASIO_NAMESPACE::completion_signature_of<Op>::type) CompletionToken
+                typename net::completion_signature_of<Op>::type) CompletionToken
         BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
 auto guarded(basic_mutex<Implementation, Executor> & mtx,
              Op && op,
              CompletionToken && completion_token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
-    using sig_t = typename decltype(std::declval<Op>()(BOOST_ASEM_ASIO_NAMESPACE::detail::completion_signature_probe{}))::type;
+    using sig_t = typename decltype(std::declval<Op>()(net::detail::completion_signature_probe{}))::type;
     using cop = detail::guard_by_mutex_op<Implementation, Executor, std::decay_t<Op>, sig_t>;
-    return BOOST_ASEM_ASIO_NAMESPACE::async_compose<CompletionToken, sig_t>(
+    return net::async_compose<CompletionToken, sig_t>(
             cop{mtx, std::forward<Op>(op)}, completion_token, mtx);
 }
 

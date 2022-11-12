@@ -14,7 +14,7 @@
 #include <boost/asem/lock_guard.hpp>
 
 #if !defined(BOOST_ASEM_STANDALONE)
-namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
+namespace asio = boost::asio;
 #include <boost/asio.hpp>
 #include <boost/asio/compose.hpp>
 #include <boost/asio/yield.hpp>
@@ -27,8 +27,8 @@ namespace asio = BOOST_ASEM_ASIO_NAMESPACE;
 #endif
 
 using namespace BOOST_ASEM_NAMESPACE;
-using namespace BOOST_ASEM_ASIO_NAMESPACE;
-using namespace BOOST_ASEM_ASIO_NAMESPACE::experimental;
+using namespace net;
+using namespace net::experimental;
 
 using models = std::tuple<st, mt>;
 template<typename T>
@@ -86,7 +86,7 @@ struct impl : asio::coroutine
 template<typename T, typename CompletionToken>
 auto async_impl(T & mtx, int i, bool & active,  CompletionToken && completion_token)
 {
-    return BOOST_ASEM_ASIO_NAMESPACE::async_compose<CompletionToken, void(error_code)>(
+    return net::async_compose<CompletionToken, void(error_code)>(
             impl<T>(i, active, mtx), completion_token, mtx);
 }
 
@@ -146,7 +146,7 @@ struct impl_t : asio::coroutine
 template<typename T, typename CompletionToken>
 auto async_impl(T & mtx, CompletionToken && completion_token)
 {
-    return BOOST_ASEM_ASIO_NAMESPACE::async_compose<CompletionToken, void(error_code)>(
+    return net::async_compose<CompletionToken, void(error_code)>(
             impl_t<T>(mtx), completion_token, mtx);
 }
 

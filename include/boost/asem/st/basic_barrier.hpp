@@ -16,7 +16,7 @@ namespace detail
 template<>
 struct barrier_impl<st> : detail::service_member<st>
 {
-    barrier_impl(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx,
+    barrier_impl(net::execution_context & ctx,
                  std::ptrdiff_t init) : detail::service_member<st>(ctx), init_(init) {}
 
     std::ptrdiff_t init_;
@@ -54,7 +54,7 @@ struct barrier_impl<st> : detail::service_member<st>
 
 #if !defined(BOOST_ASEM_HEADER_ONLY)
 extern template
-struct basic_barrier<st, BOOST_ASEM_ASIO_NAMESPACE::any_io_executor >;
+struct basic_barrier<st, net::any_io_executor >;
 #endif
 
 BOOST_ASEM_END_NAMESPACE

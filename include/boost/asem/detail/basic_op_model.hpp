@@ -34,19 +34,19 @@ template < class Implementation, class Executor, class Handler, class ... Ts>
 struct basic_op_model<Implementation, Executor, Handler, void(Ts...)> final : basic_op<void(Ts...)>
 {
     using executor_type = Executor;
-    using cancellation_slot_type = BOOST_ASEM_ASIO_NAMESPACE::associated_cancellation_slot_t< Handler >;
-    using allocator_type = BOOST_ASEM_ASIO_NAMESPACE::associated_allocator_t< Handler >;
+    using cancellation_slot_type = net::associated_cancellation_slot_t< Handler >;
+    using allocator_type = net::associated_allocator_t< Handler >;
 
     allocator_type
     get_allocator()
     {
-        return BOOST_ASEM_ASIO_NAMESPACE::get_associated_allocator(handler_);
+        return net::get_associated_allocator(handler_);
     }
 
     cancellation_slot_type
     get_cancellation_slot()
     {
-        return BOOST_ASEM_ASIO_NAMESPACE::get_associated_cancellation_slot(handler_);
+        return net::get_associated_cancellation_slot(handler_);
     }
 
     executor_type
@@ -79,7 +79,7 @@ struct basic_op_model<Implementation, Executor, Handler, void(Ts...)> final : ba
     };
 
   private:
-    BOOST_ASEM_ASIO_NAMESPACE::executor_work_guard< Executor > work_guard_;
+    net::executor_work_guard< Executor > work_guard_;
     Handler                               handler_;
 };
 

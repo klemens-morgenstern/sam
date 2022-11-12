@@ -13,7 +13,7 @@ BOOST_ASEM_BEGIN_NAMESPACE
 namespace detail
 {
 
-semaphore_impl<st>::semaphore_impl(BOOST_ASEM_ASIO_NAMESPACE::execution_context & ctx, int initial_count)
+semaphore_impl<st>::semaphore_impl(net::execution_context & ctx, int initial_count)
     :  detail::service_member<st>(ctx), count_(initial_count)
 {
 }

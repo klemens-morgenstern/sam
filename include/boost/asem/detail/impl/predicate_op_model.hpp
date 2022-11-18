@@ -62,9 +62,8 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
 template < class Implementation, class Executor, class Handler, class Predicate, class ... Ts >
 auto
 predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_code ec, Ts...) >::destroy(
-        predicate_op_model *self) -> void
+        predicate_op_model *self, net::associated_allocator_t<Handler> halloc) -> void
 {
-    auto halloc = self->get_allocator();
     auto alloc  = typename std::allocator_traits< decltype(halloc) >::
         template rebind_alloc< predicate_op_model >(halloc);
     self->~predicate_op_model();
@@ -102,7 +101,7 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
     auto g = std::move(work_guard_);
     auto h = std::move(handler_);
     this->unlink();
-    destroy(this);
+    destroy(this, net::get_associated_allocator(h));
     net::post(g.get_executor(),
                                     net::append(std::move(h), ec, std::move(args)...));
 }
@@ -113,7 +112,7 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
 {
   get_cancellation_slot().clear();
   this->unlink();
-  destroy(this);
+  destroy(this, net::get_associated_allocator(this->handler_));
 }
 
 }   // namespace detail

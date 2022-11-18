@@ -59,7 +59,8 @@ struct basic_op_model<Implementation, Executor, Handler, void(Ts...)> final : ba
     construct(Executor e, Handler handler);
 
     static void
-    destroy(basic_op_model *self);
+    destroy(basic_op_model *self,
+            net::associated_allocator_t<Handler> halloc);
 
     basic_op_model(Executor              e,
                    Handler               handler);

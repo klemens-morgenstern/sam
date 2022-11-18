@@ -60,7 +60,8 @@ struct predicate_op_model<Implementation, Executor, Handler, Predicate, void(err
     construct(Executor e, Handler handler, Predicate predicate);
 
     static void
-    destroy(predicate_op_model *self);
+    destroy(predicate_op_model *self,
+            net::associated_allocator_t<Handler> halloc);
 
     predicate_op_model(Executor              e,
                        Handler               handler,

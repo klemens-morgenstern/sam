@@ -77,14 +77,6 @@ struct predicate_op_model<Implementation, Executor, Handler, Predicate, void(err
     }
 
   private:
-    struct cancellation_handler
-    {
-        predicate_op_model* self;
-
-        void operator()(asio::cancellation_type type);
-    };
-
-  private:
     net::executor_work_guard< Executor > work_guard_;
     Handler                               handler_;
     Predicate                             predicate_;

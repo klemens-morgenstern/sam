@@ -78,17 +78,6 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...) >::basic_op_model
 : work_guard_(std::move(e))
 , handler_(std::move(handler))
 {
-    auto slot = get_cancellation_slot();
-    if (slot.is_connected())
-        slot.assign(
-            [this](net::cancellation_type type)
-            {
-                if (type != net::cancellation_type::none)
-                {
-                    basic_op_model *self = this;
-                    self->complete(net::error::operation_aborted);
-                }
-            });
 }
 
 template < class Implementation, class Executor, class Handler, class ... Ts >

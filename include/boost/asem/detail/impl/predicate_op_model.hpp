@@ -80,17 +80,6 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
 , handler_(std::move(handler))
 , predicate_(std::move(predicate))
 {
-    auto slot = get_cancellation_slot();
-    if (slot.is_connected())
-        slot.assign(
-            [this](net::cancellation_type type)
-            {
-                if (type != net::cancellation_type::none)
-                {
-                    predicate_op_model *self = this;
-                    self->complete(net::error::operation_aborted);
-                }
-            });
 }
 
 template < class Implementation, class Executor, class Handler, class Predicate, class ... Ts >

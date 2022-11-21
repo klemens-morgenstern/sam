@@ -45,6 +45,23 @@ struct basic_mutex<Implementation ,Executor>::async_lock_op
         using handler_type = std::decay_t< Handler >;
         using model_type = detail::basic_op_model< Implementation, decltype(e), handler_type, void(error_code)>;
         model_type *model = model_type::construct(std::move(e), std::forward< Handler >(handler));
+
+        auto slot = model->get_cancellation_slot();
+        if (slot.is_connected())
+        {
+          auto &impl = self->impl_;
+          slot.assign(
+              [model, &impl](net::cancellation_type type)
+              {
+                if (type != net::cancellation_type::none)
+                {
+                  auto lock = impl.internal_lock();
+                  ignore_unused(lock);
+                  auto *self = model;
+                  self->complete(net::error::operation_aborted);
+                }
+              });
+        }
         self->impl_.add_waiter(model);
     }
 };

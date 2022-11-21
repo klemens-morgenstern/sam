@@ -157,4 +157,23 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
   BOOST_CHECK(wp.expired());
 }
 
+BOOST_AUTO_TEST_CASE_TEMPLATE(cancel, T, models)
+{
+  context<T> ctx;
+  auto smtx = std::make_shared<typename T::barrier>(ctx, 2);
+  auto l =  [smtx](error_code ec) { BOOST_CHECK(ec == asio::error::operation_aborted); };
+
+  asio::cancellation_signal sig;
+
+  smtx->async_arrive(asio::bind_cancellation_slot(sig.slot(), l));
+
+  asio::post(
+      [&]
+      {
+        sig.emit(asio::cancellation_type::total);
+      });
+
+  run_impl(ctx);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

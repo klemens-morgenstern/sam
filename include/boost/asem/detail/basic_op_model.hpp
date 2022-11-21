@@ -72,14 +72,6 @@ struct basic_op_model<Implementation, Executor, Handler, void(Ts...)> final : ba
     shutdown() override;
 
   private:
-    struct cancellation_handler
-    {
-        basic_op_model* self;
-
-        void operator()(asio::cancellation_type type);
-    };
-
-  private:
     net::executor_work_guard< Executor > work_guard_;
     Handler                               handler_;
 };

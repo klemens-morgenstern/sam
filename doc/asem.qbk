@@ -24,6 +24,8 @@ Every primitive comes in two version, `st` for single threaded and `mt` for mult
 
 The `st` version is meant for applications that do utilize a single `asio::io_context` with a single thread.
 
+Moving a primitive while it has pending operations is UB.
+
 [endsection]
 
 [xinclude autodoc.xml]

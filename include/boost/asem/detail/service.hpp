@@ -54,7 +54,7 @@ struct op_list_service final
   void   register_queue(bilist_node * sm)
   {
     std::lock_guard<mutex_type> lock{mtx_};
-    entries.link_before(sm);
+    sm->link_before(&entries);
   }
   void unregister_queue(bilist_node * sm)
   {
@@ -70,10 +70,10 @@ struct op_list_service final
     while (nx != &e)
     {
       auto nnx = nx->next_;
+      static_cast< op * >(nx)->service = nullptr;
       static_cast< op * >(nx)->shutdown();
-      nx = nnx;
+      e.next_ = nx = nnx;
     }
-
   }
 
   ~op_list_service()
@@ -98,7 +98,7 @@ struct service_member : bilist_node
   service_member(service_member&& sm) noexcept
       : service(sm.service)
   {
-
+    service->register_queue(this);
   }
   service_member& operator=(const service_member& ) = delete;
 
@@ -106,16 +106,17 @@ struct service_member : bilist_node
   {
     if (sm.service != service)
     {
-      sm.service->unregister_queue(this);
+      service->unregister_queue(this);
       sm.service = service;
-      sm.service->register_queue(this);
+      service->register_queue(this);
     }
     return *this;
   }
 
   ~service_member()
   {
-    service->unregister_queue(this);
+    if (service != nullptr)
+      service->unregister_queue(this);
   }
 
   using mutex_type = mutex<Impl>;

@@ -20,9 +20,7 @@ on common implementations, such as `std::barrier`, `std::mutex`, `std::counting_
 This library is not meant for common asio usage in the application layer, but for implementation of complex composed operations.
 That means you should only consider this if an `asio::strand` does not suffice.
 
-Every primitive comes in two version, `st` for single threaded and `mt` for multi threaded.
-
-The `st` version is meant for applications that do utilize a single `asio::io_context` with a single thread.
+The primitives checks the executor whether or not it is operating on a single thread, and chooses thread-protection accordingly.
 
 Moving a primitive while it has pending operations is UB.
 

@@ -5,4 +5,3 @@
 
 #define BOOST_TEST_MODULE boost_asem
 #include <boost/test/included/unit_test.hpp>
-#include <boost/asem/src.hpp>

@@ -9,7 +9,7 @@
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/bilist_node.hpp>
-#include <boost/asem/detail/basic_semaphore.hpp>
+#include <boost/asem/detail/semaphore_impl.hpp>
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/any_io_executor.hpp>

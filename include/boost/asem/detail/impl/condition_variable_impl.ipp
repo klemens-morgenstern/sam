@@ -2,12 +2,12 @@
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-#ifndef BOOST_ASEM_DETAIL_IMPL_BASIC_CONDITION_VARIABLE_IPP
-#define BOOST_ASEM_DETAIL_IMPL_BASIC_CONDITION_VARIABLE_IPP
+#ifndef BOOST_ASEM_DETAIL_IMPL_CONDITION_VARIABLE_IMPL_IPP
+#define BOOST_ASEM_DETAIL_IMPL_CONDITION_VARIABLE_IMPL_IPP
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/basic_op.hpp>
-#include <boost/asem/detail/basic_condition_variable.hpp>
+#include <boost/asem/detail/condition_variable_impl.hpp>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 namespace detail
@@ -54,4 +54,4 @@ condition_variable_impl::notify_all()
 BOOST_ASEM_END_NAMESPACE
 
 
-#endif //BOOST_ASEM_MT_IMPL_BASIC_CONDITION_VARIABLE_IPP
+#endif //BOOST_ASEM_DETAIL_IMPL_CONDITION_VARIABLE_IMPL_IPP

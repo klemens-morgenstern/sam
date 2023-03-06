@@ -6,7 +6,7 @@
 #define BOOST_ASEM_BASIC_MUTEX_HPP
 
 #include <boost/asem/detail/config.hpp>
-#include <boost/asem/detail/basic_mutex.hpp>
+#include <boost/asem/detail/mutex_impl.hpp>
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/any_io_executor.hpp>

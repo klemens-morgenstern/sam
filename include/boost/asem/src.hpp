@@ -14,9 +14,9 @@
 #endif
 
 #include <boost/asem/detail/impl/service.ipp>
-#include <boost/asem/detail/impl/basic_barrier.ipp>
-#include <boost/asem/detail/impl/basic_condition_variable.ipp>
-#include <boost/asem/detail/impl/basic_mutex.ipp>
-#include <boost/asem/detail/impl/basic_semaphore.ipp>
+#include <boost/asem/detail/impl/barrier_impl.ipp>
+#include <boost/asem/detail/impl/condition_variable_impl.ipp>
+#include <boost/asem/detail/impl/mutex_impl.ipp>
+#include <boost/asem/detail/impl/semaphore_impl.ipp>
 
 #endif //BOOST_ASEM_SRC_HPP

@@ -2,12 +2,12 @@
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-#ifndef BOOST_ASEM_DETAIL_IMPL_BASIC_SEMAPHORE_IPP
-#define BOOST_ASEM_DETAIL_IMPL_BASIC_SEMAPHORE_IPP
+#ifndef BOOST_ASEM_DEDTAIL_IMPL_SEMAPHORE_IMPL_IPP
+#define BOOST_ASEM_DEDTAIL_IMPL_SEMAPHORE_IMPL_IPP
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/basic_op.hpp>
-#include <boost/asem/detail/basic_semaphore.hpp>
+#include <boost/asem/detail/semaphore_impl.hpp>
 
 #include <condition_variable>
 
@@ -152,4 +152,4 @@ semaphore_impl::decrement()
 BOOST_ASEM_END_NAMESPACE
 
 
-#endif //BOOST_ASEM_MT_IMPL_BASIC_SEMAPHORE_IPP
+#endif //BOOST_ASEM_DEDTAIL_IMPL_SEMAPHORE_IMPL_IPP

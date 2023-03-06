@@ -6,7 +6,7 @@
 #define BOOST_ASEM_BASIC_CONDITION_VARIABLE_HPP
 
 #include <boost/asem/detail/config.hpp>
-#include <boost/asem/detail/basic_condition_variable.hpp>
+#include <boost/asem/detail/condition_variable_impl.hpp>
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/any_io_executor.hpp>

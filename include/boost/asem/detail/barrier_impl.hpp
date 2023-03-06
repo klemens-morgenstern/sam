@@ -2,8 +2,8 @@
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-#ifndef BOOST_ASEM_DETAIL_BASIC_BARRIER_HPP
-#define BOOST_ASEM_DETAIL_BASIC_BARRIER_HPP
+#ifndef BOOST_ASEM_DETAIL_BARRIER_IMPL_HPP
+#define BOOST_ASEM_DETAIL_BARRIER_IMPL_HPP
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/basic_barrier.hpp>
@@ -86,4 +86,4 @@ BOOST_ASEM_END_NAMESPACE
 
 
 
-#endif //BOOST_ASEM_DETAIL_BASIC_BARRIER_HPP
+#endif //BOOST_ASEM_DETAIL_BARRIER_IMPL_HPP

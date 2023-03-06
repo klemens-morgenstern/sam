@@ -7,7 +7,7 @@
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/service.hpp>
-#include <boost/asem/detail/basic_barrier.hpp>
+#include <boost/asem/detail/barrier_impl.hpp>
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/any_io_executor.hpp>

@@ -2,35 +2,59 @@
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-#ifndef BOOST_ASEM_DETAIL_IMPL_BASIC_MUTEX_IPP
-#define BOOST_ASEM_DETAIL_IMPL_BASIC_MUTEX_IPP
+#ifndef BOOST_ASEM_IMPL_BARRIER_IMPL_IPP
+#define BOOST_ASEM_IMPL_BARRIER_IMPL_IPP
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/basic_op.hpp>
-#include <boost/asem/detail/basic_mutex.hpp>
-
+#include <boost/asem/basic_barrier.hpp>
 #include <condition_variable>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 namespace detail
 {
 
-void
-mutex_impl::add_waiter(detail::wait_op *waiter) noexcept
+bool barrier_impl::try_arrive()
 {
-    waiter->link_before(&waiters_);
+  if (thread_safe())
+  {
+    if (ts_counter_.fetch_sub(1) <= 1)
+    {
+        auto l = internal_lock();
+        waiters_.complete_all({});
+        ts_counter_ = init_;
+        return true;
+    }
+    else
+    {
+        ts_counter_ ++;
+        return false;
+    }
+  }
+  else
+  {
+    if (--counter_ == 0u)
+    {
+      waiters_.complete_all({});
+      counter_ = init_;
+      return true;
+    }
+    else
+      counter_++;
+    return false;
+  }
 }
 
-void
-mutex_impl::lock(error_code & ec)
+void barrier_impl::arrive(error_code &ec)
 {
-    if (try_lock())
-        return ;
-    else if (!this->thread_safe())
+    if (try_arrive())
+        return;
+    else if (!thread_safe())
     {
-        BOOST_ASEM_ASSIGN_EC(ec, asio::error::in_progress);
-        return ;
+      BOOST_ASEM_ASSIGN_EC(ec, asio::error::in_progress);
+      return ;
     }
+
     struct op_t final : detail::wait_op
     {
         error_code ec;
@@ -56,39 +80,32 @@ mutex_impl::lock(error_code & ec)
           this->unlink();
         }
 
+        ~op_t()
+        {
+        }
+
         void wait()
         {
-          while (!done)
-            var.wait(lock);
+            while (!done)
+                var.wait(lock);
         }
     };
-
     auto lock = this->internal_lock();
     op_t op{ec, lock};
+    decrement();
     add_waiter(&op);
     op.wait();
 }
 
 void
-mutex_impl::unlock()
+barrier_impl::add_waiter(detail::wait_op *waiter) noexcept
 {
-    auto lock = internal_lock();
-
-    // release a pending operations
-    if (waiters_.next_ == &waiters_)
-    {
-        if (thread_safe())
-          ts_locked_.store(false);
-        else
-          locked_ = false;
-        return;
-    }
-    assert(waiters_.next_ != nullptr);
-    static_cast< detail::wait_op * >(waiters_.next_)->complete(std::error_code());
+    waiter->link_before(&waiters_);
 }
+
 
 }
 BOOST_ASEM_END_NAMESPACE
 
 
-#endif //BOOST_ASEM_DETAIL_IMPL_BASIC_MUTEX_IPP
+#endif //BOOST_ASEM_IMPL_BARRIER_IMPL_IPP

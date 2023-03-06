@@ -2,8 +2,8 @@
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-#ifndef BOOST_ASEM_DETAIL_BASIC_SEMAPHORE_HPP
-#define BOOST_ASEM_DETAIL_BASIC_SEMAPHORE_HPP
+#ifndef BOOST_ASEM_DETAIL_SEMAPHORE_IMPL_HPP
+#define BOOST_ASEM_DETAIL_SEMAPHORE_IMPL_HPP
 
 #include <atomic>
 #include <mutex>
@@ -87,4 +87,4 @@ BOOST_ASEM_END_NAMESPACE
 
 
 
-#endif //BOOST_ASEM_DETAIL_BASIC_SEMAPHORE_HPP
+#endif //BOOST_ASEM_DETAIL_SEMAPHORE_IMPL_HPP

@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.5...3.16)
 
 project(boost_asem VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 
-add_library(boost_asem INTERFACE)
+add_library(boost_asem STATIC src/src.cpp)
 add_library(Boost::asem ALIAS boost_asem)
 
 if (BOOST_ASEM_STANDALONE)
@@ -18,12 +18,12 @@ else()
   target_link_libraries(boost_asem
     INTERFACE
       Boost::asio
-      Boost::filesystem
       Boost::system
   )
 endif()
 
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
+  enable_testing()
   add_subdirectory(test)
 endif()
 

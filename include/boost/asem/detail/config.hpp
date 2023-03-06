@@ -14,13 +14,15 @@
 #define BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(Executor) ASIO_DEFAULT_COMPLETION_TOKEN(Executor)
 
 #include <asio/error.hpp>
+#include <asio/detail/event.hpp>
+#include <asio/detail/conditionally_enabled_mutex.hpp>
 #include <system_error>
 
 #define BOOST_ASEM_BEGIN_NAMESPACE namespace asem {
 #define BOOST_ASEM_END_NAMESPACE  }
 #define BOOST_ASEM_NAMESPACE asem
 #define BOOST_ASEM_ASSERT(Condition) ASIO_ASSERT(Condition)
-
+#define BOOST_ASEM_ASSIGN_EC(ec, error) ec = error;
 
 #else
 
@@ -34,6 +36,8 @@
 
 #include <boost/config.hpp>
 #include <boost/asio/error.hpp>
+#include <boost/asio/detail/event.hpp>
+#include <boost/asio/detail/conditionally_enabled_mutex.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_category.hpp>
 #include <boost/system/system_error.hpp>
@@ -68,7 +72,11 @@
 #define BOOST_ASEM_END_NAMESPACE  } }
 #define BOOST_ASEM_NAMESPACE boost::asem
 #define BOOST_ASEM_ASSERT(Condition) BOOST_ASSERT(Condition)
-
+#define BOOST_ASEM_ASSIGN_EC(ec, ev) \
+{                                       \
+    static constexpr auto loc ## __LINE__((BOOST_CURRENT_LOCATION)); \
+    ec =::boost::system::error_code((ev), &loc ## __LINE__);         \
+}
 #endif
 
 BOOST_ASEM_BEGIN_NAMESPACE
@@ -79,7 +87,6 @@ using std::error_code ;
 using std::error_category ;
 using std::system_category ;
 using std::system_error ;
-
 template<typename T>
 inline void ignore_unused(const T& ) {}
 
@@ -97,11 +104,19 @@ namespace net = ::boost::asio;
 
 #endif
 
+namespace detail
+{
+// maybe ported over.
+using net::detail::conditionally_enabled_mutex;
+using net::detail::event;
+}
+
+
 BOOST_ASEM_END_NAMESPACE
 
 #ifndef BOOST_ASEM_HEADER_ONLY
 # ifndef BOOST_ASEM_SEPARATE_COMPILATION
-#   define BOOST_ASEM_HEADER_ONLY 1
+#   define BOOST_ASEM_SEPARATE_COMPILATION 1
 # endif
 #endif
 

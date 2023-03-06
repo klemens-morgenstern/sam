@@ -19,12 +19,10 @@ project : requirements
 
 import testing ;
 
-
-
 lib header_test : header_1.cpp header_2.cpp :
         <define>BOOST_ASEM_HEADER_ONLY=1 ;
 
-lib test_impl : test_impl.cpp :
+lib test_impl : test_impl.cpp /boost//asem :
         <define>BOOST_ASEM_SEPARATE_COMPILATION=1
         <define>BOOST_TEST_IGNORE_SIGCHLD=1
         <link>static
@@ -39,4 +37,5 @@ test-suite standalone :
     [ run basic_condition_variable.cpp test_impl ]
     [ run guarded.cpp test_impl ]
     [ run lock_guard.cpp test_impl ]
+    [ run concurrency_hint.cpp test_impl ]
     ;

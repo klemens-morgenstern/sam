@@ -4,7 +4,12 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/asem/detail/concurrency_hint.hpp>
+
+#if defined(BOOST_ASEM_STANDALONE)
 #include <asio/thread_pool.hpp>
+#else
+#include <boost/asio/thread_pool.hpp>
+#endif
 
 #include <boost/test/unit_test.hpp>
 

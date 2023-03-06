@@ -7,22 +7,16 @@
 
 #define BOOST_ASEM_SOURCE
 
-#include <boost/process/v2/detail/config.hpp>
+#include <boost/asem/detail/config.hpp>
 
 #if defined(BOOST_ASEM_HEADER_ONLY)
 # error Do not compile Asem library source with BOOST_BEAST_HEADER_ONLY defined
 #endif
 
 #include <boost/asem/detail/impl/service.ipp>
-#include <boost/asem/mt/impl/basic_barrier.ipp>
-#include <boost/asem/st/impl/basic_barrier.ipp>
-#include <boost/asem/mt/impl/basic_condition_variable.ipp>
-#include <boost/asem/st/impl/basic_condition_variable.ipp>
-#include <boost/asem/mt/impl/basic_mutex.ipp>
-#include <boost/asem/st/impl/basic_mutex.ipp>
-#include <boost/asem/mt/impl/basic_semaphore.ipp>
-#include <boost/asem/st/impl/basic_semaphore.ipp>
-#include <boost/asem/impl/st.ipp>
-#include <boost/asem/impl/mt.ipp>
+#include <boost/asem/detail/impl/basic_barrier.ipp>
+#include <boost/asem/detail/impl/basic_condition_variable.ipp>
+#include <boost/asem/detail/impl/basic_mutex.ipp>
+#include <boost/asem/detail/impl/basic_semaphore.ipp>
 
 #endif //BOOST_ASEM_SRC_HPP

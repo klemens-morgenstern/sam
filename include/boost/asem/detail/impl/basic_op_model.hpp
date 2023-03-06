@@ -25,9 +25,9 @@ BOOST_ASEM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template < class Implementation, class Executor, class Handler, class ... Ts >
+template < class Executor, class Handler, class ... Ts >
 auto
-basic_op_model< Implementation, Executor, Handler, void(Ts...)>::construct(
+basic_op_model< Executor, Handler, void(Ts...)>::construct(
     Executor              e,
     Handler               handler)
     -> basic_op_model *
@@ -58,9 +58,9 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...)>::construct(
             basic_op_model(std::move(e), std::move(handler));
 }
 
-template < class Implementation, class Executor, class Handler, class ... Ts >
+template < class Executor, class Handler, class ... Ts >
 auto
-basic_op_model< Implementation, Executor, Handler, void(Ts...) >::destroy(
+basic_op_model< Executor, Handler, void(Ts...) >::destroy(
         basic_op_model *self,
         net::associated_allocator_t<Handler> halloc) -> void
 {
@@ -71,8 +71,8 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...) >::destroy(
     traits.deallocate(alloc, self, 1);
 }
 
-template < class Implementation, class Executor, class Handler, class ... Ts >
-basic_op_model< Implementation, Executor, Handler, void(Ts...) >::basic_op_model(
+template < class Executor, class Handler, class ... Ts >
+basic_op_model< Executor, Handler, void(Ts...) >::basic_op_model(
     Executor              e,
     Handler               handler)
 : work_guard_(std::move(e))
@@ -80,9 +80,9 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...) >::basic_op_model
 {
 }
 
-template < class Implementation, class Executor, class Handler, class ... Ts >
+template < class Executor, class Handler, class ... Ts >
 void
-basic_op_model< Implementation, Executor, Handler, void(Ts...) >::complete(Ts ... args)
+basic_op_model< Executor, Handler, void(Ts...) >::complete(Ts ... args)
 {
     get_cancellation_slot().clear();
     auto g = std::move(work_guard_);
@@ -92,9 +92,9 @@ basic_op_model< Implementation, Executor, Handler, void(Ts...) >::complete(Ts ..
     net::post(g.get_executor(), net::append(std::move(h), std::move(args)...));
 }
 
-template < class Implementation, class Executor, class Handler, class ... Ts >
+template < class Executor, class Handler, class ... Ts >
 void
-basic_op_model< Implementation, Executor, Handler, void(Ts...) >::shutdown()
+basic_op_model< Executor, Handler, void(Ts...) >::shutdown()
 {
   get_cancellation_slot().clear();
   this->unlink();

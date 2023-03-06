@@ -1,4 +1,3 @@
-enable_testing()
 
 if (BOOST_ASEM_STANDALONE)
     find_package(Boost REQUIRED unit_test_framework)
@@ -19,5 +18,6 @@ boost_asem_standalone_test(basic_semaphore)
 boost_asem_standalone_test(basic_mutex)
 boost_asem_standalone_test(basic_condition_variable)
 boost_asem_standalone_test(basic_barrier)
+boost_asem_standalone_test(concurrency_hint)
 boost_asem_standalone_test(guarded)
 boost_asem_standalone_test(lock_guard)

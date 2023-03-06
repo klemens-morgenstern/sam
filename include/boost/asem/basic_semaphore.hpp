@@ -9,6 +9,7 @@
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/bilist_node.hpp>
+#include <boost/asem/detail/basic_semaphore.hpp>
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/any_io_executor.hpp>
@@ -21,28 +22,17 @@
 #endif
 
 BOOST_ASEM_BEGIN_NAMESPACE
-struct st;
-struct mt;
-
-namespace detail
-{
-
-template<typename Impl>
-struct semaphore_impl;
-
-}
 
 /** An asio based semaphore.`
  *
  * @tparam Implementation The implementation, st or mt.
  * @tparam Executor The executor to use as default completion.
  */
-template < class Implementation,
-           class Executor = net::any_io_executor >
+template < class Executor = net::any_io_executor >
 struct basic_semaphore
 {
     /// @brief The implementation type
-    using implementation_type = detail::semaphore_impl<Implementation>;
+    using implementation_type = detail::semaphore_impl;
 
     /// @brief The type of the default executor.
     using executor_type = Executor;
@@ -52,7 +42,7 @@ struct basic_semaphore
     struct rebind_executor
     {
         /// The socket type when rebound to the specified executor.
-        typedef basic_semaphore< Implementation, Executor1 > other;
+        typedef basic_semaphore< Executor1 > other;
     };
 
     /// @brief Construct a semaphore
@@ -65,7 +55,7 @@ struct basic_semaphore
 
     /// @brief Rebind a semaphore to a new executor - this cancels all outstanding operations.
     template<typename Executor_>
-    basic_semaphore(basic_semaphore<Implementation, Executor_> && sem,
+    basic_semaphore(basic_semaphore<Executor_> && sem,
                     std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
         : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
     {
@@ -76,7 +66,7 @@ struct basic_semaphore
 
     /// Move assign a semaphore with a different executor.
     template<typename Executor_>
-    auto operator=(basic_semaphore<Implementation, Executor_> && sem)
+    auto operator=(basic_semaphore<Executor_> && sem)
         -> std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_semaphore>  &
     {
         exec_ = std::move(sem.exec_);
@@ -182,7 +172,7 @@ struct basic_semaphore
         return impl_.value();
     }
   private:
-    template<typename, typename>
+    template<typename>
     friend struct basic_semaphore;
 
     executor_type exec_;

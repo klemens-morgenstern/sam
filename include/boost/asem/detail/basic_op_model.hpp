@@ -26,12 +26,12 @@ BOOST_ASEM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template < class Implementation, class Executor, class Handler, class Signature>
+template < class Executor, class Handler, class Signature>
 struct basic_op_model;
 
 
-template < class Implementation, class Executor, class Handler, class ... Ts>
-struct basic_op_model<Implementation, Executor, Handler, void(Ts...)> final : basic_op<void(Ts...)>
+template < class Executor, class Handler, class ... Ts>
+struct basic_op_model<Executor, Handler, void(Ts...)> final : basic_op<void(Ts...)>
 {
     using executor_type = Executor;
     using cancellation_slot_type = net::associated_cancellation_slot_t< Handler >;

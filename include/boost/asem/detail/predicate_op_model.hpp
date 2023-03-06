@@ -26,12 +26,12 @@ BOOST_ASEM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template < class Implementation, class Executor, class Predicate, class Handler, class Signature>
+template < class Executor, class Predicate, class Handler, class Signature>
 struct predicate_op_model;
 
 
-template < class Implementation, class Executor, class Handler, class Predicate, class ... Ts>
-struct predicate_op_model<Implementation, Executor, Handler, Predicate, void(error_code, Ts...)> final
+template < class Executor, class Handler, class Predicate, class ... Ts>
+struct predicate_op_model< Executor, Handler, Predicate, void(error_code, Ts...)> final
     : predicate_op<void(error_code, Ts...)>
 {
     using executor_type = Executor;

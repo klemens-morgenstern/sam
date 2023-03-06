@@ -19,7 +19,7 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-template<typename Implementation, typename Executor>
+template<typename Executor>
 struct basic_mutex;
 
 /** A lock-guard used as an RAII object that automatically unlocks on destruction
@@ -55,16 +55,16 @@ struct lock_guard
         if (mtx_ != nullptr)
             mtx_->unlock();
     }
-    template<typename Implementation, typename Executor,
-            BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard<basic_mutex<Implementation, Executor>>)) CompletionHandler>
-    friend BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionHandler, void(error_code, lock_guard<basic_mutex<Implementation, Executor>>))
-        async_lock(basic_mutex<Implementation, Executor> &mtx, CompletionHandler &&token);
+    template<typename Executor,
+            BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard<basic_mutex<Executor>>)) CompletionHandler>
+    friend BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionHandler, void(error_code, lock_guard<basic_mutex<Executor>>))
+        async_lock(basic_mutex<Executor> &mtx, CompletionHandler &&token);
 
-    template<typename Implementation, typename Executor>
-    friend lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementation, Executor> & mtx);
+    template<typename Executor>
+    friend lock_guard<basic_mutex<Executor>> lock(basic_mutex<Executor> & mtx);
 
-    template<typename Implementation, typename Executor>
-    friend lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementation, Executor> & mtx, error_code & ec);
+    template<typename Executor>
+    friend lock_guard<basic_mutex<Executor>> lock(basic_mutex<Executor> & mtx, error_code & ec);
 
     lock_guard(Mutex & mtx, const std::adopt_lock_t &) : mtx_(&mtx) {}
 
@@ -85,11 +85,11 @@ struct lock_guard
  *
  * @throws May throw a system_error if locking is not possible without a deadlock.
  */
-template<typename Implementation, typename Executor>
-lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementation, Executor> & mtx)
+template<typename Executor>
+lock_guard<basic_mutex<Executor>> lock(basic_mutex<Executor> & mtx)
 {
     mtx.lock();
-    return lock_guard<basic_mutex<Implementation, Executor>>(std::adopt_lock, mtx);
+    return lock_guard<basic_mutex<Executor>>(std::adopt_lock, mtx);
 }
 
 
@@ -100,15 +100,15 @@ lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementatio
  *
  * @returns The lock_guard. It might be default constructed if locking   wasn't possible.
  */
-template<typename Implementation, typename Executor>
-lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementation, Executor> & mtx,
+template<typename Executor>
+lock_guard<basic_mutex<Executor>> lock(basic_mutex<Executor> & mtx,
                                                        error_code & ec)
 {
     mtx.lock(ec);
     if (ec)
-        return lock_guard<basic_mutex<Implementation, Executor>>();
+        return lock_guard<basic_mutex<Executor>>();
     else
-        return lock_guard<basic_mutex<Implementation, Executor>>(&mtx);
+        return lock_guard<basic_mutex<Executor>>(&mtx);
 }
 
 
@@ -136,15 +136,15 @@ lock_guard<basic_mutex<Implementation, Executor>> lock(basic_mutex<Implementatio
  * @endcode
  *
  */
-template<typename Implementation, typename Executor,
-         BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard<basic_mutex<Implementation, Executor>>)) CompletionToken
+template<typename Executor,
+         BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard<basic_mutex<Executor>>)) CompletionToken
              BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor) >
 inline BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock_guard<Mutex>))
-    async_lock(basic_mutex<Implementation, Executor> &mtx,
+    async_lock(basic_mutex<Executor> &mtx,
                 CompletionToken &&token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
     using net::deferred;
-    using lg_t = lock_guard<basic_mutex<Implementation, Executor>>;
+    using lg_t = lock_guard<basic_mutex<Executor>>;
     return mtx.async_lock(
             deferred([&](error_code ec)
             {

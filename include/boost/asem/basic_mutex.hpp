@@ -6,6 +6,7 @@
 #define BOOST_ASEM_BASIC_MUTEX_HPP
 
 #include <boost/asem/detail/config.hpp>
+#include <boost/asem/detail/basic_mutex.hpp>
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/any_io_executor.hpp>
@@ -17,23 +18,12 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-struct st;
-struct mt;
-
-namespace detail
-{
-
-template<typename Impl>
-struct mutex_impl;
-
-}
-
 /** An asio based mutex modeled on `std::mutex`.
  *
  * @tparam Implementation The implementation, st or mt.
  * @tparam Executor The executor to use as default completion.
  */
-template<typename Implementation, typename Executor = net::any_io_executor>
+template<typename Executor = net::any_io_executor>
 struct basic_mutex
 {
     /// The executor type.
@@ -60,7 +50,7 @@ struct basic_mutex
 
     /// @brief Rebind a mutex to a new executor - this cancels all outstanding operations.
     template<typename Executor_>
-    basic_mutex(basic_mutex<Implementation, Executor_> && sem,
+    basic_mutex(basic_mutex<Executor_> && sem,
                 std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
             : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
     {
@@ -86,7 +76,7 @@ struct basic_mutex
 
     /// Move assign a mutex with a different executor.
     template<typename Executor_>
-    auto operator=(basic_mutex<Implementation, Executor_> && sem)
+    auto operator=(basic_mutex<Executor_> && sem)
         -> std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_mutex>  &
     {
         std::swap(exec_, sem.exec_);
@@ -139,7 +129,7 @@ struct basic_mutex
     struct rebind_executor
     {
         /// The mutex type when rebound to the specified executor.
-        typedef basic_mutex<Implementation, Executor1> other;
+        typedef basic_mutex<Executor1> other;
     };
 
     /// @brief return the default executor.
@@ -147,11 +137,11 @@ struct basic_mutex
     get_executor() const noexcept {return exec_;}
 
   private:
-    template<typename, typename>
+    template<typename>
     friend struct basic_mutex;
 
     Executor exec_;
-    detail::mutex_impl<Implementation> impl_;
+    detail::mutex_impl impl_;
     struct async_lock_op;
 };
 

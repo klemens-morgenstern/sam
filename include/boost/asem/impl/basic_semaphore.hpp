@@ -22,26 +22,25 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-template < class Implementation, class Executor >
-basic_semaphore<  Implementation, Executor >::basic_semaphore(executor_type exec,
-                                                         int initial_count)
+template < class Executor >
+basic_semaphore< Executor >::basic_semaphore(executor_type exec, int initial_count)
 : exec_(std::move(exec))
 , impl_(net::query(exec_, net::execution::context), initial_count)
 {
 }
 
-template < class  Implementation, class Executor >
+template < class Executor >
 auto
-basic_semaphore< Implementation, Executor >::get_executor() const noexcept -> executor_type
+basic_semaphore< Executor >::get_executor() const noexcept -> executor_type
 {
     return exec_;
 }
 
 
-template < class  Implementation, class Executor >
-struct basic_semaphore<Implementation ,Executor>::async_aquire_op
+template < class Executor >
+struct basic_semaphore<Executor>::async_aquire_op
 {
-    basic_semaphore<Implementation, Executor> * self;
+    basic_semaphore<Executor> * self;
 
     template< class Handler >
     void operator()(Handler &&handler)
@@ -59,7 +58,7 @@ struct basic_semaphore<Implementation ,Executor>::async_aquire_op
         }
 
         using handler_type = std::decay_t< Handler >;
-        using model_type = detail::basic_op_model< Implementation, decltype(e), handler_type, void(error_code)>;
+        using model_type = detail::basic_op_model< decltype(e), handler_type, void(error_code)>;
         model_type *model = model_type ::construct(std::move(e), std::forward< Handler >(handler));
         auto slot = model->get_cancellation_slot();
         if (slot.is_connected())
@@ -87,10 +86,10 @@ struct basic_semaphore<Implementation ,Executor>::async_aquire_op
     }
 };
 
-template < class  Implementation, class Executor >
+template < class Executor >
 template < BOOST_ASEM_COMPLETION_TOKEN_FOR(void(error_code)) CompletionHandler >
 BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(CompletionHandler, void(error_code))
-basic_semaphore<Implementation, Executor >::async_acquire(CompletionHandler &&token)
+basic_semaphore< Executor >::async_acquire(CompletionHandler &&token)
 {
     return net::async_initiate< CompletionHandler, void(std::error_code) >(
                 async_aquire_op{this}, token);

@@ -2,11 +2,12 @@
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-#ifndef BOOST_ASEM_basic_barrier_HPP
-#define BOOST_ASEM_basic_barrier_HPP
+#ifndef BOOST_ASEM_BASIC_BARRIER_HPP
+#define BOOST_ASEM_BASIC_BARRIER_HPP
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/service.hpp>
+#include <boost/asem/detail/basic_barrier.hpp>
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/any_io_executor.hpp>
@@ -19,36 +20,24 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-struct st;
-struct mt;
-
-namespace detail
-{
-
-template<typename Impl>
-struct barrier_impl;
-
-}
-
-/** An asio based BARRIER modeled on `std::BARRIER`.
+/** An asio based barrier modeled on `std::barrier`.
  *
- * @tparam Implementation The implementation, st or mt.
  * @tparam Executor The executor to use as default completion.
  */
-template<typename Implementation, typename Executor = net::any_io_executor>
+template<typename Executor = net::any_io_executor>
 struct basic_barrier
 {
     /// The executor type.
     using executor_type = Executor;
 
-    /// The destructor. @param exec The executor to be used by the BARRIER.
+    /// The destructor. @param exec The executor to be used by the barrier.
     explicit basic_barrier(executor_type exec, std::ptrdiff_t init_count)
             : exec_(std::move(exec))
             , impl_{net::query(exec_, net::execution::context), init_count}
     {
     }
 
-    /// The destructor. @param ctx The execution context used by the BARRIER.
+    /// The destructor. @param ctx The execution context used by the barrier.
     template<typename ExecutionContext>
     explicit basic_barrier(ExecutionContext & ctx,
                          typename std::enable_if<
@@ -63,7 +52,7 @@ struct basic_barrier
 
     /// @brief Rebind a barrier to a new executor - this cancels all outstanding operations.
     template<typename Executor_>
-    basic_barrier(basic_barrier<Implementation, Executor_> && sem,
+    basic_barrier(basic_barrier<Executor_> && sem,
                   std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
             : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
     {
@@ -89,7 +78,7 @@ struct basic_barrier
 
     /// Move assign a barrier with a different executor.
     template<typename Executor_>
-    auto operator=(basic_barrier<Implementation, Executor_> && sem)
+    auto operator=(basic_barrier<Executor_> && sem)
         ->std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_barrier>  &
     {
         exec_ = std::move(sem.exec_);
@@ -98,7 +87,7 @@ struct basic_barrier
     }
 
     basic_barrier& operator=(const basic_barrier&) = delete;
-    
+
     bool try_arrive()
     {
         return impl_.try_arrive();
@@ -129,12 +118,12 @@ struct basic_barrier
             throw system_error(ec, "arrive");
     }
 
-    /// Rebinds the BARRIER type to another executor.
+    /// Rebinds the barrier type to another executor.
     template <typename Executor1>
     struct rebind_executor
     {
-        /// The BARRIER type when rebound to the specified executor.
-        typedef basic_barrier<Implementation, Executor1> other;
+        /// The barrier type when rebound to the specified executor.
+        typedef basic_barrier<Executor1> other;
     };
 
     /// @brief return the default executor.
@@ -142,11 +131,11 @@ struct basic_barrier
     get_executor() const noexcept {return exec_;}
 
   private:
-    template<typename, typename>
+    template<typename>
     friend struct basic_barrier;
 
     Executor exec_;
-    detail::barrier_impl<Implementation> impl_;
+    detail::barrier_impl impl_;
     struct async_arrive_op;
 };
 
@@ -155,4 +144,4 @@ BOOST_ASEM_END_NAMESPACE
 
 #include <boost/asem/impl/basic_barrier.hpp>
 
-#endif //BOOST_ASEM_basic_barrier_HPP
+#endif //BOOST_ASEM_BASIC_BARRIER_HPP

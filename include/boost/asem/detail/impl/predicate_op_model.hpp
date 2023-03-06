@@ -25,9 +25,9 @@ BOOST_ASEM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template < class Implementation, class Executor, class Handler, class Predicate, class ... Ts >
+template < class Executor, class Handler, class Predicate, class ... Ts >
 auto
-predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_code ec, Ts...)>::construct(
+predicate_op_model< Executor, Handler, Predicate, void(error_code ec, Ts...)>::construct(
     Executor              e,
     Handler               handler,
     Predicate             predicate)
@@ -59,9 +59,9 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
             predicate_op_model(std::move(e), std::move(handler), std::move(predicate));
 }
 
-template < class Implementation, class Executor, class Handler, class Predicate, class ... Ts >
+template < class Executor, class Handler, class Predicate, class ... Ts >
 auto
-predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_code ec, Ts...) >::destroy(
+predicate_op_model< Executor, Handler, Predicate, void(error_code ec, Ts...) >::destroy(
         predicate_op_model *self, net::associated_allocator_t<Handler> halloc) -> void
 {
     auto alloc  = typename std::allocator_traits< decltype(halloc) >::
@@ -71,8 +71,8 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
     traits.deallocate(alloc, self, 1);
 }
 
-template < class Implementation, class Executor, class Handler, class Predicate, class ... Ts >
-predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_code ec, Ts...) >::predicate_op_model(
+template < class Executor, class Handler, class Predicate, class ... Ts >
+predicate_op_model< Executor, Handler, Predicate, void(error_code ec, Ts...) >::predicate_op_model(
     Executor              e,
     Handler               handler,
     Predicate             predicate)
@@ -82,9 +82,9 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
 {
 }
 
-template < class Implementation, class Executor, class Handler, class Predicate, class ... Ts >
+template < class Executor, class Handler, class Predicate, class ... Ts >
 void
-predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_code ec, Ts...) >::complete(error_code ec, Ts ... args)
+predicate_op_model< Executor, Handler, Predicate, void(error_code ec, Ts...) >::complete(error_code ec, Ts ... args)
 {
     get_cancellation_slot().clear();
     auto g = std::move(work_guard_);
@@ -95,9 +95,9 @@ predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_cod
                                     net::append(std::move(h), ec, std::move(args)...));
 }
 
-template < class Implementation, class Executor, class Handler, class Predicate, class ... Ts >
+template < class Executor, class Handler, class Predicate, class ... Ts >
 void
-predicate_op_model< Implementation, Executor, Handler, Predicate, void(error_code ec, Ts...) >::shutdown()
+predicate_op_model< Executor, Handler, Predicate, void(error_code ec, Ts...) >::shutdown()
 {
   get_cancellation_slot().clear();
   this->unlink();

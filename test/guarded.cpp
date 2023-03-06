@@ -5,8 +5,8 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <boost/asem/mt.hpp>
-#include <boost/asem/st.hpp>
+#include <boost/asem/mutex.hpp>
+#include <boost/asem/semaphore.hpp>
 #include <boost/asem/guarded.hpp>
 #include <chrono>
 #include <random>
@@ -29,13 +29,7 @@ using namespace BOOST_ASEM_NAMESPACE;
 using namespace net;
 using namespace net::experimental;
 
-using models = std::tuple<st, mt>;
-template<typename T>
-using context = typename std::conditional<
-        std::is_same<st, T>::value,
-        io_context,
-        thread_pool
-    >::type;
+using models = std::tuple<net::io_context, net::thread_pool>;
 
 inline void run_impl(io_context & ctx)
 {
@@ -93,37 +87,37 @@ void test_sync(T & se2, std::vector<int> & order)
             [&](auto && token)
             {
                 static int i = 0;
+                fprintf(stderr, "Op  %d\n", i);
                 return async_impl(se2, i ++, active, std::move(token));
             };
 
-
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
-    guarded(se2, op,  asio::detached);
+    guarded(se2, op, asio::detached);
+    guarded(se2, op, asio::detached);
+    guarded(se2, op, asio::detached);
+    guarded(se2, op, asio::detached);
+    guarded(se2, op, asio::detached);
+    guarded(se2, op, asio::detached);
+    guarded(se2, op, asio::detached);
+    guarded(se2, op, asio::detached);
 }
 
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(guarded_semaphore_test, T, models)
 {
-    context<T> ctx;
-    typename T::semaphore se{ctx.get_executor(), 3};
+    T ctx;
+    semaphore se{ctx.get_executor(), 3};
     cmp = 3;
     std::vector<int> order;
-    test_sync<basic_semaphore<T>>(se, order);
+    test_sync<semaphore>(se, order);
     run_impl(ctx);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(guarded_mutex_test, T, models)
 {
-    context<T> ctx;
+    T ctx;
     std::vector<int> order;
-    typename T::mutex mtx{ctx.get_executor()};
+    mutex mtx{ctx.get_executor()};
     cmp = 1;
-    test_sync<basic_mutex<T>>(mtx, order);
+    test_sync<mutex>(mtx, order);
     run_impl(ctx);
 }

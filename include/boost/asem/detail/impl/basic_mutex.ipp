@@ -2,12 +2,12 @@
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-#ifndef BOOST_ASEM_MT_IMPL_BASIC_MUTEX_IPP
-#define BOOST_ASEM_MT_IMPL_BASIC_MUTEX_IPP
+#ifndef BOOST_ASEM_DETAIL_IMPL_BASIC_MUTEX_IPP
+#define BOOST_ASEM_DETAIL_IMPL_BASIC_MUTEX_IPP
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/basic_op.hpp>
-#include <boost/asem/mt/basic_mutex.hpp>
+#include <boost/asem/detail/basic_mutex.hpp>
 
 #include <condition_variable>
 
@@ -16,60 +16,71 @@ namespace detail
 {
 
 void
-mutex_impl<mt>::add_waiter(detail::wait_op *waiter) noexcept
+mutex_impl::add_waiter(detail::wait_op *waiter) noexcept
 {
     waiter->link_before(&waiters_);
 }
 
 void
-mutex_impl<mt>::lock(error_code & ec)
+mutex_impl::lock(error_code & ec)
 {
     if (try_lock())
         return ;
+    else if (!this->thread_safe())
+    {
+        BOOST_ASEM_ASSIGN_EC(ec, asio::error::in_progress);
+        return ;
+    }
     struct op_t final : detail::wait_op
     {
         error_code ec;
         bool done = false;
-        std::condition_variable var;
-        op_t(error_code & ec) : ec(ec) {}
+        detail::event var;
+        lock_type &lock;
+        op_t(error_code & ec,
+             lock_type & lock) : ec(ec), lock(lock) {}
 
         void complete(error_code ec) override
         {
             done = true;
             this->ec = ec;
-            var.notify_all();
+            var.signal_all(lock);
             this->unlink();
         }
 
         void shutdown() override
         {
           done = true;
-          this->ec = net::error::shut_down;
-          var.notify_all();
+          BOOST_ASEM_ASSIGN_EC(this->ec, net::error::shut_down);
+          var.signal_all(lock);
           this->unlink();
         }
 
-        void wait(std::unique_lock<std::mutex> & lock)
+        void wait()
         {
-            var.wait(lock, [this]{ return done;});
+          while (!done)
+            var.wait(lock);
         }
     };
 
-    op_t op{ec};
-    std::unique_lock<std::mutex> lock(mtx_);
+    auto lock = this->internal_lock();
+    op_t op{ec, lock};
     add_waiter(&op);
-    op.wait(lock);
+    op.wait();
 }
 
 void
-mutex_impl<mt>::unlock()
+mutex_impl::unlock()
 {
-    std::lock_guard<std::mutex> lock_{mtx_};
+    auto lock = internal_lock();
 
     // release a pending operations
     if (waiters_.next_ == &waiters_)
     {
-        locked_ = false;
+        if (thread_safe())
+          ts_locked_.store(false);
+        else
+          locked_ = false;
         return;
     }
     assert(waiters_.next_ != nullptr);
@@ -80,4 +91,4 @@ mutex_impl<mt>::unlock()
 BOOST_ASEM_END_NAMESPACE
 
 
-#endif //BOOST_ASEM_MT_IMPL_BASIC_MUTEX_IPP
+#endif //BOOST_ASEM_DETAIL_IMPL_BASIC_MUTEX_IPP

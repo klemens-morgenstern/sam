@@ -24,10 +24,10 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-template < class  Implementation, class Executor >
-struct basic_mutex<Implementation ,Executor>::async_lock_op
+template < class Executor >
+struct basic_mutex<Executor>::async_lock_op
 {
-    basic_mutex<Implementation, Executor> * self;
+    basic_mutex<Executor> * self;
 
     template< class Handler >
     void operator()(Handler &&handler)
@@ -43,7 +43,7 @@ struct basic_mutex<Implementation ,Executor>::async_lock_op
                             std::forward< Handler >(handler), error_code()));
 
         using handler_type = std::decay_t< Handler >;
-        using model_type = detail::basic_op_model< Implementation, decltype(e), handler_type, void(error_code)>;
+        using model_type = detail::basic_op_model< decltype(e), handler_type, void(error_code)>;
         model_type *model = model_type::construct(std::move(e), std::forward< Handler >(handler));
 
         auto slot = model->get_cancellation_slot();

@@ -25,9 +25,9 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-template<typename Implementation, typename Execution>
+template<typename Execution>
 struct basic_semaphore;
-template<typename Implementation, typename Execution>
+template<typename Execution>
 struct basic_mutex;
 
 template<typename Mutex>
@@ -36,13 +36,13 @@ struct lock_guard;
 namespace detail
 {
 
-template<typename Implementation, typename Executor, typename Op, typename Signature>
+template<typename Executor, typename Op, typename Signature>
 struct guard_by_semaphore_op;
 
-template<typename Implementation, typename Executor, typename Op, typename Err, typename ... Args>
-struct guard_by_semaphore_op<Implementation, Executor, Op, void (Err, Args...)>
+template<typename Executor, typename Op, typename Err, typename ... Args>
+struct guard_by_semaphore_op<Executor, Op, void (Err, Args...)>
 {
-    basic_semaphore<Implementation, Executor> & sm;
+    basic_semaphore<Executor> & sm;
     Op op;
 
     struct semaphore_tag {};
@@ -103,29 +103,28 @@ struct guard_by_semaphore_op<Implementation, Executor, Op, void (Err, Args...)>
  *  @param op The operation to guard.
  *  @param completion_token The completion token to use for the async completion.
  */
-template<typename Implementation,
-         typename Executor, typename Op,
+template<typename Executor, typename Op,
         BOOST_ASEM_COMPLETION_TOKEN_FOR(
                 typename net::completion_signature_of<Op>::type) CompletionToken
         BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
-auto guarded(basic_semaphore<Implementation, Executor> & sm, Op && op,
+auto guarded(basic_semaphore<Executor> & sm, Op && op,
              CompletionToken && completion_token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
     using sig_t = typename decltype(std::declval<Op>()(net::detail::completion_signature_probe{}))::type;
-    using cop = detail::guard_by_semaphore_op<Implementation, Executor, std::decay_t<Op>, sig_t>;
+    using cop = detail::guard_by_semaphore_op<Executor, std::decay_t<Op>, sig_t>;
     return net::async_compose<CompletionToken, sig_t>(
             cop{sm, std::forward<Op>(op)}, completion_token, sm);
 }
 
 namespace detail
 {
-template<typename Implementation, typename Executor, typename Op, typename Signature>
+template<typename Executor, typename Op, typename Signature>
 struct guard_by_mutex_op;
 
-template<typename Implementation, typename Executor, typename Op, typename Err, typename ... Args>
-struct guard_by_mutex_op<Implementation, Executor, Op, void(Err, Args...)>
+template<typename Executor, typename Op, typename Err, typename ... Args>
+struct guard_by_mutex_op<Executor, Op, void(Err, Args...)>
 {
-    basic_mutex<Implementation, Executor> &sm;
+    basic_mutex<Executor> &sm;
     Op op;
 
     struct semaphore_tag
@@ -183,7 +182,6 @@ struct guard_by_mutex_op<Implementation, Executor, Op, void(Err, Args...)>
 /** Function to run OPs only when the mutex can be locked.
  * Unlocks the mutex on completion.
  *
- *  @tparam Implementation The implementation of the mutex, i.e. `st` or `mt`.
  *  @tparam Executor The executor of the semaphore.
  *  @tparam token The completion token
  *
@@ -191,17 +189,16 @@ struct guard_by_mutex_op<Implementation, Executor, Op, void(Err, Args...)>
  *  @param op The operation to guard.
  *  @param completion_token The completion token to use for the async completion.
  */
-template<typename Implementation,
-        typename Executor, typename Op,
+template<typename Executor, typename Op,
         BOOST_ASEM_COMPLETION_TOKEN_FOR(
                 typename net::completion_signature_of<Op>::type) CompletionToken
         BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
-auto guarded(basic_mutex<Implementation, Executor> & mtx,
+auto guarded(basic_mutex<Executor> & mtx,
              Op && op,
              CompletionToken && completion_token BOOST_ASEM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
     using sig_t = typename decltype(std::declval<Op>()(net::detail::completion_signature_probe{}))::type;
-    using cop = detail::guard_by_mutex_op<Implementation, Executor, std::decay_t<Op>, sig_t>;
+    using cop = detail::guard_by_mutex_op<Executor, std::decay_t<Op>, sig_t>;
     return net::async_compose<CompletionToken, sig_t>(
             cop{mtx, std::forward<Op>(op)}, completion_token, mtx);
 }

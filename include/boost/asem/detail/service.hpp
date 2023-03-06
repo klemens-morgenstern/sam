@@ -10,6 +10,7 @@
 
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/bilist_node.hpp>
+#include <boost/asem/detail/concurrency_hint.hpp>
 #include <mutex>
 
 #if defined(BOOST_ASEM_STANDALONE)
@@ -22,81 +23,56 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-struct mt;
-struct st;
-
 namespace detail
 {
 
-template<typename Impl>
 struct service_member;
 
-template<typename Impl>
-using mutex = typename std::conditional<
-    std::is_same<st, Impl>::value,
-    net::detail::null_mutex,
-    std::mutex>::type;
-
 // Default service implementation for a strand.
-template<typename Impl>
 struct op_list_service final
-  : net::detail::execution_context_service_base<op_list_service<Impl>>
+  : net::detail::execution_context_service_base<op_list_service>
 {
-  op_list_service(asio::execution_context& ctx)
-    : net::detail::execution_context_service_base<op_list_service<Impl>>(ctx)
-  {
-  }
 
+  BOOST_ASEM_DECL op_list_service(asio::execution_context& ctx);
   bilist_node entries;
-  using mutex_type = mutex<Impl>;
+
+  using mutex_type = detail::conditionally_enabled_mutex;
+  using lock_type = typename mutex_type::scoped_lock;
   mutex_type mtx_;
 
   void   register_queue(bilist_node * sm)
   {
-    std::lock_guard<mutex_type> lock{mtx_};
+    lock_type lock{mtx_};
     sm->link_before(&entries);
   }
   void unregister_queue(bilist_node * sm)
   {
-    std::lock_guard<mutex_type> lock{mtx_};
+    lock_type lock{mtx_};
     sm->unlink();
   }
 
-  void shutdown() override
-  {
-    using op = service_member<Impl>;
-    auto e = std::move(entries);
-    auto nx = e.next_;
-    while (nx != &e)
-    {
-      auto nnx = nx->next_;
-      static_cast< op * >(nx)->service = nullptr;
-      static_cast< op * >(nx)->shutdown();
-      e.next_ = nx = nnx;
-    }
-  }
-
+  BOOST_ASEM_DECL void shutdown() override;
   ~op_list_service()
   {
   }
 };
 
 
-template<typename Impl>
 struct service_member : bilist_node
 {
 
-  op_list_service<Impl> * service;
+  op_list_service* service;
 
   service_member(net::execution_context & ctx)
-    : service(&net::use_service<op_list_service<Impl>>(ctx))
+    : service(&net::use_service<op_list_service>(ctx)),
+      mtx_(!detail::is_single_threaded(ctx))
   {
     service->register_queue(this);
   }
 
   service_member(const service_member& ) = delete;
   service_member(service_member&& sm) noexcept
-      : service(sm.service)
+      : service(sm.service), mtx_(sm.mtx_.enabled())
   {
     service->register_queue(this);
   }
@@ -119,23 +95,21 @@ struct service_member : bilist_node
       service->unregister_queue(this);
   }
 
-  using mutex_type = mutex<Impl>;
-
+  using mutex_type = detail::conditionally_enabled_mutex;
+  using lock_type = typename mutex_type::scoped_lock;
   virtual void shutdown() = 0;
 
-  mutex_type mtx_;
-  auto internal_lock() -> std::unique_lock<mutex_type>
+  mutable mutex_type mtx_;
+  auto internal_lock() const -> lock_type
   {
-    return std::unique_lock<mutex_type>{mtx_};
+    return lock_type{mtx_};
+  }
+
+  bool thread_safe() const
+  {
+    return mtx_.enabled();
   }
 };
-
-#if !defined(BOOST_ASEM_HEADER_ONLY)
-extern template struct op_list_service<st>;
-extern template struct op_list_service<mt>;
-extern template struct service_member<st>;
-extern template struct service_member<mt>;
-#endif
 
 }
 BOOST_ASEM_END_NAMESPACE

@@ -10,17 +10,17 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-template < class Implementation, class Executor >
+template < class Executor >
 template < class Predicate >
-struct basic_condition_variable<Implementation, Executor>::async_predicate_wait_op
+struct basic_condition_variable<Executor>::async_predicate_wait_op
 {
-    basic_condition_variable<Implementation, Executor> * self;
+    basic_condition_variable< Executor> * self;
     Predicate predicate;
     template< class Handler >
     void operator()(Handler &&handler)
     {
         auto e = get_associated_executor(handler, self->get_executor());
-        auto l = self->impl_.lock();
+        auto l = self->impl_.internal_lock();
         ignore_unused(l);
 
         if (predicate())
@@ -31,7 +31,7 @@ struct basic_condition_variable<Implementation, Executor>::async_predicate_wait_
 
         using handler_type = std::decay_t< Handler >;
         using predicate_type = Predicate;
-        using model_type = detail::predicate_op_model< Implementation, decltype(e), handler_type,
+        using model_type = detail::predicate_op_model< decltype(e), handler_type,
                                                        predicate_type, void(error_code)>;
         model_type *model = model_type::construct(std::move(e),
                                                   std::forward< Handler >(handler),
@@ -40,10 +40,10 @@ struct basic_condition_variable<Implementation, Executor>::async_predicate_wait_
     }
 };
 
-template < class Implementation, class Executor >
-struct basic_condition_variable<Implementation, Executor>::async_wait_op
+template < class Executor >
+struct basic_condition_variable<Executor>::async_wait_op
 {
-    basic_condition_variable<Implementation, Executor> * self;
+    basic_condition_variable<Executor> * self;
 
     struct true_predicate
     {
@@ -55,12 +55,12 @@ struct basic_condition_variable<Implementation, Executor>::async_wait_op
     void operator()(Handler &&handler)
     {
         auto e = get_associated_executor(handler, self->get_executor());
-        auto l = self->impl_.lock();
+        auto l = self->impl_.internal_lock();
         ignore_unused(l);
 
         using handler_type = std::decay_t< Handler >;
         using predicate_type = true_predicate;
-        using model_type = detail::predicate_op_model< Implementation, decltype(e), handler_type,
+        using model_type = detail::predicate_op_model< decltype(e), handler_type,
                 predicate_type, void(error_code)>;
         model_type *model = model_type::construct(std::move(e),
                                                   std::forward< Handler >(handler),

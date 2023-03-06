@@ -6,8 +6,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/asem/lock_guard.hpp>
-#include <boost/asem/mt.hpp>
-#include <boost/asem/st.hpp>
+#include <boost/asem/mutex.hpp>
 #include <chrono>
 #include <random>
 
@@ -30,13 +29,7 @@ using namespace BOOST_ASEM_NAMESPACE;
 using namespace net;
 using namespace net::experimental;
 
-using models = std::tuple<st, mt>;
-template<typename T>
-using context = typename std::conditional<
-        std::is_same<st, T>::value,
-        io_context,
-        thread_pool
-    >::type;
+using models = std::tuple<io_context, thread_pool>;
 
 inline void run_impl(io_context & ctx)
 {
@@ -51,7 +44,7 @@ inline void run_impl(thread_pool & ctx)
 template<typename T>
 struct basic_main_impl
 {
-    typename T::mutex mtx;
+    mutex mtx;
     std::vector< int > seq;
 
     basic_main_impl(net::any_io_executor exec) : mtx{exec} {}
@@ -64,7 +57,7 @@ struct basic_main : net::coroutine
     struct step_impl
     {
         std::vector< int > &v;
-        typename T::mutex &mtx;
+        mutex &mtx;
         int i;
 
         std::unique_ptr<asio::steady_timer> tim;
@@ -75,7 +68,7 @@ struct basic_main : net::coroutine
         }
 
         template<typename Self>
-        void operator()(Self & self, error_code ec, lock_guard<typename T::mutex> l)
+        void operator()(Self & self, error_code ec, lock_guard<mutex> l)
         {
             v.push_back(i);
             tim = std::make_unique<asio::steady_timer>(mtx.get_executor(), std::chrono::milliseconds(10));
@@ -94,7 +87,7 @@ struct basic_main : net::coroutine
 
     std::unique_ptr<basic_main_impl<T>> impl_;
 
-    static auto f(std::vector< int > &v, typename T::mutex &mtx, int i)
+    static auto f(std::vector< int > &v, mutex &mtx, int i)
         -> asio::deferred_async_operation<void (error_code),
                 asio::detail::initiate_composed_op<void (error_code),
                                                    void (asio::any_io_executor)>, step_impl>
@@ -140,7 +133,7 @@ BOOST_AUTO_TEST_SUITE(basic_mutex_test)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(random_mtx, T, models)
 {
-    context<T> ctx;
+    T ctx;
     net::post(ctx, basic_main<T>{ctx.get_executor()});
     run_impl(ctx);
 }
@@ -149,14 +142,14 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(random_mtx, T, models)
 
 BOOST_AUTO_TEST_CASE(rebind_mutex)
 {
-    asio::io_context ctx;
-    auto res = asio::deferred.as_default_on(st::mutex{ctx.get_executor()});
+  net::io_context ctx;
+    auto res = net::deferred.as_default_on(mutex{ctx.get_executor()});
 }
 
 BOOST_AUTO_TEST_CASE(sync_lock_st)
 {
-    asio::io_context ctx;
-    st::mutex mtx{ctx};
+    asio::io_context ctx{1u};
+    mutex mtx{ctx};
 
     mtx.lock();
     BOOST_CHECK_THROW(mtx.lock(), system_error);
@@ -170,7 +163,7 @@ BOOST_AUTO_TEST_CASE(sync_lock_st)
 BOOST_AUTO_TEST_CASE(sync_lock_mt)
 {
     asio::io_context ctx;
-    mt::mutex mtx{ctx};
+    mutex mtx{ctx};
 
     mtx.lock();
     asio::post(ctx, [&]{mtx.unlock();});
@@ -187,9 +180,8 @@ BOOST_AUTO_TEST_CASE(sync_lock_mt)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(multi_lock, T, models)
 {
-    context<T> ctx;
-    typename T::mutex mtx{ctx};
-
+    T ctx;
+    mutex mtx{ctx};
 
     run_impl(ctx);
 }
@@ -201,7 +193,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_twice, T, models)
     auto res = [&](error_code ec){ecs.push_back(ec);};
 
     {
-        typename T::mutex mtx{ctx};
+        mutex mtx{ctx};
         mtx.async_lock(res);
         mtx.async_lock(res);
         mtx.async_lock(res);
@@ -240,7 +232,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
     auto res = [&](error_code ec){ecs.push_back(ec);};
 
     {
-        typename T::mutex::template rebind_executor<asio::io_context::executor_type>::other mtx{ctx};
+        mutex::template rebind_executor<asio::io_context::executor_type>::other mtx{ctx};
         mtx.async_lock(res);
         mtx.async_lock(res);
         mtx.async_lock(res);
@@ -251,7 +243,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
         ctx.run_for(std::chrono::milliseconds(10));
 
         mtx.unlock();
-        typename T::mutex mt2{std::move(mtx)};
+        mutex mt2{std::move(mtx)};
         ctx.run_for(std::chrono::milliseconds(10));
 
         mt2.unlock();
@@ -271,7 +263,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
 BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
 {
   io_context ctx;
-  auto smtx = std::make_shared<typename T::mutex>(ctx);
+  auto smtx = std::make_shared<mutex>(ctx);
 
   auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
 

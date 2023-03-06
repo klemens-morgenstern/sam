@@ -5,9 +5,9 @@
 #ifndef BOOST_ASEM_HPP
 #define BOOST_ASEM_HPP
 
-#include <boost/asem/st.hpp>
-#include <boost/asem/mt.hpp>
-#include <boost/asem/lock_guard.hpp>
-#include <boost/asem/guarded.hpp>
+#include <boost/asem/barrier.hpp>
+#include <boost/asem/condition_variable.hpp>
+#include <boost/asem/mutex.hpp>
+#include <boost/asem/semaphore.hpp>
 
 #endif //BOOST_ASEM_HPP

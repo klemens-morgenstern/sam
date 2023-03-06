@@ -12,8 +12,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <boost/asem/mt.hpp>
-#include <boost/asem/st.hpp>
+#include <boost/asem/semaphore.hpp>
 #include <chrono>
 #include <random>
 #include <thread>
@@ -48,13 +47,7 @@ using namespace net;
 using namespace std::literals;
 using namespace BOOST_ASEM_NAMESPACE;
 
-using models = std::tuple<st, mt>;
-template<typename T>
-using context = typename std::conditional<
-        std::is_same<st, T>::value,
-        io_context,
-        thread_pool
-    >::type;
+using models = std::tuple<io_context, thread_pool>;
 
 inline void run_impl(io_context & ctx)
 {
@@ -70,9 +63,9 @@ template<typename T>
 struct basic_bot : net::coroutine
 {
     int n;
-    typename T::semaphore &sem;
+    semaphore &sem;
     std::chrono::milliseconds deadline;
-    basic_bot(int n, typename T::semaphore &sem, std::chrono::milliseconds deadline)
+    basic_bot(int n, semaphore &sem, std::chrono::milliseconds deadline)
         : n(n), sem(sem), deadline(deadline) {}
     std::string ident = "bot " + std::to_string(n) + " : ";
 
@@ -150,8 +143,8 @@ BOOST_AUTO_TEST_SUITE(basic_semaphore_test)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(value, T, models)
 {
-    context<T> ioc;
-    typename T::semaphore sem{ioc, 0};
+    T ioc;
+    semaphore sem{ioc, 0};
 
     BOOST_CHECK_EQUAL(sem.value(), 0);
 
@@ -174,8 +167,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(value, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
 {
-    context<T> ioc{};
-    auto sem  = typename T::semaphore(ioc.get_executor(), 1);
+    T ioc{};
+    auto sem  = semaphore(ioc.get_executor(), 1);
     std::random_device rng;
     std::seed_seq ss{ rng(), rng(), rng(), rng(), rng() };
     auto eng  = std::default_random_engine(ss);
@@ -191,14 +184,14 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
 BOOST_AUTO_TEST_CASE(rebind_semaphore)
 {
     io_context ctx;
-    auto res = deferred.as_default_on(st::semaphore{ctx.get_executor()});
-    res = st::semaphore::rebind_executor<io_context::executor_type>::other{ctx.get_executor()};
+    auto res = deferred.as_default_on(semaphore{ctx.get_executor()});
+    res = semaphore::rebind_executor<io_context::executor_type>::other{ctx.get_executor()};
 }
 
 BOOST_AUTO_TEST_CASE(sync_acquire_st)
 {
-    io_context ctx;
-    st::semaphore mtx{ctx};
+    io_context ctx{1};
+    semaphore mtx{ctx};
 
     mtx.acquire();
     BOOST_CHECK_THROW(mtx.acquire(), system_error);
@@ -212,7 +205,7 @@ BOOST_AUTO_TEST_CASE(sync_acquire_st)
 BOOST_AUTO_TEST_CASE(sync_acquire_mt)
 {
     io_context ctx;
-    mt::semaphore mtx{ctx};
+    semaphore mtx{ctx};
 
     mtx.acquire();
     post(ctx, [&]{mtx.release();});
@@ -235,7 +228,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_acquire, T, models)
     auto res = [&](error_code ec){ecs.push_back(ec);};
 
     {
-        typename T::semaphore::template rebind_executor<io_context::executor_type>::other mtx{ctx, 2};
+        semaphore::template rebind_executor<io_context::executor_type>::other mtx{ctx, 2};
         mtx.async_acquire(res);
         mtx.async_acquire(res);
         mtx.async_acquire(res);
@@ -246,7 +239,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_acquire, T, models)
         ctx.run_for(std::chrono::milliseconds(10));
 
         mtx.release();
-        typename T::semaphore mt2{std::move(mtx)};
+        semaphore mt2{std::move(mtx)};
         ctx.run_for(std::chrono::milliseconds(10));
 
         mt2.release();
@@ -268,7 +261,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_acquire, T, models)
 BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
 {
   io_context ctx;
-  auto smtx = std::make_shared<typename T::semaphore>(ctx, 1);
+  auto smtx = std::make_shared<semaphore>(ctx, 1);
 
   auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
 

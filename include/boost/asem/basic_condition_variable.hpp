@@ -6,6 +6,7 @@
 #define BOOST_ASEM_BASIC_CONDITION_VARIABLE_HPP
 
 #include <boost/asem/detail/config.hpp>
+#include <boost/asem/detail/basic_condition_variable.hpp>
 
 #if defined(BOOST_ASEM_STANDALONE)
 #include <asio/any_io_executor.hpp>
@@ -17,23 +18,13 @@
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
-struct st;
-struct mt;
-
-namespace detail
-{
-
-template<typename Impl>
-struct condition_variable_impl;
-
-}
 
 /** An asio based condition variable modeled on `std::condition_variable`.
  *
  * @tparam Implementation The implementation, st or mt.
  * @tparam Executor The executor to use as default completion.
  */
-template<typename Implementation, typename Executor = net::any_io_executor>
+template<typename Executor = net::any_io_executor>
 struct basic_condition_variable
 {
     /// The executor type.
@@ -61,7 +52,7 @@ struct basic_condition_variable
 
     /// @brief Rebind a condition_variable to a new executor - this cancels all outstanding operations.
     template<typename Executor_>
-    basic_condition_variable(basic_condition_variable<Implementation, Executor_> && sem,
+    basic_condition_variable(basic_condition_variable<Executor_> && sem,
                              std::enable_if<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
             : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
     {
@@ -109,7 +100,7 @@ struct basic_condition_variable
 
     /// Move assign a condition_variable with a different executor.
     template<typename Executor_>
-    auto operator=(basic_condition_variable<Implementation, Executor_> && sem)
+    auto operator=(basic_condition_variable< Executor_> && sem)
         ->std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_condition_variable>  &
     {
         exec_ = std::move(sem.exec_);
@@ -138,7 +129,7 @@ struct basic_condition_variable
     struct rebind_executor
     {
         /// The mutex type when rebound to the specified executor.
-        typedef basic_condition_variable<Implementation, Executor1> other;
+        typedef basic_condition_variable<Executor1> other;
     };
 
     /// @brief return the default executor.
@@ -146,11 +137,11 @@ struct basic_condition_variable
     get_executor() const noexcept {return exec_;}
 
   private:
-    template<typename, typename>
+    template<typename>
     friend struct basic_condition_variable;
 
     Executor exec_;
-    detail::condition_variable_impl<Implementation> impl_;
+    detail::condition_variable_impl impl_;
 
     template<typename Predicate>
     struct async_predicate_wait_op;

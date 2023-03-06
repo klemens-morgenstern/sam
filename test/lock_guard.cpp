@@ -5,8 +5,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <boost/asem/mt.hpp>
-#include <boost/asem/st.hpp>
+#include <boost/asem/mutex.hpp>
 #include <boost/asem/guarded.hpp>
 #include <chrono>
 #include <random>
@@ -24,19 +23,14 @@ namespace asio = boost::asio;
 #include <asio/compose.hpp>
 #include <asio/yield.hpp>
 #include <asio/experimental/parallel_group.hpp>
+
 #endif
 
 using namespace BOOST_ASEM_NAMESPACE;
 using namespace net;
 using namespace net::experimental;
 
-using models = std::tuple<st, mt>;
-template<typename T>
-using context = typename std::conditional<
-        std::is_same<st, T>::value,
-        io_context,
-        thread_pool
->::type;
+using models = std::tuple<net::io_context, net::thread_pool>;
 
 inline void run_impl(io_context & ctx)
 {
@@ -50,11 +44,9 @@ inline void run_impl(thread_pool & ctx)
 
 static int concurrent = 0;
 
-template<typename Mutex>
 struct impl : asio::coroutine
 {
     int id;
-    using mutex = Mutex;
     mutex & mtx;
     std::shared_ptr<asio::steady_timer> tim{std::make_shared<asio::steady_timer>(mtx.get_executor())};
 
@@ -63,7 +55,7 @@ struct impl : asio::coroutine
     }
 
     template<typename Self>
-    void operator()(Self && self, error_code ec = {}, lock_guard<Mutex> lock = {})
+    void operator()(Self && self, error_code ec = {}, lock_guard<mutex> lock = {})
     {
         reenter(this)
         {
@@ -83,15 +75,14 @@ struct impl : asio::coroutine
     }
 };
 
-template<typename T, typename CompletionToken>
-auto async_impl(T & mtx, int i, bool & active,  CompletionToken && completion_token)
+template<typename CompletionToken>
+auto async_impl(mutex & mtx, int i, bool & active,  CompletionToken && completion_token)
 {
     return net::async_compose<CompletionToken, void(error_code)>(
-            impl<T>(i, active, mtx), completion_token, mtx);
+            impl(i, active, mtx), completion_token, mtx);
 }
 
-template<typename T>
-void test_sync(T & mtx, std::vector<int> & order)
+void test_sync(mutex & mtx, std::vector<int> & order)
 {
     bool active = false;
 
@@ -110,18 +101,16 @@ void test_sync(T & mtx, std::vector<int> & order)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(lock_guard_t, T, models)
 {
-    context<T> ctx;
+    T ctx;
     std::vector<int> order;
-    typename T::mutex mtx{ctx.get_executor()};
-    test_sync<basic_mutex<T>>(mtx, order);
+    mutex mtx{ctx.get_executor()};
+    test_sync(mtx, order);
     run_impl(ctx);
 }
 
 
-template<typename Mutex>
 struct impl_t : asio::coroutine
 {
-    using mutex = Mutex;
     mutex & mtx;
 
     impl_t(mutex & mtx) : mtx(mtx)
@@ -129,7 +118,7 @@ struct impl_t : asio::coroutine
     }
 
     template<typename Self>
-    void operator()(Self && self, error_code ec = {}, lock_guard<Mutex> lock = {})
+    void operator()(Self && self, error_code ec = {}, lock_guard<mutex> lock = {})
     {
         reenter(this)
         {
@@ -143,17 +132,17 @@ struct impl_t : asio::coroutine
     }
 };
 
-template<typename T, typename CompletionToken>
-auto async_impl(T & mtx, CompletionToken && completion_token)
+template<typename CompletionToken>
+auto async_impl(mutex & mtx, CompletionToken && completion_token)
 {
     return net::async_compose<CompletionToken, void(error_code)>(
-            impl_t<T>(mtx), completion_token, mtx);
+            impl_t(mtx), completion_token, mtx);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(lock_series_t, T, models)
 {
-    context<T> ctx;
-    typename T::mutex mtx{ctx.get_executor()};
+    T ctx;
+    mutex mtx{ctx.get_executor()};
     bool called = false;
     async_impl(mtx, [&](error_code ec) {BOOST_CHECK(!ec); called = true;});
     run_impl(ctx);

@@ -48,6 +48,8 @@ using namespace std::literals;
 using namespace BOOST_ASEM_NAMESPACE;
 
 using models = std::tuple<io_context, thread_pool>;
+template<typename T>
+const static int init = std::is_same<T, io_context>::value ? 1 : 4;
 
 inline void run_impl(io_context & ctx)
 {
@@ -143,7 +145,7 @@ BOOST_AUTO_TEST_SUITE(basic_semaphore_test)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(value, T, models)
 {
-    T ioc;
+    T ioc{init<T>};
     semaphore sem{ioc, 0};
 
     BOOST_CHECK_EQUAL(sem.value(), 0);
@@ -167,7 +169,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(value, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
 {
-    T ioc{};
+    T ioc{init<T>};
     auto sem  = semaphore(ioc.get_executor(), 1);
     std::random_device rng;
     std::seed_seq ss{ rng(), rng(), rng(), rng(), rng() };
@@ -222,7 +224,7 @@ BOOST_AUTO_TEST_CASE(sync_acquire_mt)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_acquire, T, models)
 {
-    io_context ctx;
+    io_context ctx{init<T>};
 
     std::vector<error_code> ecs;
     auto res = [&](error_code ec){ecs.push_back(ec);};
@@ -260,7 +262,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_acquire, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
 {
-  io_context ctx;
+  io_context ctx{init<T>};
   auto smtx = std::make_shared<semaphore>(ctx, 1);
 
   auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };

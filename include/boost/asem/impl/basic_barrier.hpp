@@ -35,10 +35,13 @@ struct basic_barrier<Executor>::async_arrive_op
         auto e = get_associated_executor(handler, self->get_executor());
 
         if (self->impl_.try_arrive())
-            return net::post(
-                    std::move(e),
-                    net::append(
-                            std::forward< Handler >(handler), error_code()));
+        {
+          auto ie = net::get_associated_immediate_executor(handler, self->get_executor());
+          return net::post(
+              ie,
+              net::append(
+                  std::forward< Handler >(handler), error_code()));
+        }
 
         auto l = self->impl_.internal_lock();
         self->impl_.decrement();

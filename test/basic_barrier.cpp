@@ -29,6 +29,9 @@ using namespace net::experimental;
 
 using models = std::tuple<io_context, thread_pool>;
 
+template<typename T>
+const static int init = std::is_same<T, io_context>::value ? 1 : 4;
+
 inline void run_impl(io_context & ctx)
 {
     ctx.run();
@@ -83,7 +86,7 @@ BOOST_AUTO_TEST_SUITE(basic_barrier_test)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(random_barrier, T, models)
 {
-    T ctx;
+    T ctx{init<T>};
     net::post(ctx, basic_barrier_main{ctx.get_executor()});
     run_impl(ctx);
 }
@@ -126,7 +129,7 @@ BOOST_AUTO_TEST_CASE(sync_barrier_m)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_wp, T, models)
 {
-  asio::io_context ctx;
+  T ctx{init<T>};
   auto smtx = std::make_shared<barrier>(ctx, 2);
   auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
 
@@ -137,7 +140,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
 {
   std::weak_ptr<barrier> wp;
   {
-    io_context ctx;
+    T ctx{init<T>};
     auto smtx = std::make_shared<barrier>(ctx, 2);
     wp = smtx;
     auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
@@ -150,7 +153,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(cancel, T, models)
 {
-  T ctx;
+  T ctx{init<T>};
   auto smtx = std::make_shared<barrier>(ctx, 2);
   auto l =  [smtx](error_code ec) { BOOST_CHECK(ec == asio::error::operation_aborted); };
 

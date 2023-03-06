@@ -51,9 +51,8 @@ struct basic_semaphore<Executor>::async_aquire_op
         if (self->impl_.count() > 0)
         {
             self->impl_.decrement();
-            net::post(std::move(e),
-                                            net::append(
-                                                std::forward< Handler >(handler), error_code()));
+            auto ie = net::get_associated_immediate_executor(handler, self->get_executor());
+            net::post(ie, net::append(std::forward< Handler >(handler), error_code()));
             return ;
         }
 

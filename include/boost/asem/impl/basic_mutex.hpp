@@ -37,11 +37,13 @@ struct basic_mutex<Executor>::async_lock_op
         ignore_unused(l);
 
         if (self->impl_.try_lock())
-            return net::post(
-                    std::move(e),
-                    net::append(
-                            std::forward< Handler >(handler), error_code()));
-
+        {
+          auto ie = net::get_associated_immediate_executor(handler, self->get_executor());
+          return net::post(
+              ie,
+              net::append(
+                  std::forward<Handler>(handler), error_code()));
+        }
         using handler_type = std::decay_t< Handler >;
         using model_type = detail::basic_op_model< decltype(e), handler_type, void(error_code)>;
         model_type *model = model_type::construct(std::move(e), std::forward< Handler >(handler));

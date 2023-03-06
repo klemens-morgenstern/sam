@@ -91,8 +91,7 @@ predicate_op_model< Executor, Handler, Predicate, void(error_code ec, Ts...) >::
     auto h = std::move(handler_);
     this->unlink();
     destroy(this, net::get_associated_allocator(h));
-    net::post(g.get_executor(),
-                                    net::append(std::move(h), ec, std::move(args)...));
+    net::post(g.get_executor(), net::append(std::move(h), ec, std::move(args)...));
 }
 
 template < class Executor, class Handler, class Predicate, class ... Ts >

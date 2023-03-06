@@ -30,6 +30,8 @@ using namespace net;
 using namespace net::experimental;
 
 using models = std::tuple<io_context, thread_pool>;
+template<typename T>
+const static int init = std::is_same<T, io_context>::value ? 1 : 4;
 
 inline void run_impl(io_context & ctx)
 {
@@ -180,7 +182,7 @@ BOOST_AUTO_TEST_CASE(sync_lock_mt)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(multi_lock, T, models)
 {
-    T ctx;
+    T ctx{init<T>};
     mutex mtx{ctx};
 
     run_impl(ctx);
@@ -188,7 +190,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(multi_lock, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_twice, T, models)
 {
-    asio::io_context ctx;
+    asio::io_context ctx{init<T>};
     std::vector<error_code> ecs;
     auto res = [&](error_code ec){ecs.push_back(ec);};
 
@@ -226,7 +228,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_twice, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
 {
-    asio::io_context ctx;
+    asio::io_context ctx{init<T>};
 
     std::vector<error_code> ecs;
     auto res = [&](error_code ec){ecs.push_back(ec);};
@@ -262,7 +264,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
 {
-  io_context ctx;
+  io_context ctx{init<T>};
   auto smtx = std::make_shared<mutex>(ctx);
 
   auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
@@ -270,5 +272,22 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
   smtx->async_lock(l);
   smtx->async_lock(l);
 }
+
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_, T, models)
+{
+  T ctx{init<T>};
+  auto smtx = std::make_shared<mutex>(ctx);
+
+  auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
+  net::cancellation_signal csig;
+  smtx->async_lock([&](error_code ec){BOOST_CHECK(!ec); csig.emit(net::cancellation_type::all);});
+  smtx->async_lock(
+      net::bind_cancellation_slot(csig.slot(),
+        [&](error_code ec){BOOST_CHECK(ec == net::error::operation_aborted); }));
+
+  run_impl(ctx);
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()

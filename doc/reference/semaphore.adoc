@@ -1,0 +1,117 @@
+[#semaphore]
+
+== Semaphore
+
+[source, cpp]
+----
+/// An asio based semaphore.
+template < class Executor = net::any_io_executor >
+struct basic_semaphore
+{
+    /// The type of the default executor.
+    using executor_type = Executor;
+
+    /// Rebinds the socket type to another executor.
+    template < typename Executor1 >
+    struct rebind_executor
+    {
+        /// The socket type when rebound to the specified executor.
+        typedef basic_semaphore< Executor1 > other;
+    };
+
+    /// Construct a semaphore
+    /// `exec` is the default executor associated with the async_semaphore
+    /// `initial_count` is the initial value of the internal counter. ( 0 =< initial_count =< MAX_INT)
+    basic_semaphore(executor_type exec, int initial_count = 1);
+
+    /// Rebind a semaphore to a new executor.
+    template<typename Executor_>
+    basic_semaphore(basic_semaphore<Executor_> && sem;
+
+    /// Move assign a semaphore.
+    basic_semaphore& operator=(basic_semaphore&&) noexcept = default;
+
+    /// Move assign a semaphore with a different executor.
+    template<typename Executor_>
+    auto operator=(basic_semaphore<Executor_> && sem);
+
+    /// Construct a semaphore from
+    template<typename ExecutionContext>
+    explicit basic_semaphore(
+            ExecutionContext & ctx,
+            int initial_count = 1);
+
+    /// return the default executor.
+    executor_type get_executor() const noexcept;
+
+    /// Initiate an asynchronous acquire of the semaphore <1>
+    template < net::completion_token_for<void(error_code)> CompletionHandler >
+    auto async_acquire( CompletionHandler &&token = net::default_token<executor_type>);
+
+    /// Acquire synchronously. This may fail depending on the implementation. <2>
+    void acquire(error_code & ec);
+    void acquire();
+
+    /// This function attempts to acquire the semaphore without blocking or initiating an asynchronous operation.
+    /// returns true if the semaphore was acquired, false otherwise
+    bool try_acquire();
+
+    /// Release the sempahore.
+    /// This function immediately releases the semaphore. If there are
+    /// pending async_acquire operations, then the least recent operation will commence completion.
+    void
+    release();
+
+    /// The current value of the semaphore
+    int value() const noexcept;
+};
+
+/// basic_semaphore with default executor.
+using semaphore = basic_semaphore<>;
+----
+<1> See <<async_acquire>>
+<2> See <<acquire>>
+
+=== `async_acquire`
+
+Multiple asynchronous acquire operations may be in progress at
+the same time. However, the caller must ensure that this function is not
+invoked from two threads simultaneously. When the semaphore's internal
+count is above zero, async acquire operations will complete in strict
+FIFO order.
+
+If the semaphore object is destroyed while an `async_acquire`
+is outstanding, the operation's completion handler will be invoked with
+the error_code set to error::operation_aborted.
+
+If the `async_acquire` operation is cancelled before completion,
+the completion handler will be invoked with the error_code
+set to `error::operation_aborted`.
+
+Successful acquisition of the semaphore is signalled to the caller when the
+completion handler is invoked with no error.
+
+
+.CompletionHandler
+****
+The completion token represents a completion token or handler which
+is invokable with the signature `void(error_code)`
+
+NOTE: The completion handler will be invoked as if by `post` to the
+handler's associated executor. If no executor is associated with the
+completion handler, the handler will be invoked as if by `post` to the
+async_semaphore's associated default executor.
+****
+
+=== `acquire`
+
+In single-threaded mode this will generate an error of `net::error::in_progress`
+if the semaphore cannot be acquired immediately.
+
+In multi-threaded mode this function will block until another thread releases
+the semaphore. Note that this may lead to deadlocks.
+
+Note that this may lead to deadlocks.
+
+WARNING: You must never use the synchronous functions from within an asio event-queue.
+

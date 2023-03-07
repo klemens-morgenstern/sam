@@ -1,0 +1,47 @@
+[#tutorial]
+# Tutorial
+
+## When should I use this?
+
+`asio` itself bring synchronization mechanism, mainly strands, 
+that will assure there's no overlap between two async operations.
+
+This however only works if the entire operation is to be locked,
+as it does not give the user finer tools to have exclusive access
+only for some time during the operation.
+
+This is the gap this library fills, i.e. giving a user tools to
+synchronize parts of composed operations where this fine-tuning is needed.
+
+E.g. to implement a connection pool, where we only lock acquiring the connection object,
+but not the entire op.
+
+Another use case is for synchronizing completions.
+
+## Semaphore example
+
+The semaphore is the simplest synchronization method,
+it allows notifying workers trying to acquire a resource.
+
+[source,cpp]
+----
+asio::awaitable<void> work(asem::semaphore & sem)
+{
+    co_await sem.async_acquire(asio::use_awaitable);
+    co_await do_work();
+}
+----
+
+[#threading-mode]
+.Threading Mode
+****
+ASem deduces the threading mode from the executor following
+the concurrency_hint by asio.
+
+See the
+https://www.boost.org/doc/libs/master/doc/html/boost_asio/overview/core/concurrency_hint.html[
+asio reference] for details.
+
+In the documentation we'll refer to the mode as single-threaded and multi-threaded mode.
+
+****

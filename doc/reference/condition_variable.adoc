@@ -1,0 +1,78 @@
+[#condition_variable]
+
+== Condition Variable
+
+[source, cpp]
+----
+
+/// An asio based condition variable modeled on `std::condition_variable`.
+template<typename Executor = net::any_io_executor>
+struct basic_condition_variable
+{
+    /// The executor type.
+    using executor_type = Executor;
+
+    /// A constructor. @param exec The executor to be used by the condition variable
+    explicit basic_condition_variable(executor_type exec);
+
+    /// Construct from an execution context, which is to be used by the condition variable.
+    template<typename ExecutionContext>
+    explicit basic_condition_variable(ExecutionContext & ctx);
+
+    /// Rebind a condition_variable to a new executor.
+    template<typename Executor_>
+    basic_condition_variable(basic_condition_variable<Executor_> && sem;
+
+    ///Wait for the condition_variable to become notified. <1>
+    template < net::completion_token_for<void(error_code)> CompletionToken >
+    auto async_wait(CompletionToken &&token = net::default_token<executor_type>);
+
+    /// Wait for the condition_variable to become notified & the predicate to return true. <2>
+    template < typename Predicate,
+               net::completion_token_for<void(error_code)> CompletionToken >
+    auto async_wait(Predicate && predicate,
+                    CompletionToken &&token = net::default_token<executor_type>);
+
+    /// Move assign a condition_variable.
+    basic_condition_variable& operator=(basic_condition_variable&&) noexcept = default;
+
+    /// Move assign a condition_variable with a different executor.
+    template<typename Executor_>
+    basic_condition_variable& operator=(basic_condition_variable< Executor_> && sem);
+
+    /// Delete copy assignment
+    basic_condition_variable& operator=(const basic_condition_variable&) = delete;
+
+    /// Notify/wake up one waiting operations.
+    void notify_one();
+    /// Notify/wake up all waiting operations.
+    void notify_all();
+    /// Rebinds the mutex type to another executor.
+    template <typename Executor1>
+    struct rebind_executor
+    {
+        /// The mutex type when rebound to the specified executor.
+        typedef basic_condition_variable<Executor1> other;
+    };
+
+    /// return the default executor.
+    executor_type get_executor() const noexcept {return exec_;}
+};
+
+/// basic_condition_variable with default executor.
+using condition_variable = basic_condition_variable<>;
+----
+<1> See <<notify>>
+<2> See <<predicate>>
+
+[#notify]
+=== wait for notification
+
+You can wait for a notification with `async_wait(token)`.
+This operation will may complete on a call to `notify_one` and will complete on a call to `notify_all`.
+
+[#predicate]
+=== wait with predicate
+
+Waiting with a predicate will complete when notified and if the `predicate` returns true`.
+The predicate will be invoked from within the executor provided to the condition_variable.

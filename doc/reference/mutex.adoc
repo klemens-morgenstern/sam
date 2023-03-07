@@ -1,0 +1,79 @@
+[#mutex]
+
+== Mutex
+
+[source, cpp]
+----
+/// An asio based mutex modeled on `std::mutex`.
+template<typename Executor = net::any_io_executor>
+struct basic_mutex
+{
+    /// The executor type.
+    using executor_type = Executor;
+
+    /// Construct from an executor to be used by the mutex.
+    explicit basic_mutex(executor_type exec);
+
+    /// Consturct a mutex from an execution context to be used by the mutex.
+    template<typename ExecutionContext>
+    explicit basic_mutex(ExecutionContext & ctx);
+
+    /// Rebind a mutex to a new executor.
+    template<typename Executor_>
+    basic_mutex(basic_mutex<Executor_> && sem);
+
+    /// Wait for the mutex to become lockable & lock it. <1>
+    template < net::completion_token_for<void(error_code)> CompletionToken >)
+    auto async_lock(CompletionToken &&token = net::default_token<executor_type>);.
+
+    /// Move assign a mutex.
+    basic_mutex& operator=(basic_mutex&&) noexcept = default;
+
+    /// Move assign a mutex with a different executor.
+    template<typename Executor_>
+    basic_mutex & operator=(basic_mutex<Executor_> && sem);
+
+    /// Lock synchronously. This may fail depending on the implementation. <2>
+    void lock(error_code & ec);
+    void lock();
+    /// Unlock the mutex, and complete one pending lock if pending.
+    void unlock();
+
+    ///  Try to lock the mutex.
+    bool try_lock();
+    /// Rebinds the mutex type to another executor.
+    template <typename Executor1>
+    struct rebind_executor
+    {
+        /// The mutex type when rebound to the specified executor.
+        typedef basic_mutex<Executor1> other;
+    };
+
+    /// return the default executor.
+    executor_type get_executor() const noexcept;
+};
+
+/// basic_mutex with default executor.
+using mutex = basic_mutex<>;
+----
+<1> See <<async_lock>>
+<2> See <<lock>>
+
+[#async_lock]
+===  `async_lock`
+
+The async arrive function follows the `asio` completion token pattern, including
+https://www.boost.org/doc/libs/master/doc/html/boost_asio/overview/composition/token_adapters.html[default tokens].
+
+This function will not block, but return immediately.
+
+[#lock]
+=== `lock`
+
+In single-threaded mode this will generate an error of `net::error::in_progress` if it cannot complete immediately.
+
+In multi-threaded mode this function will block until unlocked.
+Note that this may lead to deadlocks.
+
+WARNING: You must never use the synchronous functions from within an asio event-queue.
+

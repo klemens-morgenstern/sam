@@ -1,73 +1,22 @@
-# Copyright (c) 2022 Klemens Morgenstern, Richard Hodges
+# Copyright (c) 2022 Klemens Morgenstern
 #
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-using boostbook ;
-using quickbook ;
-using doxygen ;
+import asciidoctor ;
 
+html asem.html : asem.adoc ;
 
-local images = [ glob images/*.svg ] ;
-install images      : $(images) : <location>html/boost_asem ;
-install images_glob : $(images) : <location>$(BOOST_ROOT)/doc/html/boost_asem ;
+install html_ : asem.html : <location>html ;
 
-import type ;
-type.register XMLPROCESSWORKAROUND : : XML ;
-import generators ;
-generators.register-standard common.copy : XML : XMLPROCESSWORKAROUND ; 
+pdf asem.pdf : asem.adoc ;
+explicit asem.pdf ;
 
-path-constant INCLUDES : ../../.. ;
-
-doxygen autodoc
-:
-  $(INCLUDES)/boost/asem.hpp
-  [ glob $(INCLUDES)/boost/asem/*.hpp ]
-  :
-  <doxygen:param>PROJECT_NAME="Async SEMaphore"
-  <doxygen:param>PROJECT_BRIEF="C++ asio sync primitives"
-  <doxygen:param>ALIASES="esafe=\"@par Exception Safety\""
-  <doxygen:param>EXCLUDE_SYMBOLS=BOOST_ASEM_SOURCE
-  <doxygen:param>MACRO_EXPANSION=YES
-  <doxygen:param>PREDEFINED="\\
-    net=boost::asio \\
-    BOOST_ASEM_NAMESPACE=boost::asem \\
-    GENERATING_DOCUMENTATION \\
-    BOOST_ASEM_COMPLETION_TOKEN_FOR(X)=typename \\
-    net=boost::asio:: \\
-    BOOST_ASEM_DEFAULT_COMPLETION_TOKEN_TYPE= = default \\
-    BOOST_ASEM_DEFAULT_COMPLETION_TOKEN= = default \\
-    BOOST_ASEM_INITFN_AUTO_RESULT_TYPE(...)=deduced \\
-    BOOST_ASEM_BEGIN_NAMESPACE=namespace boost { namespace asem { \\
-    BOOST_ASEM_END_NAMESPACE=} } \\
-    BOOST_ASEM_NODISCARD  \\
-    BOOST_ASEM_DECL \\
-    "
-  <doxygen:param>HIDE_UNDOC_CLASSES=YES
-  <doxygen:param>HIDE_UNDOC_MEMBERS=YES
-  <doxygen:param>JAVADOC_AUTOBRIEF=YES
-  <doxygen:param>EXAMPLE_PATH=.
-  <xsl:path>.
-;
-
-boostbook standalone
-:
-  asem.qbk
-:
-  <dependency>autodoc
-  <dependency>images
-  <dependency>images_glob
-  <xsl:param>boost.root=../../../..
-  <xsl:param>html.stylesheet=../../../../doc/src/boostbook.css
-;
+install pdf_ : asem.pdf : <location>pdf ;
+explicit pdf_ ;
 
 ###############################################################################
-alias boostdoc
-    : standalone/<format>docbook
-    : 
-    : <dependency>images_glob
-    : ;
-
+alias boostdoc ;
 explicit boostdoc ;
-alias boostrelease ;
+alias boostrelease : html_ ;
 explicit boostrelease ;

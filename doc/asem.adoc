@@ -1,0 +1,43 @@
+//// 
+Copyright 2022 Klemens Morgenstern
+Distributed under the Boost Software License, Version 1.0.
+https://www.boost.org/LICENSE_1_0.txt
+////
+
+# ASem: Asio based semaphore
+Klemens Morgenstern
+:toc: left
+:toclevels: 4
+:idprefix:
+:listing-caption: Code Example
+:docinfo: private-footer
+:source-highlighter: rouge
+:source-language: c++
+
+:leveloffset: +1
+
+include::overview.adoc[]
+include::config.adoc[]
+include::tutorial.adoc[]
+
+= Reference
+
+include::reference/barrier.adoc[]
+include::reference/condition_variable.adoc[]
+include::reference/mutex.adoc[]
+include::reference/semaphore.adoc[]
+include::reference/guarded.adoc[]
+include::reference/lock_guard.adoc[]
+
+[#copyright]
+= Copyright and License
+:idprefix:
+
+This documentation is copyright 2023 Klemens D. Morgenstern and is distributed under
+the http://www.boost.org/LICENSE_1_0.txt[Boost Software License, Version 1.0].
+
+= Acknowledgements
+
+Thanks to Richard Hodges, for getting this started in asio-experiments.
+
+:leveloffset: -1

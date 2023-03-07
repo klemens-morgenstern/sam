@@ -1,0 +1,83 @@
+[#barrier]
+
+== Barrier
+
+
+[source, cpp]
+----
+/// An asio based barrier modeled on `std::barrier`.
+template<typename Executor = net::any_io_executor>
+struct basic_barrier
+{
+    /// The executor type.
+    using executor_type = Executor;
+
+    /// The executor to be used by the barrier.
+    explicit basic_barrier(executor_type exec, std::ptrdiff_t init_count);
+
+    /// A constructor.
+    /// ctx The execution context used by the barrier.
+    template<typename ExecutionContext>
+    explicit basic_barrier(ExecutionContext & ctx, std::size_t init_count);
+
+    /// Rebind a barrier to a new executor - this cancels all outstanding operations.
+    template<typename OtherExecutor>
+    basic_barrier(basic_barrier<OtherExecutor> && sem);
+
+    /// Arrive at a barrier and wait for all other strands to arrive. <1>
+    template < net::completion_token_for<(void(error_code))> CompletionToken >
+    auto async_arrive(CompletionToken &&token = net::default_token<executor_type>);
+
+    /// Move assign a barrier.
+    basic_barrier& operator=(basic_barrier&&) noexcept = default;
+
+    /// Move assign a barrier with a different executor.
+    template<typename Executor_>
+    basic_barrier & operator=(basic_barrier<Executor_> && sem);
+
+    /// Delete copy assignment
+    basic_barrier& operator=(const basic_barrier&) = delete;
+
+    /// Try to arrive - that is arrive immediately if we're the last thread.
+    bool try_arrive();
+
+    /// Arrive synchronously. This may fail depending on the implementation. <2>
+    void arrive(error_code & ec);
+    void arrive();
+
+    /// Rebinds the barrier type to another executor.
+    template <typename Executor1>
+    struct rebind_executor
+    {
+        /// The barrier type when rebound to the specified executor.
+        typedef basic_barrier<Executor1> other;
+    };
+
+    /// return the default executor.
+    executor_type  get_executor() const noexcept;
+};
+
+// basic_barrier with default executor.
+using barrier = basic_barrier<>;
+----
+<1> See <<async_arrive>>
+<2> See <<arrive>>
+
+[#async_arrive]
+===  `async_arrive`
+
+The async arrive function follows the `asio` completion token pattern, including
+https://www.boost.org/doc/libs/master/doc/html/boost_asio/overview/composition/token_adapters.html[default tokens].
+
+This function will not block, but return immediately.
+
+[#arrive]
+=== `arrive`
+
+In single-threaded mode this will generate an error of `net::error::in_progress`  if it cannot complete immediately.
+
+In multi-threaded mode this function will block until other threads arrive.
+Note that this may lead to deadlocks.
+
+WARNING: You must never use the synchronous functions from within an asio event-queue.
+

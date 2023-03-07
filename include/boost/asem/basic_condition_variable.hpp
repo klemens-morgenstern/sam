@@ -20,8 +20,6 @@ BOOST_ASEM_BEGIN_NAMESPACE
 
 
 /** An asio based condition variable modeled on `std::condition_variable`.
- *
- * @tparam Implementation The implementation, st or mt.
  * @tparam Executor The executor to use as default completion.
  */
 template<typename Executor = net::any_io_executor>
@@ -30,14 +28,15 @@ struct basic_condition_variable
     /// The executor type.
     using executor_type = Executor;
 
-    /// The destructor. @param exec The executor to be used by the condition variable
+    /// A constructor. @param exec The executor to be used by the condition variable
     explicit basic_condition_variable(executor_type exec)
             : exec_(std::move(exec))
             , impl_{{net::query(exec_, net::execution::context)}}
     {
     }
 
-    /// The destructor. @param ctx The execution context used by the condition variable.
+    /// The Constructor.
+    /// @param ctx The execution context used by the condition variable.
     template<typename ExecutionContext>
     explicit basic_condition_variable(
                         ExecutionContext & ctx,

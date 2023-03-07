@@ -30,14 +30,17 @@ struct basic_barrier
     /// The executor type.
     using executor_type = Executor;
 
-    /// The destructor. @param exec The executor to be used by the barrier.
+    /// The constructor.
+    /// @param exec The executor to be used by the barrier.
+    /// @param init_count The number of thread for the barrier.
     explicit basic_barrier(executor_type exec, std::ptrdiff_t init_count)
             : exec_(std::move(exec))
             , impl_{net::query(exec_, net::execution::context), init_count}
     {
     }
 
-    /// The destructor. @param ctx The execution context used by the barrier.
+    /// A constructor.
+    // @param ctx The execution context used by the barrier.
     template<typename ExecutionContext>
     explicit basic_barrier(ExecutionContext & ctx,
                          typename std::enable_if<
@@ -50,7 +53,7 @@ struct basic_barrier
     {
     }
 
-    /// @brief Rebind a barrier to a new executor - this cancels all outstanding operations.
+    /// Rebind a barrier to a new executor - this cancels all outstanding operations.
     template<typename Executor_>
     basic_barrier(basic_barrier<Executor_> && sem,
                   std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
@@ -86,8 +89,10 @@ struct basic_barrier
         return *this;
     }
 
+    /// Delete copy assignment
     basic_barrier& operator=(const basic_barrier&) = delete;
 
+    /// Try to arrive - that is arrive immediately if we're the last thread.
     bool try_arrive()
     {
         return impl_.try_arrive();

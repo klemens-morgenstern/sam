@@ -70,7 +70,7 @@ struct basic_main : net::coroutine
         }
 
         template<typename Self>
-        void operator()(Self & self, error_code ec, lock_guard<mutex> l)
+        void operator()(Self & self, error_code ec, lock_guard l)
         {
             v.push_back(i);
             tim = std::make_unique<asio::steady_timer>(mtx.get_executor(), std::chrono::milliseconds(10));

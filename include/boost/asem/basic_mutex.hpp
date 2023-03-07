@@ -29,14 +29,14 @@ struct basic_mutex
     /// The executor type.
     using executor_type = Executor;
 
-    /// The destructor. @param exec The executor to be used by the mutex.
+    /// A constructor. @param exec The executor to be used by the mutex.
     explicit basic_mutex(executor_type exec)
             : exec_(std::move(exec))
             , impl_{{net::query(exec_, net::execution::context)}}
     {
     }
 
-    /// The destructor. @param ctx The execution context used by the mutex.
+    /// A constructor. @param ctx The execution context used by the mutex.
     template<typename ExecutionContext>
     explicit basic_mutex(ExecutionContext & ctx,
                          typename std::enable_if<
@@ -139,6 +139,7 @@ struct basic_mutex
   private:
     template<typename>
     friend struct basic_mutex;
+    friend struct lock_guard;
 
     Executor exec_;
     detail::mutex_impl impl_;

@@ -76,7 +76,7 @@ struct basic_semaphore
 
     basic_semaphore& operator=(const basic_semaphore&) = delete;
 
-    /// The destructor. @param ctx The execution context used by the semaphore.
+    /// A constructor. @param ctx The execution context used by the semaphore.
     template<typename ExecutionContext>
     explicit basic_semaphore(
             ExecutionContext & ctx,

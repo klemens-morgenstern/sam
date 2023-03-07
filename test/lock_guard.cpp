@@ -55,7 +55,7 @@ struct impl : asio::coroutine
     }
 
     template<typename Self>
-    void operator()(Self && self, error_code ec = {}, lock_guard<mutex> lock = {})
+    void operator()(Self && self, error_code ec = {}, lock_guard lock = {})
     {
         reenter(this)
         {
@@ -118,7 +118,7 @@ struct impl_t : asio::coroutine
     }
 
     template<typename Self>
-    void operator()(Self && self, error_code ec = {}, lock_guard<mutex> lock = {})
+    void operator()(Self && self, error_code ec = {}, lock_guard lock = {})
     {
         reenter(this)
         {

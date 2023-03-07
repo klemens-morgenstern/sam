@@ -196,6 +196,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_, T, models)
                    net::bind_cancellation_slot(csig.slot(),
                                   [&](error_code ec){BOOST_TEST_CHECK(ec == net::error::operation_aborted); }));
 
+  net::post(ctx, [&]{smtx->notify_all();});
   run_impl(ctx);
 }
 
@@ -205,15 +206,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_2, T, models)
   auto smtx = std::make_shared<condition_variable>(ctx);
 
   net::cancellation_signal csig;
-  smtx->async_wait([]{return true;},
-                   [&](error_code ec)
-                   {
-                     BOOST_TEST_CHECK(!ec);
-                     csig.emit(net::cancellation_type::all);
-                   });
-  smtx->async_wait(net::bind_cancellation_slot(csig.slot(),
-                                               [&](error_code ec){BOOST_TEST_CHECK(ec == net::error::operation_aborted); }));
+  smtx->async_wait(net::bind_cancellation_slot(
+      csig.slot(),
+      [&](error_code ec){BOOST_TEST_CHECK(ec == net::error::operation_aborted); }));
 
+  net::post(ctx, [&]{csig.emit(net::cancellation_type::all);});
   run_impl(ctx);
 }
 

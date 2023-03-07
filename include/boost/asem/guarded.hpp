@@ -13,7 +13,6 @@ BOOST_ASEM_BEGIN_NAMESPACE
 /** Function to run OPs only when the semaphore can be acquired.
  *  That way an artificial number of processes can run in parallel.
  *
- *  @tparam Implementation The implementation of the semaphore, i.e. `st` or `mt`.
  *  @tparam Executor The executor of the semaphore.
  *  @tparam token The completion token
  *

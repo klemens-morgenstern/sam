@@ -24,7 +24,6 @@ struct basic_semaphore;
 template<typename>
 struct basic_mutex;
 
-template<typename Mutex>
 struct lock_guard;
 
 namespace detail

@@ -25,7 +25,7 @@ struct semaphore_impl : detail::service_member
         : detail::service_member(std::move(mi))
         , waiters_(std::move(mi.waiters_))
     {
-      if (thread_safe())
+      if (multi_threaded())
         new (&ts_count_) std::atomic<int>(mi.ts_count_.load());
       else
         new (&count_) int (mi.count_);
@@ -36,7 +36,7 @@ struct semaphore_impl : detail::service_member
     {
       auto _ = internal_lock();
 
-      if (thread_safe())
+      if (multi_threaded())
         new (&ts_count_) std::atomic<int>(lhs.ts_count_.load());
       else
         new (&count_) int (lhs.count_);

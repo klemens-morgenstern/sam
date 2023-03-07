@@ -26,7 +26,7 @@ struct barrier_impl : detail::service_member
                  : detail::service_member(ctx), init_(init)
 
     {
-      if (thread_safe())
+      if (multi_threaded())
         new (&ts_counter_) std::atomic<std::ptrdiff_t>(init_);
       else
         new (&counter_) std::size_t(init_);
@@ -37,7 +37,7 @@ struct barrier_impl : detail::service_member
         init_(rhs.init_),
         waiters_(std::move(rhs.waiters_))
     {
-      if (thread_safe())
+      if (multi_threaded())
         new (&ts_counter_) std::atomic<std::ptrdiff_t>(rhs.ts_counter_.load());
       else
         new (&counter_) std::size_t(rhs.counter_);
@@ -49,7 +49,7 @@ struct barrier_impl : detail::service_member
     init_ = rhs.init_;
     waiters_ = std::move(rhs.waiters_);
 
-    if (thread_safe())
+    if (multi_threaded())
       new (&ts_counter_) std::atomic<std::ptrdiff_t>(rhs.ts_counter_.load());
     else
       new (&counter_) std::size_t(rhs.counter_);
@@ -68,7 +68,7 @@ struct barrier_impl : detail::service_member
 
     void decrement()
     {
-      thread_safe() ? ts_counter_-- : counter_--;
+      multi_threaded() ? ts_counter_-- : counter_--;
     }
     BOOST_ASEM_DECL void arrive(error_code & ec);
 

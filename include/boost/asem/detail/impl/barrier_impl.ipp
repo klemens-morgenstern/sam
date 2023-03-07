@@ -16,7 +16,7 @@ namespace detail
 
 bool barrier_impl::try_arrive()
 {
-  if (thread_safe())
+  if (multi_threaded())
   {
     if (ts_counter_.fetch_sub(1) <= 1)
     {
@@ -49,7 +49,7 @@ void barrier_impl::arrive(error_code &ec)
 {
     if (try_arrive())
         return;
-    else if (!thread_safe())
+    else if (!multi_threaded())
     {
       BOOST_ASEM_ASSIGN_EC(ec, asio::error::in_progress);
       return ;

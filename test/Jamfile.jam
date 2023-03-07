@@ -23,7 +23,6 @@ lib header_test : header_1.cpp header_2.cpp :
         <define>BOOST_ASEM_HEADER_ONLY=1 ;
 
 lib test_impl : test_impl.cpp /boost//asem :
-        <define>BOOST_ASEM_SEPARATE_COMPILATION=1
         <define>BOOST_TEST_IGNORE_SIGCHLD=1
         <link>static
         <target-os>windows:<source>shell32

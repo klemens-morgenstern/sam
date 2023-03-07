@@ -29,7 +29,7 @@ semaphore_impl::add_waiter(detail::wait_op *waiter) noexcept
 int
 semaphore_impl::count() const noexcept
 {
-  if (thread_safe())
+  if (multi_threaded())
     return ts_count_.load();
   else
     return count_;
@@ -39,7 +39,7 @@ void
 semaphore_impl::release()
 {
     auto lock_ = internal_lock();
-    thread_safe() ?
+    multi_threaded() ?
       ts_count_ ++ :
       count_ ++;
 
@@ -58,7 +58,7 @@ semaphore_impl::acquire(error_code & ec)
 {
     if (try_acquire())
         return ;
-    else if (!thread_safe())
+    else if (!multi_threaded())
     {
         BOOST_ASEM_ASSIGN_EC(ec, asio::error::in_progress);
         return ;
@@ -120,7 +120,7 @@ semaphore_impl::value() const noexcept
 bool
 semaphore_impl::try_acquire()
 {
-  if (thread_safe())
+  if (multi_threaded())
   {
     if (ts_count_.fetch_sub(1) >= 0)
       return true;

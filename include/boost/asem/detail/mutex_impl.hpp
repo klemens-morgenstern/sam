@@ -20,7 +20,7 @@ struct mutex_impl : detail::service_member
 {
     mutex_impl(net::execution_context & ctx) : detail::service_member(ctx)
     {
-      if (thread_safe())
+      if (multi_threaded())
         new (&ts_locked_) std::atomic<bool>(false);
       else
         new (&locked_) bool(false);
@@ -29,7 +29,7 @@ struct mutex_impl : detail::service_member
     BOOST_ASEM_DECL void unlock();
     bool try_lock()
     {
-        if (thread_safe())
+        if (multi_threaded())
           return !ts_locked_.exchange(true);
         else
         {
@@ -63,7 +63,7 @@ struct mutex_impl : detail::service_member
         : detail::service_member(std::move(mi))
         , waiters_(std::move(mi.waiters_))
     {
-      if (thread_safe())
+      if (multi_threaded())
         new (&ts_locked_) std::atomic<bool>(mi.ts_locked_.exchange(false));
       else
       {
@@ -76,7 +76,7 @@ struct mutex_impl : detail::service_member
     mutex_impl& operator=(mutex_impl && lhs) noexcept
     {
         auto _ = lhs.internal_lock();
-        if (thread_safe())
+        if (multi_threaded())
           new (&ts_locked_) std::atomic<bool>(lhs.ts_locked_.exchange(false));
         else
         {

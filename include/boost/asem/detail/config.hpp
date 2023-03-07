@@ -125,7 +125,12 @@ BOOST_ASEM_END_NAMESPACE
 #elif defined(BOOST_ASEM_HEADER_ONLY)
 # define BOOST_ASEM_DECL inline
 #else
-# define BOOST_ASEM_DECL
+#if !defined(BOOST_ASEM_STANDALONE)
+# define BOOST_ASEM_DECL BOOST_SYMBOL_EXPORT
+#else
+#define BOOST_ASEM_DECL
+#endif
+
 #endif
 
 #endif //BOOST_ASEM_DETAIL_CONFIG_HPP

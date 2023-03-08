@@ -31,3 +31,6 @@ if(BUILD_EXAMPLES AND NOT BOOST_ASEM_STANDALONE AND EXISTS "${CMAKE_CURRENT_SOUR
   add_subdirectory(example)
 endif()
 
+if(BUILD_BENCH AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/bench/CMakeLists.txt")
+  add_subdirectory(bench)
+endif()

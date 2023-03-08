@@ -1,0 +1,5 @@
+add_executable(boost_asem_bench_condition_variable condition_variable.cpp)
+target_link_libraries(boost_asem_bench_condition_variable Boost::asem)
+
+add_executable(boost_asem_bench_mutex mutex.cpp)
+target_link_libraries(boost_asem_bench_mutex Boost::asem)

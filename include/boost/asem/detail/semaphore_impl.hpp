@@ -64,7 +64,7 @@ struct semaphore_impl : detail::service_member
     BOOST_ASEM_DECL void
     add_waiter(detail::wait_op *waiter) noexcept;
 
-    BOOST_ASEM_DECL int
+    BOOST_ASEM_DECL void
     decrement();
 
     BOOST_ASEM_NODISCARD BOOST_ASEM_DECL int

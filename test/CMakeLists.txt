@@ -4,7 +4,7 @@ if (BOOST_ASEM_STANDALONE)
 endif()
 
 add_library(boost_asem_test_impl test_impl.cpp)
-target_link_libraries(boost_asem_test_impl Boost::unit_test_framework)
+target_link_libraries(boost_asem_test_impl Boost::headers)
 target_compile_definitions(boost_asem_test_impl PUBLIC -DBOOST_asem_SEPARATE_COMPILATION=1)
 
 

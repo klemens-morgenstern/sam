@@ -91,6 +91,7 @@ struct service_member : bilist_node
 
   ~service_member()
   {
+    auto _ = internal_lock();
     if (service != nullptr)
       service->unregister_queue(this);
   }

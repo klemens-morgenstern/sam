@@ -39,7 +39,7 @@ condition_variable_impl::notify_one()
 BOOST_SAM_DECL void
 condition_variable_impl::notify_all()
 {
-  auto lock = this->internal_lock();
+    auto lock = this->internal_lock();
     // release a pending operations
     for (auto c = waiters_.next_; c != &waiters_;)
     {

@@ -59,7 +59,9 @@ struct barrier_impl : detail::service_member
 
     void shutdown() override
     {
+      auto l = this->internal_lock();
       auto w = std::move(waiters_);
+      l.unlock();
       w.shutdown();
     }
     detail::basic_bilist_holder<void(error_code)> waiters_;

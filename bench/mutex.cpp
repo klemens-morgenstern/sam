@@ -67,7 +67,9 @@ struct run_benchmark_impl : net::coroutine
       while ( 0 < N--)
       {
         if (!mtx.try_lock())
-          yield { mtx.async_lock(std::move(*this)); }
+        {
+          yield  mtx.async_lock(std::move(*this));
+        }
         mtx.unlock();
       }
     }

@@ -33,8 +33,8 @@ mutex_impl::lock(error_code & ec)
     }
     struct op_t final : detail::wait_op
     {
-        error_code ec;
-        bool done = false;
+        error_code &ec;
+        std::atomic<bool> done = false;
         detail::event var;
         lock_type &lock;
         op_t(error_code & ec,

@@ -22,7 +22,7 @@
 #define BOOST_SAM_END_NAMESPACE  }
 #define BOOST_SAM_NAMESPACE sam
 #define BOOST_SAM_ASSERT(Condition) ASIO_ASSERT(Condition)
-#define BOOST_SAM_ASSIGN_EC(ec, error) ec = error;
+#define BOOST_SAM_ASSIGN_EC(ec, error) ec = error
 
 #else
 
@@ -72,11 +72,11 @@
 #define BOOST_SAM_END_NAMESPACE  } }
 #define BOOST_SAM_NAMESPACE boost::sam
 #define BOOST_SAM_ASSERT(Condition) BOOST_ASSERT(Condition)
-#define BOOST_SAM_ASSIGN_EC(ec, ev) \
-{                                       \
+#define BOOST_SAM_ASSIGN_EC(ec, ev)                                  \
+do {                                                                 \
     static constexpr auto loc ## __LINE__((BOOST_CURRENT_LOCATION)); \
     ec =::boost::system::error_code((ev), &loc ## __LINE__);         \
-}
+} while(false)
 #endif
 
 BOOST_SAM_BEGIN_NAMESPACE

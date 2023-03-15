@@ -39,24 +39,16 @@ predicate_op_model< Executor, Handler, Predicate, void(error_code ec, Ts...)>::c
     using traits = std::allocator_traits< decltype(alloc) >;
     auto pmem   = traits::allocate(alloc, 1);
 
-    struct dealloc
+    try
     {
-        ~dealloc()
-        {
-#if defined(__cpp_lib_uncaught_exceptions)
-            if (std::uncaught_exceptions() > 0)
-#else
-            if (std::uncaught_exception())
-#endif
-                traits::deallocate(alloc_, pmem_, 1);
-        }
-        decltype(alloc) alloc_;
-        decltype(pmem) pmem_;
-    };
-
-    dealloc dc{halloc, pmem};
-    return new (pmem)
+      return new (pmem)
             predicate_op_model(std::move(e), std::move(handler), std::move(predicate));
+    }
+    catch(...)
+    {
+      traits::deallocate(alloc, pmem, 1);
+      throw;
+    }
 }
 
 template < class Executor, class Handler, class Predicate, class ... Ts >

@@ -16,7 +16,7 @@ namespace detail
 
 bool barrier_impl::try_arrive()
 {
-
+  auto _ = internal_lock();
   if (--counter_ == 0u)
   {
     waiters_.complete_all({});
@@ -40,19 +40,18 @@ void barrier_impl::arrive(error_code &ec)
 
     struct op_t final : detail::wait_op
     {
-        error_code ec;
-        bool done = false;
+        error_code &ec;
+        std::atomic<bool> done = false;
         detail::event var;
         lock_type &lock;
-        op_t(error_code & ec,
-             lock_type & lock) : ec(ec), lock(lock) {}
+        op_t(error_code & ec, lock_type & lock) : ec(ec), lock(lock) {}
 
         void complete(error_code ec) override
         {
-            done = true;
-            this->ec = ec;
-            var.signal_all(lock);
-            this->unlink();
+          done = true;
+          this->ec = ec;
+          var.signal_all(lock);
+          this->unlink();
         }
 
         void shutdown() override
@@ -63,19 +62,23 @@ void barrier_impl::arrive(error_code &ec)
           this->unlink();
         }
 
-        ~op_t()
-        {
-        }
-
         void wait()
         {
-            while (!done)
-                var.wait(lock);
+          while (!done)
+            var.wait(lock);
         }
     };
     auto lock = this->internal_lock();
-    op_t op{ec, lock};
     decrement();
+
+    // double check!
+    if (counter_ == 0u)
+    {
+      waiters_.complete_all({});
+      counter_ = init_;
+      return ;
+    }
+    op_t op{ec, lock};
     add_waiter(&op);
     op.wait();
 }

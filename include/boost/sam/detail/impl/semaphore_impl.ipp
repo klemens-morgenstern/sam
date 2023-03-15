@@ -61,10 +61,10 @@ semaphore_impl::acquire(error_code & ec)
 
     struct op_t final : detail::wait_op
     {
-        error_code ec;
+        error_code &ec;
         semaphore_impl * this_;
         lock_type lock_{this_->internal_lock()};
-        bool done = false;
+        std::atomic<bool> done = false;
         detail::event var;
         op_t(error_code & ec, semaphore_impl * this_) : ec(ec), this_(this_) {}
 

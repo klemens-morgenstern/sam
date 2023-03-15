@@ -38,7 +38,9 @@ struct semaphore_impl : detail::service_member
 
     void shutdown() override
     {
+        auto l = internal_lock();
         auto w = std::move(waiters_);
+        l.unlock();
         w.shutdown();
     }
 

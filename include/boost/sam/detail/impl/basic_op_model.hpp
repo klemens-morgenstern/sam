@@ -38,24 +38,17 @@ basic_op_model< Executor, Handler, void(Ts...)>::construct(
     using traits = std::allocator_traits< decltype(alloc) >;
     auto pmem   = traits::allocate(alloc, 1);
 
-    struct dealloc
+    try
     {
-        ~dealloc()
-        {
-#if defined(__cpp_lib_uncaught_exceptions)
-            if (std::uncaught_exceptions() > 0)
-#else
-            if (std::uncaught_exception())
-#endif
-                traits::deallocate(alloc_, pmem_, 1);
-        }
-        decltype(alloc) alloc_;
-        decltype(pmem) pmem_;
-    };
+      return new (pmem)
+          basic_op_model(std::move(e), std::move(handler));
+    }
+    catch(...)
+    {
+      traits::deallocate(alloc, pmem, 1);
+      throw;
+    }
 
-    dealloc dc{halloc, pmem};
-    return new (pmem)
-            basic_op_model(std::move(e), std::move(handler));
 }
 
 template < class Executor, class Handler, class ... Ts >

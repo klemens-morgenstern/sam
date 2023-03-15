@@ -6,8 +6,8 @@
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/yield.hpp>
-#include <boost/asem/guarded.hpp>
-#include <boost/asem/mutex.hpp>
+#include <boost/sam/guarded.hpp>
+#include <boost/sam/mutex.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <iostream>
@@ -69,10 +69,10 @@ int main(int argc, const char ** argv)
     auto const results = resolver.resolve("boost.org", "80");
     stream.connect(*results);
 
-    boost::asem::mutex mtx{ctx};
+    boost::sam::mutex mtx{ctx};
 
-    boost::asem::guarded(mtx, [&](auto && token) { return async_request(stream, req1, res1, std::move(token)); }, boost::asio::detached);
-    boost::asem::guarded(mtx, [&](auto && token) { return async_request(stream, req2, res2, std::move(token)); }, boost::asio::detached);
+    boost::sam::guarded(mtx, [&](auto && token) { return async_request(stream, req1, res1, std::move(token)); }, boost::asio::detached);
+    boost::sam::guarded(mtx, [&](auto && token) { return async_request(stream, req2, res2, std::move(token)); }, boost::asio::detached);
 
     ctx.run();
 

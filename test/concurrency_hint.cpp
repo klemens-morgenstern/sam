@@ -3,9 +3,9 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/asem/detail/concurrency_hint.hpp>
+#include <boost/sam/detail/concurrency_hint.hpp>
 
-#if defined(BOOST_ASEM_STANDALONE)
+#if defined(BOOST_SAM_STANDALONE)
 #include <asio/thread_pool.hpp>
 #else
 #include <boost/asio/thread_pool.hpp>
@@ -15,8 +15,8 @@
 
 BOOST_AUTO_TEST_SUITE(concurrency_hint);
 
-using namespace BOOST_ASEM_NAMESPACE;
-using BOOST_ASEM_NAMESPACE::detail::is_single_threaded;
+using namespace BOOST_SAM_NAMESPACE;
+using BOOST_SAM_NAMESPACE::detail::is_single_threaded;
 
 BOOST_AUTO_TEST_CASE(io_context_1)
 {

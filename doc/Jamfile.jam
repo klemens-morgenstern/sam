@@ -5,14 +5,14 @@
 
 import asciidoctor ;
 
-html asem.html : asem.adoc ;
+html sam.html : sam.adoc ;
 
-install html_ : asem.html : <location>html ;
+install html_ : sam.html : <location>html ;
 
-pdf asem.pdf : asem.adoc ;
-explicit asem.pdf ;
+pdf sam.pdf : sam.adoc ;
+explicit sam.pdf ;
 
-install pdf_ : asem.pdf : <location>pdf ;
+install pdf_ : sam.pdf : <location>pdf ;
 explicit pdf_ ;
 
 ###############################################################################

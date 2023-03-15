@@ -1,14 +1,14 @@
 [#overview]
 # Overview
 
-ASem is a library providing synchronization primitives for asio based application.
+Sam is a library providing synchronization primitives for asio based application.
 
 The primitives are modeled on common concepts, as listed below:
 
 .List of Primitives
 [options="header"]
 |============================================
-|ASem                   | C++ Standard
+|Sam                   | C++ Standard
 |<<mutex>>              | std::mutex
 |<<condition_variable>> | std::condition_variable
 |<<semaphore>>          | std::counting_semaphore

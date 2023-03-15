@@ -5,14 +5,14 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <boost/asem/mutex.hpp>
-#include <boost/asem/guarded.hpp>
+#include <boost/sam/mutex.hpp>
+#include <boost/sam/guarded.hpp>
 #include <chrono>
 #include <random>
 #include <vector>
-#include <boost/asem/lock_guard.hpp>
+#include <boost/sam/lock_guard.hpp>
 
-#if !defined(BOOST_ASEM_STANDALONE)
+#if !defined(BOOST_SAM_STANDALONE)
 namespace asio = boost::asio;
 #include <boost/asio.hpp>
 #include <boost/asio/compose.hpp>
@@ -26,7 +26,7 @@ namespace asio = boost::asio;
 
 #endif
 
-using namespace BOOST_ASEM_NAMESPACE;
+using namespace BOOST_SAM_NAMESPACE;
 using namespace net;
 using namespace net::experimental;
 

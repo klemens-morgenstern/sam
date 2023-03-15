@@ -4,9 +4,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 
-#include <boost/asem/condition_variable.hpp>
+#include <boost/sam/condition_variable.hpp>
 
-#if defined(BOOST_ASEM_STANDALONE)
+#if defined(BOOST_SAM_STANDALONE)
 #include <asio/steady_timer.hpp>
 #include <asio/compose.hpp>
 #include <asio/detached.hpp>
@@ -17,7 +17,7 @@
 #include <boost/asio/detached.hpp>
 #endif
 
-using namespace BOOST_ASEM_NAMESPACE;
+using namespace BOOST_SAM_NAMESPACE;
 
 using steady_timer = typename net::steady_timer::rebind_executor<net::io_context::executor_type>::other;
 
@@ -120,7 +120,7 @@ int main(int argc, char * argv[])
     run_benchmark<tcondvar>(ctx.get_executor(), cnt);
   }
 
-  if (auto b = benchmark("no-mutex asem"))
+  if (auto b = benchmark("no-mutex sam"))
   {
     asio::io_context ctx{1};
     run_benchmark<basic_condition_variable<net::io_context::executor_type>>(ctx.get_executor(), cnt);
@@ -131,7 +131,7 @@ int main(int argc, char * argv[])
     run_benchmark<tcondvar>(ctx.get_executor(), cnt);
   }
 
-  if (auto b = benchmark("mutexed  asem"))
+  if (auto b = benchmark("mutexed  sam"))
   {
     asio::io_context ctx{-1};
     run_benchmark<basic_condition_variable<net::io_context::executor_type>>(ctx.get_executor(), cnt);

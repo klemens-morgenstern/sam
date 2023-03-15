@@ -14,15 +14,15 @@ project : requirements
   <toolset>msvc:<cxxflags>/bigobj
   <target-os>windows:<define>WIN32_LEAN_AND_MEAN
   <target-os>linux:<linkflags>-lpthread
-  <define>BOOST_ASEM_SEPARATE_COMPILATION=1
+  <define>BOOST_SAM_SEPARATE_COMPILATION=1
 ;
 
 import testing ;
 
 lib header_test : header_1.cpp header_2.cpp :
-        <define>BOOST_ASEM_HEADER_ONLY=1 ;
+        <define>BOOST_SAM_HEADER_ONLY=1 ;
 
-lib test_impl : test_impl.cpp /boost//asem :
+lib test_impl : test_impl.cpp /boost//sam :
         <define>BOOST_TEST_IGNORE_SIGCHLD=1
         <link>static
         <target-os>windows:<source>shell32

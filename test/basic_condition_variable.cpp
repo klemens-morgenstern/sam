@@ -12,13 +12,13 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <boost/asem/condition_variable.hpp>
+#include <boost/sam/condition_variable.hpp>
 #include <boost/optional.hpp>
 #include <chrono>
 #include <random>
 
 
-#if defined(BOOST_ASEM_STANDALONE)
+#if defined(BOOST_SAM_STANDALONE)
 
 #include <asio.hpp>
 #include <asio/coroutine.hpp>
@@ -45,7 +45,7 @@ namespace net = boost::asio;
 #endif
 
 using namespace std::literals;
-using namespace BOOST_ASEM_NAMESPACE;
+using namespace BOOST_SAM_NAMESPACE;
 using namespace net;
 
 using models = std::tuple<net::io_context, net::thread_pool>;

@@ -6,7 +6,6 @@
 
 import os ;
 
-
 project : requirements
   <define>BOOST_ASIO_NO_DEPRECATED
   <toolset>msvc:<define>_SCL_SECURE_NO_WARNINGS
@@ -18,15 +17,15 @@ project : requirements
 ;
 
 
-alias asem_sources
+alias sam_sources
    : src.cpp
    ;
 
-explicit asem_sources ;
+explicit sam_sources ;
 
-lib boost_asem
-   : asem_sources
+lib boost_sam
+   : sam_sources
    ;
 
-boost-install boost_asem ;
+boost-install boost_sam ;
 

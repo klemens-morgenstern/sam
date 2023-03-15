@@ -1,11 +1,11 @@
 [#config]
 # Config
 
-ASem is by default considered a part of boost, thus it will use `boost/asio.hpp`.
-it is however possible to use it standalone, by defining `BOOST_ASEM_STANDALONE`.
-In standalone mode the namespace will be `asem` and it will include standalone `asio`.
+Sam is by default considered a part of boost, thus it will use `boost/asio.hpp`.
+it is however possible to use it standalone, by defining `BOOST_SAM_STANDALONE`.
+In standalone mode the namespace will be `sam` and it will include standalone `asio`.
 
-ASem is compiled by default, but a header only mode
-can be switched on by defining `BOOST_ASEM_HEADER_ONLY`.
+Sam is compiled by default, but a header only mode
+can be switched on by defining `BOOST_SAM_HEADER_ONLY`.
 
-The user needs can include `boost/asem/src.hpp` as an alternative to linking.
+The user needs can include `boost/sam/src.hpp` as an alternative to linking.

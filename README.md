@@ -1,8 +1,8 @@
-# [Boost Asem (Asio Semaphore)](https://github.com/klemens-morgenstern/asem)
+# [Boost Sam (Semaphore and Mutex)](https://github.com/klemens-morgenstern/sam)
 
 ### About
 
-This C++11 library is a small synchronization utility library around asio..
+This C++11 library is a small synchronization utility library around asio.
 
 ### License
 
@@ -10,4 +10,4 @@ Distributed under the [Boost Software License, Version 1.0](http://www.boost.org
 
 ### Dependency
 
-Asio, standalone or with boost
+Asio, standalone or with boost.

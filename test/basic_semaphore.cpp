@@ -12,13 +12,13 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <boost/asem/semaphore.hpp>
+#include <boost/sam/semaphore.hpp>
 #include <chrono>
 #include <random>
 #include <thread>
 
 
-#if defined(BOOST_ASEM_STANDALONE)
+#if defined(BOOST_SAM_STANDALONE)
 
 #include <asio.hpp>
 #include <asio/coroutine.hpp>
@@ -45,7 +45,7 @@ namespace net = boost::asio;
 
 using namespace net;
 using namespace std::literals;
-using namespace BOOST_ASEM_NAMESPACE;
+using namespace BOOST_SAM_NAMESPACE;
 
 using models = std::tuple<io_context, thread_pool>;
 template<typename T>

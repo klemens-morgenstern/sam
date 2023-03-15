@@ -4,9 +4,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 
-#include <boost/asem/mutex.hpp>
+#include <boost/sam/mutex.hpp>
 
-#if defined(BOOST_ASEM_STANDALONE)
+#if defined(BOOST_SAM_STANDALONE)
 #include <asio/steady_timer.hpp>
 #include <asio/experimental/channel.hpp>
 #include <asio/experimental/concurrent_channel.hpp>
@@ -26,7 +26,7 @@
 
 #endif
 
-using namespace BOOST_ASEM_NAMESPACE;
+using namespace BOOST_SAM_NAMESPACE;
 
 // imitate a barrier using a timer
 template<template <typename ...> class Channel>
@@ -115,7 +115,7 @@ int main(int argc, char * argv[])
     run_benchmark<tmutex<net::experimental::channel>>(ctx.get_executor(), cnt);
   }
 
-  if (auto b = benchmark("no-mutex asem"))
+  if (auto b = benchmark("no-mutex sam"))
   {
     net::io_context ctx{1};
     run_benchmark<basic_mutex<net::io_context::executor_type>>(ctx.get_executor(), cnt);
@@ -127,7 +127,7 @@ int main(int argc, char * argv[])
     run_benchmark<tmutex<net::experimental::concurrent_channel>>(ctx.get_executor(), cnt);
   }
 
-  if (auto b = benchmark("mutexed asem"))
+  if (auto b = benchmark("mutexed sam"))
   {
     net::io_context ctx{-1};
     run_benchmark<basic_mutex<net::io_context::executor_type>>(ctx.get_executor(), cnt);

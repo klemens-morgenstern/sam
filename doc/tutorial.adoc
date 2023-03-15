@@ -25,7 +25,7 @@ it allows notifying workers trying to acquire a resource.
 
 [source,cpp]
 ----
-asio::awaitable<void> work(asem::semaphore & sem)
+asio::awaitable<void> work(sam::semaphore & sem)
 {
     co_await sem.async_acquire(asio::use_awaitable);
     co_await do_work();
@@ -35,7 +35,7 @@ asio::awaitable<void> work(asem::semaphore & sem)
 [#threading-mode]
 .Threading Mode
 ****
-ASem deduces the threading mode from the executor following
+Sam deduces the threading mode from the executor following
 the concurrency_hint by asio.
 
 See the

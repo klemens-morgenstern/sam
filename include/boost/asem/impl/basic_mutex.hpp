@@ -36,8 +36,9 @@ struct basic_mutex<Executor>::async_lock_op
         auto l = self->impl_.internal_lock();
         ignore_unused(l);
 
-        if (self->impl_.try_lock())
+        if (!self->impl_.locked_)
         {
+          self->impl_.locked_ = true;
           auto ie = net::get_associated_immediate_executor(handler, self->get_executor());
           return net::post(
               ie,

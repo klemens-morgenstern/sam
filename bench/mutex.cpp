@@ -108,7 +108,7 @@ struct benchmark
 int main(int argc, char * argv[])
 {
   {net::io_context ctx{1};}
-  const std::size_t cnt = 1'000'000;
+  const std::size_t cnt = 10'000'000;
   if (auto b = benchmark("no-mutex asio"))
   {
     net::io_context ctx{1};
@@ -130,7 +130,7 @@ int main(int argc, char * argv[])
   if (auto b = benchmark("mutexed asem"))
   {
     net::io_context ctx{-1};
-    run_benchmark<basic_mutex<net::io_context::executor_type>>(ctx.get_executor(), 1'000'000);
+    run_benchmark<basic_mutex<net::io_context::executor_type>>(ctx.get_executor(), cnt);
   }
   return 0;
 }

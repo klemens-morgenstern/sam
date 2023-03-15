@@ -104,11 +104,6 @@ struct service_member : bilist_node
   {
     return lock_type{mtx_};
   }
-
-  bool multi_threaded() const
-  {
-    return mtx_.enabled();
-  }
 };
 
 }

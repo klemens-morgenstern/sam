@@ -5,7 +5,6 @@
 #ifndef BOOST_ASEM_DETAIL_CONDITION_VARIABLE_IMPL_HPP
 #define BOOST_ASEM_DETAIL_CONDITION_VARIABLE_IMPL_HPP
 
-#include <atomic>
 #include <mutex>
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/predicate_op.hpp>

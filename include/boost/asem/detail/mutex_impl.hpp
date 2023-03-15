@@ -5,11 +5,11 @@
 #ifndef BOOST_ASEM_DETAIL_MUTEX_IMPL_HPP
 #define BOOST_ASEM_DETAIL_MUTEX_IMPL_HPP
 
-#include <atomic>
-#include <mutex>
 #include <boost/asem/detail/config.hpp>
 #include <boost/asem/detail/service.hpp>
 #include <boost/asem/detail/basic_op_model.hpp>
+
+#include <mutex>
 
 BOOST_ASEM_BEGIN_NAMESPACE
 
@@ -18,26 +18,18 @@ namespace detail
 
 struct mutex_impl : detail::service_member
 {
-    mutex_impl(net::execution_context & ctx) : detail::service_member(ctx)
+    mutex_impl(net::execution_context & ctx) : detail::service_member(ctx), locked_(false)
     {
-      if (multi_threaded())
-        new (&ts_locked_) std::atomic<bool>(false);
-      else
-        new (&locked_) bool(false);
     }
 
     BOOST_ASEM_DECL void unlock();
     bool try_lock()
     {
-        if (multi_threaded())
-          return !ts_locked_.exchange(true);
-        else
-        {
-          if (locked_)
-            return false;
-          else
-            return locked_ = true;
-        }
+      auto _ = internal_lock();
+      if (locked_)
+        return false;
+      else
+        return locked_ = true;
     }
 
     BOOST_ASEM_DECL void
@@ -50,10 +42,7 @@ struct mutex_impl : detail::service_member
         w.shutdown();
     }
 
-    union {
-      bool locked_;
-      std::atomic<bool> ts_locked_;
-    };
+    bool locked_;
 
     detail::basic_bilist_holder<void(error_code)> waiters_;
 
@@ -61,28 +50,18 @@ struct mutex_impl : detail::service_member
     mutex_impl(const mutex_impl &) = delete;
     mutex_impl(mutex_impl && mi)
         : detail::service_member(std::move(mi))
+        , locked_(mi.locked_)
         , waiters_(std::move(mi.waiters_))
     {
-      if (multi_threaded())
-        new (&ts_locked_) std::atomic<bool>(mi.ts_locked_.exchange(false));
-      else
-      {
-        new (&locked_) bool(mi.locked_);
-        mi.locked_ = false;
-      }
+      mi.locked_ = false;
     }
 
     mutex_impl& operator=(const mutex_impl & lhs) = delete;
     mutex_impl& operator=(mutex_impl && lhs) noexcept
     {
         auto _ = lhs.internal_lock();
-        if (multi_threaded())
-          new (&ts_locked_) std::atomic<bool>(lhs.ts_locked_.exchange(false));
-        else
-        {
-          new (&locked_) bool(lhs.locked_);
+        locked_ = lhs.locked_;
           lhs.locked_ = false;
-        }
         lhs.waiters_ = std::move(waiters_);
         return *this;
     }

@@ -16,40 +16,23 @@ namespace detail
 
 bool barrier_impl::try_arrive()
 {
-  if (multi_threaded())
+
+  if (--counter_ == 0u)
   {
-    if (ts_counter_.fetch_sub(1) <= 1)
-    {
-        auto l = internal_lock();
-        waiters_.complete_all({});
-        ts_counter_ = init_;
-        return true;
-    }
-    else
-    {
-        ts_counter_ ++;
-        return false;
-    }
+    waiters_.complete_all({});
+    counter_ = init_;
+    return true;
   }
   else
-  {
-    if (--counter_ == 0u)
-    {
-      waiters_.complete_all({});
-      counter_ = init_;
-      return true;
-    }
-    else
-      counter_++;
-    return false;
-  }
+    counter_++;
+  return false;
 }
 
 void barrier_impl::arrive(error_code &ec)
 {
     if (try_arrive())
         return;
-    else if (!multi_threaded())
+    else if (!this->mtx_.enabled())
     {
       BOOST_ASEM_ASSIGN_EC(ec, asio::error::in_progress);
       return ;

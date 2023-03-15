@@ -26,7 +26,7 @@ mutex_impl::lock(error_code & ec)
 {
     if (try_lock())
         return ;
-    else if (!this->multi_threaded())
+    else if (!this->mtx_.enabled())
     {
         BOOST_ASEM_ASSIGN_EC(ec, asio::error::in_progress);
         return ;
@@ -77,10 +77,7 @@ mutex_impl::unlock()
     // release a pending operations
     if (waiters_.next_ == &waiters_)
     {
-        if (multi_threaded())
-          ts_locked_.store(false);
-        else
-          locked_ = false;
+        locked_ = false;
         return;
     }
     assert(waiters_.next_ != nullptr);

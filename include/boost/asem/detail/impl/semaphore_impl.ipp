@@ -29,19 +29,14 @@ semaphore_impl::add_waiter(detail::wait_op *waiter) noexcept
 int
 semaphore_impl::count() const noexcept
 {
-  if (multi_threaded())
-    return ts_count_.load();
-  else
-    return count_;
+  return count_;
 }
 
 void
 semaphore_impl::release()
 {
     auto lock_ = internal_lock();
-    multi_threaded() ?
-      ts_count_ ++ :
-      count_ ++;
+    count_ ++;
 
     // release a pending operations
     if (waiters_.next_ == &waiters_)
@@ -58,7 +53,7 @@ semaphore_impl::acquire(error_code & ec)
 {
     if (try_acquire())
         return ;
-    else if (!multi_threaded())
+    else if (!mtx_.enabled())
     {
         BOOST_ASEM_ASSIGN_EC(ec, asio::error::in_progress);
         return ;
@@ -120,25 +115,14 @@ semaphore_impl::value() const noexcept
 bool
 semaphore_impl::try_acquire()
 {
-  if (multi_threaded())
+  auto _ = internal_lock();
+  bool acquired = false;
+  if (count_ > 0)
   {
-    if (ts_count_.fetch_sub(1) >= 0)
-      return true;
-    else
-      ts_count_++;
-    return false;
+    --count_;
+    acquired = true;
   }
-  else
-  {
-    bool acquired = false;
-    if (count_ > 0)
-    {
-      --count_;
-      acquired = true;
-    }
-    return acquired;
-  }
-
+  return acquired;
 }
 
 int

@@ -62,7 +62,6 @@ struct basic_barrier_main : net::coroutine
     void operator()(error_code = {})
     {
         auto p = impl_.get();
-        int val = impl_->done.load();
         reenter (this)
         {
             impl_->barrier_.async_arrive([p](error_code ec){BOOST_CHECK(!ec); p->done |= 1;});
@@ -73,9 +72,9 @@ struct basic_barrier_main : net::coroutine
             yield asio::post(impl_->barrier_.get_executor(), std::move(*this));
             BOOST_CHECK_EQUAL(p->done, 0);
             yield impl_->barrier_.async_arrive(std::move(*this));
-            impl_->tim.expires_after(std::chrono::milliseconds(10));
+            impl_->tim.expires_after(std::chrono::milliseconds(1000));
             yield impl_->tim.async_wait(std::move(*this));
-            BOOST_CHECK_EQUAL(val, 15);
+            BOOST_CHECK_EQUAL(impl_->done.load(), 15);
         }
     }
 

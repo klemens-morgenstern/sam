@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(notify_all, T, models)
 {
     T ioc{init<T>};
     auto cv  = condition_variable(ioc.get_executor());
-    int cnt = 0;
+    std::atomic<int> cnt = 0;
     cv.async_wait([&](error_code ec){cnt |= 1; BOOST_CHECK(!ec);});
     cv.async_wait([&](error_code ec){cnt |= 2; BOOST_CHECK(!ec);});
     cv.async_wait([&](error_code ec){cnt |= 4; BOOST_CHECK(!ec);});
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(notify_one, T, models)
     T ioc{init<T>};
     boost::optional<condition_variable> store{ioc.get_executor()};
     auto & cv = *store;
-    int cnt = 0;
+    std::atomic<int> cnt = 0;
     cv.async_wait([&](error_code ec){if (!ec) cnt |= 1; BOOST_TEST_CHECK(!ec);});
     cv.async_wait([&](error_code ec){if (!ec) cnt |= 2; BOOST_TEST_CHECK(!ec);});
     cv.async_wait([&](error_code ec){if (!ec) cnt |= 4; BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted);});
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(notify_some, T, models)
     auto store  = boost::optional<condition_variable>(ioc.get_executor());
     auto & cv = *store;
 
-    int cnt = 0;
+    std::atomic<int> cnt = 0;
     cv.async_wait([]{return false;}, [&](error_code ec){if (!ec) cnt |= 1; BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted);});
     cv.async_wait([]{return true;},  [&](error_code ec){if (!ec) cnt |= 2; BOOST_TEST_CHECK(!ec);});
     cv.async_wait([]{return false;}, [&](error_code ec){if (!ec) cnt |= 4; BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted);});
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(notify_some_more, T, models)
     auto store  = boost::optional<condition_variable>(ioc.get_executor());
     auto & cv = *store;
 
-    int cnt = 0;
+    std::atomic<int> cnt = 0;
     cv.async_wait([&](error_code ec){if (!ec) cnt |= 1; BOOST_CHECK(!ec);});
     cv.async_wait([&](error_code ec){if (!ec) cnt |= 2; BOOST_CHECK(!ec);});
     cv.async_wait([&](error_code ec){if (!ec) cnt |= 4; BOOST_CHECK(!ec);});

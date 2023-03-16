@@ -28,58 +28,64 @@ bool barrier_impl::try_arrive()
   return false;
 }
 
+struct barrier_impl::arrive_op_t final : detail::wait_op
+{
+    error_code &ec;
+    bool done = false;
+    detail::event var;
+    lock_type &lock;
+    arrive_op_t(error_code & ec, lock_type & lock) : ec(ec), lock(lock) {}
+
+    void complete(error_code ec) override
+    {
+        done = true;
+        this->ec = ec;
+        var.signal_all(lock);
+        this->unlink();
+    }
+
+    void shutdown() override
+    {
+        done = true;
+        BOOST_SAM_ASSIGN_EC(this->ec, net::error::shut_down);
+        var.signal_all(lock);
+        this->unlink();
+    }
+
+    void wait()
+    {
+       while (!done)
+          var.wait(lock);
+    }
+
+};
+
 void barrier_impl::arrive(error_code &ec)
 {
-    if (try_arrive())
-        return;
-    else if (!this->mtx_.enabled())
+    if (!this->mtx_.enabled())
     {
-      BOOST_SAM_ASSIGN_EC(ec, asio::error::in_progress);
-      return ;
+      if (try_arrive())
+          return;
+      else
+      {
+          BOOST_SAM_ASSIGN_EC(ec, asio::error::in_progress);
+          return ;
+      }
     }
-
-    struct op_t final : detail::wait_op
-    {
-        error_code &ec;
-        std::atomic<bool> done = false;
-        detail::event var;
-        lock_type &lock;
-        op_t(error_code & ec, lock_type & lock) : ec(ec), lock(lock) {}
-
-        void complete(error_code ec) override
-        {
-          done = true;
-          this->ec = ec;
-          var.signal_all(lock);
-          this->unlink();
-        }
-
-        void shutdown() override
-        {
-          done = true;
-          BOOST_SAM_ASSIGN_EC(this->ec, net::error::shut_down);
-          var.signal_all(lock);
-          this->unlink();
-        }
-
-        void wait()
-        {
-          while (!done)
-            var.wait(lock);
-        }
-    };
     auto lock = this->internal_lock();
-    decrement();
 
-    // double check!
+    arrive_op_t op{ec, lock};
+    add_waiter(&op);
+    // try_arrive
+    counter_--;
     if (counter_ == 0u)
     {
-      waiters_.complete_all({});
-      counter_ = init_;
-      return ;
+        waiters_.complete_all({});
+        counter_ = init_;
+        op.unlink();
+        return;
     }
-    op_t op{ec, lock};
-    add_waiter(&op);
+    // try_arrive is over
     op.wait();
 }
 

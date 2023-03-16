@@ -60,7 +60,6 @@ struct op_list_service final
 
 struct service_member : bilist_node
 {
-
   op_list_service* service;
 
   service_member(net::execution_context & ctx)

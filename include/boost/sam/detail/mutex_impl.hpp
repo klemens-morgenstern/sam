@@ -67,6 +67,8 @@ struct mutex_impl : detail::service_member
         lhs.waiters_ = std::move(waiters_);
         return *this;
     }
+
+    struct lock_op_t;
 };
 
 }

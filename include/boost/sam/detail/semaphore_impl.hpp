@@ -68,6 +68,7 @@ struct semaphore_impl : detail::service_member
   private:
     int count_;
     detail::basic_bilist_holder<void(error_code)> waiters_;
+    struct acquire_op_t;
 };
 
 

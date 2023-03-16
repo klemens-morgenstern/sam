@@ -39,11 +39,11 @@ struct basic_bilist_holder<void(error_code, Ts...)> : bilist_node
 {
     ~basic_bilist_holder()
     {
-      using op = basic_op<void(error_code, Ts...)>;
+        using op = basic_op<void(error_code, Ts...)>;
         auto & nx = this->next_;
         error_code ec = asio::error::operation_aborted;
         while (nx != this)
-            static_cast< op * >(nx)->complete(ec, Ts{}...);
+          static_cast< op * >(nx)->complete(ec, Ts{}...);
     }
 
     void complete_all(error_code ec, Ts ... ts)

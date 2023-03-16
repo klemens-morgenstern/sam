@@ -289,5 +289,23 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_, T, models)
   run_impl(ctx);
 }
 
+BOOST_AUTO_TEST_CASE(mt_shutdown)
+{
+  std::weak_ptr<mutex> wp;
+  std::thread thr;
+  {
+    asio::thread_pool ctx{2u};
+    auto smtx = std::make_shared<mutex>(ctx);
+    smtx->lock();
+    thr = std::thread([smtx] { BOOST_CHECK_THROW(smtx->lock(), system_error); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    wp = smtx;
+    auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
+  }
+
+  thr.join();
+  BOOST_CHECK(wp.expired());
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -72,7 +72,7 @@ struct basic_barrier_main : net::coroutine
             yield asio::post(impl_->barrier_.get_executor(), std::move(*this));
             BOOST_CHECK_EQUAL(p->done, 0);
             yield impl_->barrier_.async_arrive(std::move(*this));
-            impl_->tim.expires_after(std::chrono::milliseconds(1000));
+            impl_->tim.expires_after(std::chrono::milliseconds(50));
             yield impl_->tim.async_wait(std::move(*this));
             BOOST_CHECK_EQUAL(impl_->done.load(), 15);
         }
@@ -168,5 +168,32 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel, T, models)
 
   run_impl(ctx);
 }
+
+
+BOOST_AUTO_TEST_CASE(mt_shutdown)
+{
+  std::weak_ptr<barrier> wp;
+  std::thread thr;
+  std::exception_ptr ep;
+  {
+    asio::thread_pool ctx{2u};
+    auto smtx = std::make_shared<barrier>(ctx, 3);
+
+    thr = std::thread(
+       [smtx]
+       {
+         BOOST_CHECK_THROW(smtx->arrive(), system_error);
+       });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    wp = smtx;
+    auto l =  [smtx](error_code ec) { BOOST_CHECK(false); };
+    smtx->async_arrive(l);
+  }
+
+  thr.join();
+  BOOST_CHECK(wp.expired());
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()

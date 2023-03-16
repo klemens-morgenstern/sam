@@ -46,59 +46,61 @@ semaphore_impl::release()
     static_cast< detail::wait_op * >(waiters_.next_)->complete(std::error_code());
 }
 
+struct semaphore_impl::acquire_op_t final : detail::wait_op
+{
+  error_code &ec;
+  lock_type & lock_;
+  bool done = false;
+  detail::event var;
+  acquire_op_t(error_code & ec,
+               lock_type & lock_) : ec(ec), lock_(lock_) {}
 
+  void complete(error_code ec) override
+  {
+    done = true;
+    this->ec = ec;
+    var.signal_all(lock_);
+    this->unlink();
+  }
+
+  void shutdown() override
+  {
+    done = true;
+    BOOST_SAM_ASSIGN_EC(this->ec, net::error::shut_down);
+    var.signal_all(lock_);
+    this->unlink();
+  }
+
+  void wait()
+  {
+    while (!done)
+      var.wait(lock_);
+  }
+};
 
 void
 semaphore_impl::acquire(error_code & ec)
 {
-    if (try_acquire())
-        return ;
-    else if (!mtx_.enabled())
+    if (!mtx_.enabled())
     {
-        BOOST_SAM_ASSIGN_EC(ec, asio::error::in_progress);
-        return ;
+        if (try_acquire())
+          return;
+        else
+        {
+          BOOST_SAM_ASSIGN_EC(ec, asio::error::in_progress);
+          return ;
+        }
     }
 
-    struct op_t final : detail::wait_op
-    {
-        error_code &ec;
-        semaphore_impl * this_;
-        lock_type lock_{this_->internal_lock()};
-        std::atomic<bool> done = false;
-        detail::event var;
-        op_t(error_code & ec, semaphore_impl * this_) : ec(ec), this_(this_) {}
-
-        void complete(error_code ec) override
-        {
-            done = true;
-            this->ec = ec;
-            var.signal_all(lock_);
-            this_->decrement();
-            this->unlink();
-        }
-
-        void shutdown() override
-        {
-          done = true;
-          BOOST_SAM_ASSIGN_EC(this->ec, net::error::shut_down);
-          var.signal_all(lock_);
-          this_->decrement();
-          this->unlink();
-        }
-
-        ~op_t()
-        {
-        }
-
-        void wait()
-        {
-            while (!done)
-              var.wait(lock_);
-        }
-    };
-
-    op_t op{ec, this};
+    lock_type lock = internal_lock();
+    acquire_op_t op{ec, lock};
     add_waiter(&op);
+    if (count_ > 0)
+    {
+        decrement();
+        op.unlink();
+        return;
+    }
     op.wait();
 }
 
@@ -116,19 +118,19 @@ bool
 semaphore_impl::try_acquire()
 {
   auto _ = internal_lock();
-  bool acquired = false;
   if (count_ > 0)
   {
     --count_;
-    acquired = true;
+    return true;
   }
-  return acquired;
+  else
+    return false;
 }
 
 int
 semaphore_impl::decrement()
 {
-    //BOOST_SAM_ASSERT(count_ > 0);
+    BOOST_SAM_ASSERT(count_ > 0);
     return --count_;
 }
 

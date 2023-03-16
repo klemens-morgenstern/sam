@@ -65,6 +65,8 @@ struct barrier_impl : detail::service_member
       w.shutdown();
     }
     detail::basic_bilist_holder<void(error_code)> waiters_;
+
+    struct arrive_op_t;
 };
 
 }

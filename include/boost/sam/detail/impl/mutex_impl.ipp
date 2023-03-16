@@ -21,51 +21,64 @@ mutex_impl::add_waiter(detail::wait_op *waiter) noexcept
     waiter->link_before(&waiters_);
 }
 
+struct mutex_impl::lock_op_t final : detail::wait_op
+{
+  error_code &ec;
+  bool done = false;
+  detail::event var;
+  lock_type &lock;
+  lock_op_t(error_code & ec,
+            lock_type & lock) : ec(ec), lock(lock) {}
+
+  void complete(error_code ec) override
+  {
+    done = true;
+    this->ec = ec;
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
+    var.signal_all(lock);
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
+    this->unlink();
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
+  }
+
+  void shutdown() override
+  {
+    done = true;
+    BOOST_SAM_ASSIGN_EC(this->ec, net::error::shut_down);
+    var.signal_all(lock);
+    this->unlink();
+  }
+
+  void wait()
+  {
+    while (!done)
+      var.wait(lock);
+  }
+};
+
 void
 mutex_impl::lock(error_code & ec)
 {
-    if (try_lock())
-        return ;
-    else if (!this->mtx_.enabled())
+    if (!this->mtx_.enabled())
     {
+      if (try_lock())
+        return;
+      else
+      {
         BOOST_SAM_ASSIGN_EC(ec, asio::error::in_progress);
         return ;
+      }
     }
-    struct op_t final : detail::wait_op
-    {
-        error_code &ec;
-        std::atomic<bool> done = false;
-        detail::event var;
-        lock_type &lock;
-        op_t(error_code & ec,
-             lock_type & lock) : ec(ec), lock(lock) {}
-
-        void complete(error_code ec) override
-        {
-            done = true;
-            this->ec = ec;
-            var.signal_all(lock);
-            this->unlink();
-        }
-
-        void shutdown() override
-        {
-          done = true;
-          BOOST_SAM_ASSIGN_EC(this->ec, net::error::shut_down);
-          var.signal_all(lock);
-          this->unlink();
-        }
-
-        void wait()
-        {
-          while (!done)
-            var.wait(lock);
-        }
-    };
 
     auto lock = this->internal_lock();
-    op_t op{ec, lock};
+    lock_op_t op{ec, lock};
     add_waiter(&op);
+    if (!locked_)
+    {
+      locked_ = true;
+      op.unlink();
+      return ;
+    }
     op.wait();
 }
 

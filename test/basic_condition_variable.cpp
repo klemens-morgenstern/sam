@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(notify_some_more, T, models)
     T ioc{init<T>};
     auto store  = boost::optional<condition_variable>(ioc.get_executor());
     auto & cv = *store;
-
+    cv.notify_one();
     std::atomic<int> cnt = 0;
     cv.async_wait([&](error_code ec){if (!ec) cnt |= 1; BOOST_CHECK(!ec);});
     cv.async_wait([&](error_code ec){if (!ec) cnt |= 2; BOOST_CHECK(!ec);});
@@ -213,6 +213,5 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_2, T, models)
   net::post(ctx, [&]{csig.emit(net::cancellation_type::all);});
   run_impl(ctx);
 }
-
 
 BOOST_AUTO_TEST_SUITE_END()

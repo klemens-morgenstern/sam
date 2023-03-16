@@ -21,60 +21,55 @@
 #include <boost/asio/post.hpp>
 #endif
 
-
 BOOST_SAM_BEGIN_NAMESPACE
 
-template < class Executor >
+template <class Executor>
 struct basic_barrier<Executor>::async_arrive_op
 {
-    basic_barrier< Executor> * self;
+  basic_barrier<Executor> *self;
 
-    template< class Handler >
-    void operator()(Handler &&handler)
+  template <class Handler>
+  void operator()(Handler &&handler)
+  {
+    auto e = get_associated_executor(handler, self->get_executor());
+
+    if (self->impl_.try_arrive())
     {
-        auto e = get_associated_executor(handler, self->get_executor());
-
-        if (self->impl_.try_arrive())
-        {
-          auto ie = net::get_associated_immediate_executor(handler, self->get_executor());
-          return net::post(
-              ie,
-              net::append(
-                  std::forward< Handler >(handler), error_code()));
-        }
-
-        auto l = self->impl_.internal_lock();
-        self->impl_.decrement();
-        ignore_unused(l);
-        using handler_type = std::decay_t< Handler >;
-        using model_type = detail::basic_op_model< decltype(e), handler_type, void(error_code)>;
-        model_type *model = model_type::construct(std::move(e), std::forward< Handler >(handler));
-
-        auto slot = model->get_cancellation_slot();
-        if (slot.is_connected())
-        {
-            auto &impl = self->impl_;
-            slot.assign(
-                [model, &impl, slot](net::cancellation_type type)
-                {
-
-                    if (type != net::cancellation_type::none)
-                    {
-                      auto sl = slot;
-                      auto lock = impl.internal_lock();
-                      ignore_unused(lock);
-                      // completed already
-                      if (!sl.is_connected())
-                        return;
-
-                      auto *self = model;
-                      self->complete(net::error::operation_aborted);
-                    }
-                });
-        }
-
-      self->impl_.add_waiter(model);
+      auto ie = net::get_associated_immediate_executor(handler, self->get_executor());
+      return net::post(ie, net::append(std::forward<Handler>(handler), error_code()));
     }
+
+    auto l = self->impl_.internal_lock();
+    self->impl_.decrement();
+    ignore_unused(l);
+    using handler_type = std::decay_t<Handler>;
+    using model_type   = detail::basic_op_model<decltype(e), handler_type, void(error_code)>;
+    model_type *model  = model_type::construct(std::move(e), std::forward<Handler>(handler));
+
+    auto slot = model->get_cancellation_slot();
+    if (slot.is_connected())
+    {
+      auto &impl = self->impl_;
+      slot.assign(
+          [model, &impl, slot](net::cancellation_type type)
+          {
+            if (type != net::cancellation_type::none)
+            {
+              auto sl   = slot;
+              auto lock = impl.internal_lock();
+              ignore_unused(lock);
+              // completed already
+              if (!sl.is_connected())
+                return;
+
+              auto *self = model;
+              self->complete(net::error::operation_aborted);
+            }
+          });
+    }
+
+    self->impl_.add_waiter(model);
+  }
 };
 
 BOOST_SAM_END_NAMESPACE

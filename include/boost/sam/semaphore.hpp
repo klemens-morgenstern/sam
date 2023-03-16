@@ -14,4 +14,4 @@ BOOST_SAM_BEGIN_NAMESPACE
 using semaphore = basic_semaphore<>;
 
 BOOST_SAM_END_NAMESPACE
-#endif //BOOST_SAM_SEMAPHORE_HPP
+#endif // BOOST_SAM_SEMAPHORE_HPP

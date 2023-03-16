@@ -18,7 +18,7 @@
 BOOST_SAM_BEGIN_NAMESPACE
 namespace detail
 {
-inline bool is_single_threaded(net::execution_context& ctx)
+inline bool is_single_threaded(net::execution_context &ctx)
 {
 
 #if defined(BOOST_SAM_STANDALONE)
@@ -28,8 +28,7 @@ inline bool is_single_threaded(net::execution_context& ctx)
 #endif
 
   if (net::has_service<net::detail::scheduler>(ctx))
-    return net::use_service<net::detail::scheduler>(ctx).concurrency_hint()
-           == asio_concurrency_1;
+    return net::use_service<net::detail::scheduler>(ctx).concurrency_hint() == asio_concurrency_1;
   else
     return false;
 }
@@ -41,8 +40,7 @@ inline bool is_single_threaded(net::any_io_executor exec)
   return is_single_threaded(exec.context());
 }
 
-
-}
+} // namespace detail
 BOOST_SAM_END_NAMESPACE
 
-#endif //BOOST_SAM_CONCURRENCY_HINT_HPP
+#endif // BOOST_SAM_CONCURRENCY_HINT_HPP

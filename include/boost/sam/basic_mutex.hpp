@@ -23,132 +23,114 @@ BOOST_SAM_BEGIN_NAMESPACE
  * @tparam Implementation The implementation, st or mt.
  * @tparam Executor The executor to use as default completion.
  */
-template<typename Executor = net::any_io_executor>
+template <typename Executor = net::any_io_executor>
 struct basic_mutex
 {
-    /// The executor type.
-    using executor_type = Executor;
+  /// The executor type.
+  using executor_type = Executor;
 
-    /// A constructor. @param exec The executor to be used by the mutex.
-    explicit basic_mutex(executor_type exec)
-            : exec_(std::move(exec))
-            , impl_{{net::query(exec_, net::execution::context)}}
-    {
-    }
+  /// A constructor. @param exec The executor to be used by the mutex.
+  explicit basic_mutex(executor_type exec) : exec_(std::move(exec)), impl_{{net::query(exec_, net::execution::context)}}
+  {
+  }
 
-    /// A constructor. @param ctx The execution context used by the mutex.
-    template<typename ExecutionContext>
-    explicit basic_mutex(ExecutionContext & ctx,
-                         typename std::enable_if<
-                                 std::is_convertible<
-                                         ExecutionContext&,
-                                         net::execution_context&>::value
-                                 >::type * = nullptr)
-            : exec_(ctx.get_executor()), impl_(ctx)
-    {
-    }
+  /// A constructor. @param ctx The execution context used by the mutex.
+  template <typename ExecutionContext>
+  explicit basic_mutex(
+      ExecutionContext &ctx,
+      typename std::enable_if<std::is_convertible<ExecutionContext &, net::execution_context &>::value>::type * =
+          nullptr)
+      : exec_(ctx.get_executor()), impl_(ctx)
+  {
+  }
 
-    /// @brief Rebind a mutex to a new executor - this cancels all outstanding operations.
-    template<typename Executor_>
-    basic_mutex(basic_mutex<Executor_> && sem,
-                std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
-            : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
-    {
-    }
+  /// @brief Rebind a mutex to a new executor - this cancels all outstanding operations.
+  template <typename Executor_>
+  basic_mutex(basic_mutex<Executor_> &&sem,
+              std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
+      : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
+  {
+  }
 
-    /** Wait for the mutex to become lockable & lock it.
-     *
-     * @tparam CompletionToken The completion token type.
-     * @param token The token for completion.
-     * @return Deduced from the token.
-     */
-    template < BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code)) CompletionToken
-        BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type) >
-        BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
-    async_lock(CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(executor_type))
-    {
-        return net::async_initiate<CompletionToken, void(std::error_code)>(
-                async_lock_op{this}, token);
-    }
+  /** Wait for the mutex to become lockable & lock it.
+   *
+   * @tparam CompletionToken The completion token type.
+   * @param token The token for completion.
+   * @return Deduced from the token.
+   */
+  template <BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code))
+                CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type)>
+  BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
+  async_lock(CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(executor_type))
+  {
+    return net::async_initiate<CompletionToken, void(std::error_code)>(async_lock_op{this}, token);
+  }
 
-    /// Move assign a mutex.
-    basic_mutex& operator=(basic_mutex&&) noexcept = default;
+  /// Move assign a mutex.
+  basic_mutex &operator=(basic_mutex &&) noexcept = default;
 
-    /// Move assign a mutex with a different executor.
-    template<typename Executor_>
-    auto operator=(basic_mutex<Executor_> && sem)
-        -> std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_mutex>  &
-    {
-        std::swap(exec_, sem.exec_);
-        std::swap(impl_, sem.impl_);
-        return *this;
-    }
+  /// Move assign a mutex with a different executor.
+  template <typename Executor_>
+  auto operator=(basic_mutex<Executor_> &&sem)
+      -> std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_mutex> &
+  {
+    std::swap(exec_, sem.exec_);
+    std::swap(impl_, sem.impl_);
+    return *this;
+  }
 
-    basic_mutex& operator=(const basic_mutex&) = delete;
+  basic_mutex &operator=(const basic_mutex &) = delete;
 
-    /** Lock synchronously. This may fail depending on the implementation.
-     *
-     * If the implementation is `st` this will generate an error if the mutex
-     * is already locked.
-     *
-     * If the implementation is `mt` this function will block until another thread releases
-     * the lock. Note that this may lead to deadlocks.
-     *
-     * You should never use the synchronous functions from within an asio event-queue.
-     *
-     */
-    void lock(error_code & ec)
-    {
-        impl_.lock(ec);
-    }
+  /** Lock synchronously. This may fail depending on the implementation.
+   *
+   * If the implementation is `st` this will generate an error if the mutex
+   * is already locked.
+   *
+   * If the implementation is `mt` this function will block until another thread releases
+   * the lock. Note that this may lead to deadlocks.
+   *
+   * You should never use the synchronous functions from within an asio event-queue.
+   *
+   */
+  void lock(error_code &ec) { impl_.lock(ec); }
 
-    /// Throwing @overload lock(error_code &);
-    void lock()
-    {
-        error_code ec;
-        lock(ec);
-        if (ec)
-            throw system_error(ec, "lock");
-    }
-    /// Unlock the mutex, and complete one pending lock if pending.
-    void
-    unlock()
-    {
-        impl_.unlock();
-    }
+  /// Throwing @overload lock(error_code &);
+  void lock()
+  {
+    error_code ec;
+    lock(ec);
+    if (ec)
+      throw system_error(ec, "lock");
+  }
+  /// Unlock the mutex, and complete one pending lock if pending.
+  void unlock() { impl_.unlock(); }
 
-    ///  Try to lock the mutex.
-    bool
-    try_lock()
-    {
-        return impl_.try_lock();
-    }
+  ///  Try to lock the mutex.
+  bool try_lock() { return impl_.try_lock(); }
 
-    /// Rebinds the mutex type to another executor.
-    template <typename Executor1>
-    struct rebind_executor
-    {
-        /// The mutex type when rebound to the specified executor.
-        typedef basic_mutex<Executor1> other;
-    };
+  /// Rebinds the mutex type to another executor.
+  template <typename Executor1>
+  struct rebind_executor
+  {
+    /// The mutex type when rebound to the specified executor.
+    typedef basic_mutex<Executor1> other;
+  };
 
-    /// @brief return the default executor.
-    executor_type
-    get_executor() const noexcept {return exec_;}
+  /// @brief return the default executor.
+  executor_type get_executor() const noexcept { return exec_; }
 
-  private:
-    template<typename>
-    friend struct basic_mutex;
-    friend struct lock_guard;
+private:
+  template <typename>
+  friend struct basic_mutex;
+  friend struct lock_guard;
 
-    Executor exec_;
-    detail::mutex_impl impl_;
-    struct async_lock_op;
+  Executor           exec_;
+  detail::mutex_impl impl_;
+  struct async_lock_op;
 };
-
 
 BOOST_SAM_END_NAMESPACE
 
 #include <boost/sam/impl/basic_mutex.hpp>
 
-#endif //BOOST_SAM_BASIC_MUTEX_HPP
+#endif // BOOST_SAM_BASIC_MUTEX_HPP

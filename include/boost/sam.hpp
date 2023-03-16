@@ -10,4 +10,4 @@
 #include <boost/sam/mutex.hpp>
 #include <boost/sam/semaphore.hpp>
 
-#endif //BOOST_SAM_HPP
+#endif // BOOST_SAM_HPP

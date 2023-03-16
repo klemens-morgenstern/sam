@@ -14,4 +14,4 @@ BOOST_SAM_BEGIN_NAMESPACE
 using mutex = basic_mutex<>;
 
 BOOST_SAM_END_NAMESPACE
-#endif //BOOST_SAM_MUTEX_HPP
+#endif // BOOST_SAM_MUTEX_HPP

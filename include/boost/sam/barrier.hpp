@@ -5,8 +5,8 @@
 #ifndef BOOST_SAM_BARRIER_HPP
 #define BOOST_SAM_BARRIER_HPP
 
-#include <boost/sam/detail/config.hpp>
 #include <boost/sam/basic_barrier.hpp>
+#include <boost/sam/detail/config.hpp>
 
 BOOST_SAM_BEGIN_NAMESPACE
 
@@ -15,4 +15,4 @@ using barrier = basic_barrier<>;
 
 BOOST_SAM_END_NAMESPACE
 
-#endif //BOOST_SAM_BARRIER_HPP
+#endif // BOOST_SAM_BARRIER_HPP

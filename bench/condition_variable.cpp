@@ -3,18 +3,17 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-
 #include <boost/sam/condition_variable.hpp>
 
 #if defined(BOOST_SAM_STANDALONE)
-#include <asio/steady_timer.hpp>
 #include <asio/compose.hpp>
 #include <asio/detached.hpp>
+#include <asio/steady_timer.hpp>
 
 #else
-#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/compose.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/steady_timer.hpp>
 #endif
 
 using namespace BOOST_SAM_NAMESPACE;
@@ -27,13 +26,13 @@ struct tcondvar
   steady_timer tim;
   tcondvar(net::io_context::executor_type exec) : tim(exec) {}
 
-  net::io_context::executor_type get_executor() {return tim.get_executor();}
+  net::io_context::executor_type get_executor() { return tim.get_executor(); }
 
-  template<typename Predicate, typename Handler>
-  auto async_wait(Predicate && p, Handler && h)
+  template <typename Predicate, typename Handler>
+  auto async_wait(Predicate &&p, Handler &&h)
   {
     return net::async_compose<Handler, void(error_code)>(
-        [this, p = std::move(p), initial = true](auto && self, error_code = {}) mutable
+        [this, p = std::move(p), initial = true](auto &&self, error_code = {}) mutable
         {
           if (initial)
           {
@@ -47,36 +46,27 @@ struct tcondvar
             self.complete(ec);
           else
             tim.async_wait(std::move(self));
-
-        }, h, tim.get_executor());
+        },
+        h, tim.get_executor());
   }
 
-  void notify_one()
-  {
-    tim.cancel_one();
-  }
+  void notify_one() { tim.cancel_one(); }
 
-
-  void notify_all()
-  {
-    tim.cancel();
-  }
+  void notify_all() { tim.cancel(); }
 };
 
-
-template<typename CondVar>
+template <typename CondVar>
 void run_benchmark(asio::io_context::executor_type exec, std::size_t n)
 {
   CondVar cv{exec};
 
   struct impl
   {
-    CondVar & cv;
-    void operator()(error_code ec, std::size_t i)
+    CondVar &cv;
+    void     operator()(error_code ec, std::size_t i)
     {
       if (i != 0u)
-        cv.async_wait([&i = i]{return i % 4 == 0;}, net::detached);
-
+        cv.async_wait([&i = i] { return i % 4 == 0; }, net::detached);
 
       if (i % 100 == 0)
         cv.notify_all();
@@ -94,11 +84,9 @@ void run_benchmark(asio::io_context::executor_type exec, std::size_t n)
 
 struct benchmark
 {
-  const char * name;
+  const char                           *name;
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-  benchmark(const char * name) : name(name)
-  {
-  }
+  benchmark(const char *name) : name(name) {}
 
   ~benchmark()
   {
@@ -107,12 +95,15 @@ struct benchmark
     printf("Benchmark  %s: %ld us\n", name, std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
   }
 
-  operator bool () const {return true; }
+  operator bool() const { return true; }
 };
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
-  {net::io_context ctx{1}; }
+  {
+    net::io_context ctx{1};
+    ctx.run();
+  }
   const std::size_t cnt = 1'000'000;
   if (auto b = benchmark("no-mutex asio"))
   {
@@ -120,7 +111,7 @@ int main(int argc, char * argv[])
     run_benchmark<tcondvar>(ctx.get_executor(), cnt);
   }
 
-  if (auto b = benchmark("no-mutex sam"))
+  if (auto b = benchmark("no-mutex  sam"))
   {
     asio::io_context ctx{1};
     run_benchmark<basic_condition_variable<net::io_context::executor_type>>(ctx.get_executor(), cnt);
@@ -131,7 +122,7 @@ int main(int argc, char * argv[])
     run_benchmark<tcondvar>(ctx.get_executor(), cnt);
   }
 
-  if (auto b = benchmark("mutexed  sam"))
+  if (auto b = benchmark("mutexed   sam"))
   {
     asio::io_context ctx{-1};
     run_benchmark<basic_condition_variable<net::io_context::executor_type>>(ctx.get_executor(), cnt);

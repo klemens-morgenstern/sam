@@ -26,57 +26,37 @@ BOOST_SAM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template < class Executor, class Handler, class Signature>
+template <class Executor, class Handler, class Signature>
 struct basic_op_model;
 
-
-template < class Executor, class Handler, class ... Ts>
+template <class Executor, class Handler, class... Ts>
 struct basic_op_model<Executor, Handler, void(Ts...)> final : basic_op<void(Ts...)>
 {
-    using executor_type = Executor;
-    using cancellation_slot_type = net::associated_cancellation_slot_t< Handler >;
-    using allocator_type = net::associated_allocator_t< Handler >;
+  using executor_type          = Executor;
+  using cancellation_slot_type = net::associated_cancellation_slot_t<Handler>;
+  using allocator_type         = net::associated_allocator_t<Handler>;
 
-    allocator_type
-    get_allocator()
-    {
-        return net::get_associated_allocator(handler_);
-    }
+  allocator_type get_allocator() { return net::get_associated_allocator(handler_); }
 
-    cancellation_slot_type
-    get_cancellation_slot()
-    {
-        return net::get_associated_cancellation_slot(handler_);
-    }
+  cancellation_slot_type get_cancellation_slot() { return net::get_associated_cancellation_slot(handler_); }
 
-    executor_type
-    get_executor()
-    {
-        return work_guard_.get_executor();
-    }
+  executor_type get_executor() { return work_guard_.get_executor(); }
 
-    static basic_op_model *
-    construct(Executor e, Handler handler);
+  static basic_op_model *construct(Executor e, Handler handler);
 
-    static void
-    destroy(basic_op_model *self,
-            net::associated_allocator_t<Handler> halloc);
+  static void destroy(basic_op_model *self, net::associated_allocator_t<Handler> halloc);
 
-    basic_op_model(Executor              e,
-                   Handler               handler);
+  basic_op_model(Executor e, Handler handler);
 
-    virtual void
-    complete(Ts... ec) override;
+  virtual void complete(Ts... ec) override;
+  virtual void shutdown() override;
 
-    virtual void
-    shutdown() override;
-
-  private:
-    net::executor_work_guard< Executor > work_guard_;
-    Handler                               handler_;
+private:
+  net::executor_work_guard<Executor> work_guard_;
+  Handler                            handler_;
 };
 
-}   // namespace detail
+} // namespace detail
 
 BOOST_SAM_END_NAMESPACE
 

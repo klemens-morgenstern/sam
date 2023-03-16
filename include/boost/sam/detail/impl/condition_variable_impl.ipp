@@ -13,45 +13,35 @@ BOOST_SAM_BEGIN_NAMESPACE
 namespace detail
 {
 
-condition_variable_impl::condition_variable_impl(
-    net::execution_context & ctx) : detail::service_member(ctx)
+condition_variable_impl::condition_variable_impl(net::execution_context &ctx) : detail::service_member(ctx) {}
+
+void condition_variable_impl::add_waiter(detail::predicate_wait_op *waiter) noexcept { waiter->link_before(&waiters_); }
+
+BOOST_SAM_DECL void condition_variable_impl::notify_one()
 {
+  auto lock = this->internal_lock();
+  // release a pending operations
+  if (waiters_.next_ == &waiters_)
+    return;
+  auto op = static_cast<detail::predicate_wait_op *>(waiters_.next_);
+  if (op->done())
+    op->complete(error_code());
 }
 
-void
-condition_variable_impl::add_waiter(detail::predicate_wait_op *waiter) noexcept
+BOOST_SAM_DECL void condition_variable_impl::notify_all()
 {
-    waiter->link_before(&waiters_);
-}
-
-BOOST_SAM_DECL void
-condition_variable_impl::notify_one()
-{
-    auto lock = this->internal_lock();
-    // release a pending operations
-    if (waiters_.next_ == &waiters_)
-        return;
-    auto op = static_cast< detail::predicate_wait_op * >(waiters_.next_);
+  auto lock = this->internal_lock();
+  // release a pending operations
+  for (auto c = waiters_.next_; c != &waiters_;)
+  {
+    auto op = static_cast<detail::predicate_wait_op *>(c);
+    c       = c->next_;
     if (op->done())
-        op->complete(error_code());
+      op->complete(error_code());
+  }
 }
 
-BOOST_SAM_DECL void
-condition_variable_impl::notify_all()
-{
-    auto lock = this->internal_lock();
-    // release a pending operations
-    for (auto c = waiters_.next_; c != &waiters_;)
-    {
-        auto op = static_cast< detail::predicate_wait_op * >(c);
-        c = c->next_;
-        if (op->done())
-            op->complete(error_code());
-    }
-}
-
-}
+} // namespace detail
 BOOST_SAM_END_NAMESPACE
 
-
-#endif //BOOST_SAM_DETAIL_IMPL_CONDITION_VARIABLE_IMPL_IPP
+#endif // BOOST_SAM_DETAIL_IMPL_CONDITION_VARIABLE_IMPL_IPP

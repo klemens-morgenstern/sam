@@ -26,63 +26,41 @@ BOOST_SAM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template < class Executor, class Predicate, class Handler, class Signature>
+template <class Executor, class Predicate, class Handler, class Signature>
 struct predicate_op_model;
 
-
-template < class Executor, class Handler, class Predicate, class ... Ts>
-struct predicate_op_model< Executor, Handler, Predicate, void(error_code, Ts...)> final
+template <class Executor, class Handler, class Predicate, class... Ts>
+struct predicate_op_model<Executor, Handler, Predicate, void(error_code, Ts...)> final
     : predicate_op<void(error_code, Ts...)>
 {
-    using executor_type = Executor;
-    using cancellation_slot_type = net::associated_cancellation_slot_t< Handler >;
-    using allocator_type = net::associated_allocator_t< Handler >;
+  using executor_type          = Executor;
+  using cancellation_slot_type = net::associated_cancellation_slot_t<Handler>;
+  using allocator_type         = net::associated_allocator_t<Handler>;
 
-    allocator_type
-    get_allocator()
-    {
-        return net::get_associated_allocator(handler_);
-    }
+  allocator_type get_allocator() { return net::get_associated_allocator(handler_); }
 
-    cancellation_slot_type
-    get_cancellation_slot()
-    {
-        return net::get_associated_cancellation_slot(handler_);
-    }
+  cancellation_slot_type get_cancellation_slot() { return net::get_associated_cancellation_slot(handler_); }
 
-    executor_type
-    get_executor()
-    {
-        return work_guard_.get_executor();
-    }
+  executor_type get_executor() { return work_guard_.get_executor(); }
 
-    static predicate_op_model *
-    construct(Executor e, Handler handler, Predicate predicate);
+  static predicate_op_model *construct(Executor e, Handler handler, Predicate predicate);
 
-    static void
-    destroy(predicate_op_model *self,
-            net::associated_allocator_t<Handler> halloc);
+  static void destroy(predicate_op_model *self, net::associated_allocator_t<Handler> halloc);
 
-    predicate_op_model(Executor              e,
-                       Handler               handler,
-                       Predicate             predicate);
+  predicate_op_model(Executor e, Handler handler, Predicate predicate);
 
-    virtual void
-    complete(error_code ec, Ts... val) override;
+  virtual void complete(error_code ec, Ts... val) override;
 
-    virtual void shutdown() override;
-    virtual bool done() override
-    {
-        return predicate_();
-    }
+  virtual void shutdown() override;
+  virtual bool done() override { return predicate_(); }
 
-  private:
-    net::executor_work_guard< Executor > work_guard_;
-    Handler                               handler_;
-    Predicate                             predicate_;
+private:
+  net::executor_work_guard<Executor> work_guard_;
+  Handler                            handler_;
+  Predicate                          predicate_;
 };
 
-}   // namespace detail
+} // namespace detail
 
 BOOST_SAM_END_NAMESPACE
 

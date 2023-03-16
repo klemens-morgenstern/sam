@@ -15,61 +15,58 @@
 
 BOOST_SAM_BEGIN_NAMESPACE
 
-
 namespace detail
 {
-template<typename Signature>
+template <typename Signature>
 struct predicate_op;
 
-template<typename ... Ts>
+template <typename... Ts>
 struct predicate_op<void(Ts...)> : detail::bilist_node
 {
-    virtual void shutdown() = 0;
-    virtual void complete(Ts...) = 0;
-    virtual bool done() = 0;
+  virtual void shutdown()      = 0;
+  virtual void complete(Ts...) = 0;
+  virtual bool done()          = 0;
 };
 
 using predicate_wait_op = predicate_op<void(error_code)>;
 
-
-template<typename Signature>
+template <typename Signature>
 struct predicate_bilist_holder;
 
-template<typename ...Ts>
+template <typename... Ts>
 struct predicate_bilist_holder<void(error_code, Ts...)> : bilist_node
 {
-    ~predicate_bilist_holder()
+  ~predicate_bilist_holder()
+  {
+    using op = predicate_op<void(error_code, Ts...)>;
+    auto &nx = this->next_;
+    while (nx != this)
+      static_cast<op *>(nx)->complete(asio::error::operation_aborted, Ts{}...);
+  }
+
+  void shutdown()
+  {
+    using op = predicate_op<void(error_code, Ts...)>;
+    bilist_node bn{std::move(*this)};
+
+    auto &nx = bn.next_;
+    while (nx != &bn)
     {
-        using op = predicate_op<void(error_code, Ts...)>;
-        auto & nx = this->next_;
-        while (nx != this)
-            static_cast< op * >(nx)->complete(asio::error::operation_aborted, Ts{}...);
+      auto nx2 = nx->next_;
+      static_cast<op *>(nx)->shutdown();
+      nx = nx2;
     }
+  }
 
-    void shutdown()
-    {
-        using op = predicate_op<void(error_code, Ts...)>;
-        bilist_node bn{std::move(*this)};
+  predicate_bilist_holder()                                = default;
+  predicate_bilist_holder(const predicate_bilist_holder &) = delete;
+  predicate_bilist_holder(predicate_bilist_holder &&)      = default;
 
-        auto & nx = bn.next_;
-        while (nx != &bn)
-        {
-          auto nx2 = nx->next_;
-          static_cast< op * >(nx)->shutdown();
-          nx = nx2;
-        }
-
-    }
-
-    predicate_bilist_holder() = default;
-    predicate_bilist_holder(const predicate_bilist_holder &) = delete;
-    predicate_bilist_holder(predicate_bilist_holder &&) = default;
-
-    predicate_bilist_holder& operator=(const predicate_bilist_holder &) = delete;
-    predicate_bilist_holder& operator=(predicate_bilist_holder &&) = default;
+  predicate_bilist_holder &operator=(const predicate_bilist_holder &) = delete;
+  predicate_bilist_holder &operator=(predicate_bilist_holder &&)      = default;
 };
 
-}   // namespace detail
+} // namespace detail
 BOOST_SAM_END_NAMESPACE
 
 #endif

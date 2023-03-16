@@ -21,7 +21,7 @@
 
 BOOST_SAM_BEGIN_NAMESPACE
 
-template<typename Executor>
+template <typename Executor>
 struct basic_mutex;
 
 /** A lock-guard used as an RAII object that automatically unlocks on destruction
@@ -30,41 +30,38 @@ struct basic_mutex;
  */
 struct lock_guard
 {
-    /// Construct an empty lock_guard.
-    lock_guard() = default;
-    lock_guard(const lock_guard &) = delete;
-    lock_guard(lock_guard &&lhs) : mtx_(lhs.mtx_)
-    {
-        lhs.mtx_ = nullptr;
-    }
+  /// Construct an empty lock_guard.
+  lock_guard()                   = default;
+  lock_guard(const lock_guard &) = delete;
+  lock_guard(lock_guard &&lhs) : mtx_(lhs.mtx_) { lhs.mtx_ = nullptr; }
 
-    lock_guard &
-    operator=(const lock_guard &) = delete;
-    lock_guard &
-    operator=(lock_guard &&lhs)
-    {
-        std::swap(lhs.mtx_, mtx_);
-        return *this;
-    }
+  lock_guard &operator=(const lock_guard &) = delete;
+  lock_guard &operator=(lock_guard &&lhs)
+  {
+    std::swap(lhs.mtx_, mtx_);
+    return *this;
+  }
 
-    /// Unlock the underlying mutex.
-    ~lock_guard()
-    {
-        if (mtx_ != nullptr)
-            mtx_->unlock();
-    }
+  /// Unlock the underlying mutex.
+  ~lock_guard()
+  {
+    if (mtx_ != nullptr)
+      mtx_->unlock();
+  }
 
-    template<typename Executor>
-    friend lock_guard lock(basic_mutex<Executor> & mtx);
+  template <typename Executor>
+  friend lock_guard lock(basic_mutex<Executor> &mtx);
 
-    template<typename Executor>
-    friend lock_guard lock(basic_mutex<Executor> & mtx, error_code & ec);
+  template <typename Executor>
+  friend lock_guard lock(basic_mutex<Executor> &mtx, error_code &ec);
 
-    template<typename Executor>
-    lock_guard(basic_mutex<Executor> & mtx, const std::adopt_lock_t &) : mtx_(&mtx.impl_) {}
+  template <typename Executor>
+  lock_guard(basic_mutex<Executor> &mtx, const std::adopt_lock_t &) : mtx_(&mtx.impl_)
+  {
+  }
 
-  private:
-    detail::mutex_impl * mtx_ = nullptr;
+private:
+  detail::mutex_impl *mtx_ = nullptr;
 };
 
 /** Acquire a lock_guard synchronously.
@@ -76,13 +73,12 @@ struct lock_guard
  *
  * @throws May throw a system_error if locking is not possible without a deadlock.
  */
-template<typename Executor>
-lock_guard lock(basic_mutex<Executor> & mtx)
+template <typename Executor>
+lock_guard lock(basic_mutex<Executor> &mtx)
 {
-    mtx.lock();
-    return lock_guard(std::adopt_lock, mtx);
+  mtx.lock();
+  return lock_guard(std::adopt_lock, mtx);
 }
-
 
 /** Acquire a lock_guard synchronously.
  *
@@ -91,16 +87,15 @@ lock_guard lock(basic_mutex<Executor> & mtx)
  *
  * @returns The lock_guard. It might be default constructed if locking  wasn't possible.
  */
-template<typename Executor>
-lock_guard lock(basic_mutex<Executor> & mtx, error_code & ec)
+template <typename Executor>
+lock_guard lock(basic_mutex<Executor> &mtx, error_code &ec)
 {
-    mtx.lock(ec);
-    if (ec)
-        return lock_guard();
-    else
-        return lock_guard(mtx);
+  mtx.lock(ec);
+  if (ec)
+    return lock_guard();
+  else
+    return lock_guard(mtx);
 }
-
 
 /** Acquire a lock_guard asynchronously.
  *
@@ -126,24 +121,22 @@ lock_guard lock(basic_mutex<Executor> & mtx, error_code & ec)
  * @endcode
  *
  */
-template<typename Executor,
-         BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard)) CompletionToken
-             BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor) >
+template <typename Executor, BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard))
+                                 CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
 inline BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock_guard))
-    async_lock(basic_mutex<Executor> &mtx,
-                CompletionToken && token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
+    async_lock(basic_mutex<Executor> &mtx, CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
-    using net::deferred;
-    return mtx.async_lock(
-            deferred([&](error_code ec)
-            {
-                if (ec)
-                    return deferred.values(ec, lock_guard{});
-                else
-                    return deferred.values(ec, lock_guard{mtx, std::adopt_lock});
-            }))(std::forward<CompletionToken>(token));
+  using net::deferred;
+  return mtx.async_lock(deferred(
+      [&](error_code ec)
+      {
+        if (ec)
+          return deferred.values(ec, lock_guard{});
+        else
+          return deferred.values(ec, lock_guard{mtx, std::adopt_lock});
+      }))(std::forward<CompletionToken>(token));
 }
 
 BOOST_SAM_END_NAMESPACE
 
-#endif //BOOST_SAM_LOCK_GUARD_HPP
+#endif // BOOST_SAM_LOCK_GUARD_HPP

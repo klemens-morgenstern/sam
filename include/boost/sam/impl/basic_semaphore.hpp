@@ -42,7 +42,7 @@ struct basic_semaphore<Executor>::async_aquire_op
   void operator()(Handler &&handler)
   {
     auto e = get_associated_executor(handler, self->get_executor());
-    auto l = self->impl_.internal_lock();
+    detail::op_list_service::lock_type l{self->impl_.mtx_};
     ignore_unused(l);
     if (self->impl_.count() > 0)
     {
@@ -52,7 +52,7 @@ struct basic_semaphore<Executor>::async_aquire_op
       return;
     }
 
-    using handler_type = std::decay_t<Handler>;
+    using handler_type = typename std::decay<Handler>::type;
     using model_type   = detail::basic_op_model<decltype(e), handler_type, void(error_code)>;
     model_type *model  = model_type ::construct(std::move(e), std::forward<Handler>(handler));
     auto        slot   = model->get_cancellation_slot();
@@ -65,7 +65,7 @@ struct basic_semaphore<Executor>::async_aquire_op
             if (type != net::cancellation_type::none)
             {
               auto sl   = slot;
-              auto lock = impl.internal_lock();
+              detail::op_list_service::lock_type lock {impl.mtx_};
               ignore_unused(lock);
               // completed already
               if (!sl.is_connected())

@@ -47,7 +47,7 @@ struct basic_mutex
   /// @brief Rebind a mutex to a new executor - this cancels all outstanding operations.
   template <typename Executor_>
   basic_mutex(basic_mutex<Executor_> &&sem,
-              std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
+              typename std::enable_if<std::is_convertible<Executor_, executor_type>::value>::type * = nullptr)
       : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
   {
   }
@@ -72,7 +72,7 @@ struct basic_mutex
   /// Move assign a mutex with a different executor.
   template <typename Executor_>
   auto operator=(basic_mutex<Executor_> &&sem)
-      -> std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_mutex> &
+      -> typename std::enable_if<std::is_convertible<Executor_, executor_type>::value, basic_mutex>::type &
   {
     std::swap(exec_, sem.exec_);
     std::swap(impl_, sem.impl_);

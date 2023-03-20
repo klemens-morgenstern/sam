@@ -10,17 +10,45 @@ project(boost_sam VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 add_library(boost_sam STATIC src/src.cpp)
 add_library(Boost::sam ALIAS boost_sam)
 
+set(BOOST_SAM_IS_ROOT OFF)
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set(BOOST_SAM_IS_ROOT ON)
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../boost.css)
+  set(BOOST_SAM_SHOULD_BE_INLINE ON)
+else()
+  set(BOOST_SAM_SHOULD_BE_INLINE OFF)
+endif()
+
+if(BOOST_SAM_IS_ROOT AND BOOST_SAM_BUILD_INLINE)
+  #
+  # Building inside Boost tree, but as a separate project e.g. on Travis or
+  # other CI, or when producing Visual Studio Solution and Projects.
+
+  set(BOOST_INCLUDE_LIBRARIES SAM)
+  set(BOOST_EXCLUDE_LIBRARIES SAM)
+
+  set(CMAKE_FOLDER _deps)
+  add_subdirectory(../.. _deps/boost EXCLUDE_FROM_ALL)
+  unset(CMAKE_FOLDER)
+else()
+  find_package(Boost REQUIRED system)
+endif()
+
 if (BOOST_SAM_STANDALONE)
   add_compile_definitions(BOOST_SAM_STANDALONE=1)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 else()
-  target_include_directories(boost_sam INTERFACE include)
-  target_link_libraries(boost_sam
-    INTERFACE
-      Boost::asio
-      Boost::system
-  )
+  if (BOOST_SAM_BUILD_INLINE)
+    target_link_libraries(boost_sam PUBLIC Boost::asio Boost::system)
+  else()
+    target_link_libraries(boost_sam PUBLIC Boost::system)
+  endif()
+
 endif()
+
+target_include_directories(boost_sam PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
   enable_testing()

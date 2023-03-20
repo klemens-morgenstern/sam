@@ -26,7 +26,7 @@ int semaphore_impl::count() const noexcept { return count_; }
 
 void semaphore_impl::release()
 {
-  auto lock_ = internal_lock();
+  lock_type lock_{mtx_};;
   count_++;
 
   // release a pending operations
@@ -81,7 +81,7 @@ void semaphore_impl::acquire(error_code &ec)
     }
   }
 
-  lock_type    lock = internal_lock();
+  lock_type    lock{mtx_};
   acquire_op_t op{ec, lock};
   add_waiter(&op);
   if (count_ > 0)
@@ -95,7 +95,7 @@ void semaphore_impl::acquire(error_code &ec)
 
 BOOST_SAM_NODISCARD int semaphore_impl::value() const noexcept
 {
-  auto lock_ = internal_lock();
+  lock_type lock_{mtx_};;
   if (waiters_.next_ == &waiters_)
     return count();
 
@@ -104,7 +104,7 @@ BOOST_SAM_NODISCARD int semaphore_impl::value() const noexcept
 
 bool semaphore_impl::try_acquire()
 {
-  auto _ = internal_lock();
+  lock_type _{mtx_};
   if (count_ > 0)
   {
     --count_;

@@ -10,7 +10,6 @@
 #include <boost/sam/detail/config.hpp>
 #include <boost/sam/detail/service.hpp>
 
-#include <barrier>
 #include <mutex>
 
 BOOST_SAM_BEGIN_NAMESPACE
@@ -51,7 +50,7 @@ struct barrier_impl : detail::service_member
   void decrement() { counter_--; }
   void shutdown() override
   {
-    auto l = this->internal_lock();
+    lock_type l{mtx_};
     auto w = std::move(waiters_);
     l.unlock();
     w.shutdown();
@@ -64,5 +63,9 @@ struct barrier_impl : detail::service_member
 } // namespace detail
 
 BOOST_SAM_END_NAMESPACE
+
+#if defined(BOOST_SAM_HEADER_ONLY)
+#include <boost/sam/detail/impl/barrier_impl.ipp>
+#endif
 
 #endif // BOOST_SAM_DETAIL_BARRIER_IMPL_HPP

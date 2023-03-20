@@ -3,35 +3,42 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/test/unit_test.hpp>
+#if defined(BOOST_SAM_STANDALONE)
+#define ASIO_DISABLE_BOOST_DATE_TIME 1
+#else
+#define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
+#endif
 
-#include <boost/sam/guarded.hpp>
 #include <boost/sam/lock_guard.hpp>
 #include <boost/sam/mutex.hpp>
+#include <boost/sam/guarded.hpp>
+
 #include <chrono>
 #include <random>
 #include <vector>
 
 #if !defined(BOOST_SAM_STANDALONE)
-namespace asio = boost::asio;
-#include <boost/asio.hpp>
 #include <boost/asio/compose.hpp>
-#include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/detached.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <boost/asio/yield.hpp>
 #else
-
-#include <asio.hpp>
 #include <asio/compose.hpp>
-#include <asio/experimental/parallel_group.hpp>
+#include <asio/detached.hpp>
+#include <asio/steady_timer.hpp>
+#include <asio/thread_pool.hpp>
 #include <asio/yield.hpp>
 
 #endif
+
+#include "doctest.h"
+
 
 using namespace BOOST_SAM_NAMESPACE;
 using namespace net;
 using namespace net::experimental;
 
-using models = std::tuple<net::io_context, net::thread_pool>;
 
 inline void run_impl(io_context &ctx) { ctx.run(); }
 
@@ -39,11 +46,11 @@ inline void run_impl(thread_pool &ctx) { ctx.join(); }
 
 static int concurrent = 0;
 
-struct impl : asio::coroutine
+struct impl : net::coroutine
 {
   int                                 id;
   mutex                              &mtx;
-  std::shared_ptr<asio::steady_timer> tim{std::make_shared<asio::steady_timer>(mtx.get_executor())};
+  std::shared_ptr<net::steady_timer> tim{std::make_shared<net::steady_timer>(mtx.get_executor())};
 
   impl(int id, bool &active, mutex &mtx) : id(id), mtx(mtx) {}
 
@@ -55,13 +62,13 @@ struct impl : asio::coroutine
       printf("Entered %d\n", id);
       yield async_lock(this->mtx, std::move(self));
       concurrent++;
-      BOOST_CHECK_EQUAL(concurrent, 1);
+      CHECK(concurrent == 1);
       printf("Acquired lock %d\n", id);
       tim->expires_after(std::chrono::milliseconds{10});
-      yield tim->async_wait(asio::append(std::move(self), std::move(lock)));
+      yield tim->async_wait(net::append(std::move(self), std::move(lock)));
       concurrent--;
-      BOOST_CHECK_EQUAL(concurrent, 0);
-      BOOST_CHECK(!ec);
+      CHECK(concurrent == 0);
+      CHECK(!ec);
       printf("Exited %d %d\n", id, ec.value());
       self.complete(ec);
     }
@@ -69,7 +76,8 @@ struct impl : asio::coroutine
 };
 
 template <typename CompletionToken>
-auto async_impl(mutex &mtx, int i, bool &active, CompletionToken &&completion_token)
+BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
+  async_impl(mutex &mtx, int i, bool &active, CompletionToken &&completion_token)
 {
   return net::async_compose<CompletionToken, void(error_code)>(impl(i, active, mtx), completion_token, mtx);
 }
@@ -79,18 +87,18 @@ void test_sync(mutex &mtx, std::vector<int> &order)
   bool active = false;
 
   static int i = 0;
-  async_impl(mtx, i++, active, asio::detached);
-  async_impl(mtx, i++, active, asio::detached);
-  async_impl(mtx, i++, active, asio::detached);
-  async_impl(mtx, i++, active, asio::detached);
-  async_impl(mtx, i++, active, asio::detached);
-  async_impl(mtx, i++, active, asio::detached);
-  async_impl(mtx, i++, active, asio::detached);
-  async_impl(mtx, i++, active, asio::detached);
-  async_impl(mtx, i++, active, asio::detached);
+  async_impl(mtx, i++, active, net::detached);
+  async_impl(mtx, i++, active, net::detached);
+  async_impl(mtx, i++, active, net::detached);
+  async_impl(mtx, i++, active, net::detached);
+  async_impl(mtx, i++, active, net::detached);
+  async_impl(mtx, i++, active, net::detached);
+  async_impl(mtx, i++, active, net::detached);
+  async_impl(mtx, i++, active, net::detached);
+  async_impl(mtx, i++, active, net::detached);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(lock_guard_t, T, models)
+TEST_CASE_TEMPLATE("lock_guard_t" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
   T                ctx;
   std::vector<int> order;
@@ -99,7 +107,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(lock_guard_t, T, models)
   run_impl(ctx);
 }
 
-struct impl_t : asio::coroutine
+struct impl_t : net::coroutine
 {
   mutex &mtx;
 
@@ -111,38 +119,38 @@ struct impl_t : asio::coroutine
     reenter(this)
     {
       yield async_lock(this->mtx, std::move(self));
-      BOOST_CHECK(!ec);
+      CHECK(!ec);
       yield async_lock(this->mtx, std::move(self));
-      BOOST_CHECK(!ec);
+      CHECK(!ec);
       yield async_lock(this->mtx, std::move(self));
-      BOOST_CHECK(!ec);
+      CHECK(!ec);
       yield async_lock(this->mtx, std::move(self));
-      BOOST_CHECK(!ec);
+      CHECK(!ec);
       yield async_lock(this->mtx, std::move(self));
-      BOOST_CHECK(!ec);
+      CHECK(!ec);
       self.complete(ec);
     }
   }
 };
 
 template <typename CompletionToken>
-auto async_impl(mutex &mtx, CompletionToken &&completion_token)
+BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
+  async_impl(mutex &mtx, CompletionToken &&completion_token)
 {
   return net::async_compose<CompletionToken, void(error_code)>(impl_t(mtx), completion_token, mtx);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(lock_series_t, T, models)
+TEST_CASE_TEMPLATE("lock_series_t" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
   T     ctx;
   mutex mtx{ctx.get_executor()};
   bool  called = false;
   async_impl(mtx,
              [&](error_code ec)
-             {
-               BOOST_CHECK(!ec);
+             {CHECK(!ec);
                called = true;
              });
   run_impl(ctx);
   mtx.lock();
-  BOOST_CHECK(called);
+  CHECK(called);
 }

@@ -20,10 +20,10 @@ struct basic_condition_variable<Executor>::async_predicate_wait_op
   void operator()(Handler &&handler)
   {
     auto e = get_associated_executor(handler, self->get_executor());
-    auto l = self->impl_.internal_lock();
+    detail::op_list_service::lock_type l{self->impl_.mtx_};
     ignore_unused(l);
 
-    using handler_type   = std::decay_t<Handler>;
+    using handler_type   = typename std::decay<Handler>::type;
     using predicate_type = Predicate;
     using model_type     = detail::predicate_op_model<decltype(e), handler_type, predicate_type, void(error_code)>;
     model_type *model    = model_type::construct(std::move(e), std::forward<Handler>(handler), std::move(predicate));
@@ -38,7 +38,7 @@ struct basic_condition_variable<Executor>::async_predicate_wait_op
             if (type != net::cancellation_type::none)
             {
               auto sl   = slot;
-              auto lock = impl.internal_lock();
+              detail::op_list_service::lock_type lock{impl.mtx_};
               ignore_unused(lock);
               // completed already
               if (!sl.is_connected())
@@ -68,10 +68,10 @@ struct basic_condition_variable<Executor>::async_wait_op
   void operator()(Handler &&handler)
   {
     auto e = get_associated_executor(handler, self->get_executor());
-    auto l = self->impl_.internal_lock();
+    detail::op_list_service::lock_type l{self->impl_.mtx_};
     ignore_unused(l);
 
-    using handler_type   = std::decay_t<Handler>;
+    using handler_type   = typename std::decay<Handler>::type;
     using predicate_type = true_predicate;
     using model_type     = detail::predicate_op_model<decltype(e), handler_type, predicate_type, void(error_code)>;
     model_type *model    = model_type::construct(std::move(e), std::forward<Handler>(handler), true_predicate{});
@@ -85,7 +85,7 @@ struct basic_condition_variable<Executor>::async_wait_op
             if (type != net::cancellation_type::none)
             {
               auto sl   = slot;
-              auto lock = impl.internal_lock();
+              detail::op_list_service::lock_type lock{impl.mtx_};
               ignore_unused(lock);
               // completed already
               if (!sl.is_connected())

@@ -14,8 +14,9 @@ BOOST_SAM_BEGIN_NAMESPACE
 namespace detail
 {
 
+
 op_list_service::op_list_service(asio::execution_context &ctx)
-    : net::detail::execution_context_service_base<op_list_service>(ctx), mtx_(!detail::is_single_threaded(ctx))
+  : net::detail::execution_context_service_base<op_list_service>(ctx), mtx_(!detail::is_single_threaded(ctx))
 {
 }
 

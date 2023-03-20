@@ -36,7 +36,7 @@ struct condition_variable_impl : detail::service_member
 
   void shutdown() override
   {
-    auto l = internal_lock();
+    lock_type l{mtx_};
     auto w = std::move(waiters_);
     l.unlock();
     w.shutdown();
@@ -54,5 +54,9 @@ private:
 } // namespace detail
 
 BOOST_SAM_END_NAMESPACE
+
+#if defined(BOOST_SAM_HEADER_ONLY)
+#include <boost/sam/detail/impl/condition_variable_impl.ipp>
+#endif
 
 #endif // BOOST_SAM_DETAIL_CONDITION_VARIABLE_IMPL_HPP

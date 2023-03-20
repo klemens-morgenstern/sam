@@ -10,46 +10,51 @@
 
 // Test that header file is self-contained.
 
+#if defined(BOOST_SAM_STANDALONE)
+#define ASIO_DISABLE_BOOST_DATE_TIME 1
+#else
+#define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
+#endif
+
+
 #include <boost/sam/semaphore.hpp>
-
-#include <boost/test/unit_test.hpp>
-
+#include <algorithm>
 #include <chrono>
 #include <random>
 #include <thread>
 
-#if defined(BOOST_SAM_STANDALONE)
+#include "doctest.h"
+#include <iostream>
 
-#include <asio.hpp>
+#if defined(BOOST_SAM_STANDALONE)
 #include <asio/append.hpp>
 #include <asio/as_tuple.hpp>
 #include <asio/coroutine.hpp>
+#include <asio/deferred.hpp>
 #include <asio/detached.hpp>
 #include <asio/experimental/parallel_group.hpp>
+#include <asio/steady_timer.hpp>
+#include <asio/thread_pool.hpp>
 #include <asio/yield.hpp>
 
-namespace net = ::asio;
-
 #else
-
-#include <boost/asio.hpp>
 #include <boost/asio/append.hpp>
 #include <boost/asio/coroutine.hpp>
+#include <boost/asio/deferred.hpp>
+#include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/as_tuple.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <boost/asio/yield.hpp>
-
-namespace net = boost::asio;
 
 #endif
 
-using namespace net;
-using namespace std::literals;
 using namespace BOOST_SAM_NAMESPACE;
+using namespace net;
 
-using models = std::tuple<io_context, thread_pool>;
 template <typename T>
-const static int init = std::is_same<T, io_context>::value ? 1 : 4;
+constexpr int init() {return std::is_same<T, io_context>::value ? 1 : 4; }
 
 inline void run_impl(io_context &ctx) { ctx.run(); }
 
@@ -82,6 +87,18 @@ struct basic_bot : net::coroutine
     say_impl(args...);
   };
 
+  struct op_t
+  {
+    semaphore                &sem;
+    template<typename Token>
+    BOOST_SAM_INITFN_AUTO_RESULT_TYPE(Token, void(error_code))
+    operator()(Token && tk)
+    {
+      return sem.async_acquire(std::forward<Token>(tk));
+    }
+
+  };
+
   void operator()(error_code = {}, std::size_t index = 0u)
   {
     reenter(this)
@@ -94,15 +111,17 @@ struct basic_bot : net::coroutine
         timer->expires_after(deadline);
         say("waiting up to ", deadline.count(), "ms\n");
 
-        yield experimental::make_parallel_group(sem.async_acquire(deferred), timer->async_wait(deferred))
+        yield experimental::make_parallel_group(
+            op_t{sem},
+            timer->async_wait(net::deferred))
             .async_wait(experimental::wait_for_one(),
                         deferred([](std::array<std::size_t, 2u> seq, error_code ec_sem, error_code ec_tim)
-                                 { return deferred.values(ec_sem, seq[0]); }))(std::move(*this));
+                                 { return net::deferred.values(ec_sem, seq[0]); }))(std::move(*this));
 
         if (index == 1u)
         {
           say("got bored waiting after ", deadline.count(), "ms -> Cnt: ", sem.value(), "\n");
-          BOOST_FAIL("semaphore timeout");
+          FAIL("semaphore timeout");
           return;
         }
         else
@@ -114,7 +133,7 @@ struct basic_bot : net::coroutine
       }
       else
       {
-        timer->expires_after(10ms);
+        timer->expires_after(std::chrono::milliseconds(10));
         yield timer->async_wait(std::move(*this));
         say("semaphore acquired immediately\n");
       }
@@ -127,35 +146,35 @@ struct basic_bot : net::coroutine
   }
 };
 
-BOOST_AUTO_TEST_SUITE(basic_semaphore_test)
+TEST_SUITE_BEGIN("basic_semaphore_test");
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(value, T, models)
+TEST_CASE_TEMPLATE("value" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  T         ioc{init<T>};
+  T         ioc{init<T>()};
   semaphore sem{ioc, 0};
 
-  BOOST_CHECK_EQUAL(sem.value(), 0);
+  CHECK(sem.value() == 0);
 
   sem.release();
-  BOOST_CHECK_EQUAL(sem.value(), 1);
+  CHECK(sem.value() == 1);
   sem.release();
-  BOOST_CHECK_EQUAL(sem.value(), 2);
+  CHECK(sem.value() == 2);
 
   sem.try_acquire();
-  BOOST_CHECK_EQUAL(sem.value(), 1);
+  CHECK(sem.value() == 1);
 
   sem.try_acquire();
-  BOOST_CHECK_EQUAL(sem.value(), 0);
+  CHECK(sem.value() == 0);
 
-  sem.async_acquire(detached);
-  BOOST_CHECK_EQUAL(sem.value(), -1);
-  sem.async_acquire(detached);
-  BOOST_CHECK_EQUAL(sem.value(), -2);
+  sem.async_acquire(net::detached);
+  CHECK(sem.value() == -1);
+  sem.async_acquire(net::detached);
+  CHECK(sem.value() == -2);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
+TEST_CASE_TEMPLATE("random_sem" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  T                  ioc{init<T>};
+  T                  ioc{init<T>()};
   auto               sem = semaphore(ioc.get_executor(), 1);
   std::random_device rng;
   std::seed_seq      ss{rng(), rng(), rng(), rng(), rng()};
@@ -168,45 +187,53 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(random_sem, T, models)
   run_impl(ioc);
 }
 
-BOOST_AUTO_TEST_CASE(rebind_semaphore)
+TEST_CASE("rebind_semaphore" * doctest::timeout(1.))
 {
   io_context ctx;
   auto       res = deferred.as_default_on(semaphore{ctx.get_executor()});
   res            = semaphore::rebind_executor<io_context::executor_type>::other{ctx.get_executor()};
 }
 
-BOOST_AUTO_TEST_CASE(sync_acquire_st)
+TEST_CASE("sync_acquire_st" * doctest::timeout(1.))
 {
   io_context ctx{1};
   semaphore  mtx{ctx};
 
   mtx.acquire();
-  BOOST_CHECK_THROW(mtx.acquire(), system_error);
+  CHECK_THROWS(mtx.acquire());
 
   mtx.release();
   mtx.acquire();
 }
 
-BOOST_AUTO_TEST_CASE(sync_acquire_mt)
+TEST_CASE("sync_acquire_mt" * doctest::timeout(1.))
 {
   io_context ctx;
   semaphore  mtx{ctx};
 
   mtx.acquire();
   post(ctx, [&] { mtx.release(); });
+  std::atomic<bool> acquired{false};
   std::thread thr{[&]
                   {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                    ctx.run();
+                    do
+                    {
+                      ctx.restart();
+                      std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                      ctx.run();
+                    }
+                    while (!acquired);
+
                   }};
 
   mtx.acquire();
+  acquired = true;
   thr.join();
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_acquire, T, models)
+TEST_CASE_TEMPLATE("cancel_acquire" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  io_context ctx{init<T>};
+  io_context ctx{init<T>()};
 
   std::vector<error_code> ecs;
   auto                    res = [&](error_code ec) { ecs.push_back(ec); };
@@ -231,43 +258,49 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_acquire, T, models)
   }
   ctx.run_for(std::chrono::milliseconds(10));
 
-  BOOST_CHECK_EQUAL(ecs.size(), 7u);
-  BOOST_CHECK(!ecs.at(0));
-  BOOST_CHECK(!ecs.at(1));
-  BOOST_CHECK(!ecs.at(2));
-  BOOST_CHECK(!ecs.at(3));
+  CHECK(ecs.size() == 7u);
+  CHECK(!ecs.at(0));
+  CHECK(!ecs.at(1));
+  CHECK(!ecs.at(2));
+  CHECK(!ecs.at(3));
 
-  BOOST_CHECK_EQUAL(3u, std::count(ecs.begin(), ecs.end(), error::operation_aborted));
+  CHECK(3u == std::count(ecs.begin(), ecs.end(), error::operation_aborted));
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
+TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  io_context ctx{init<T>};
+  io_context ctx{init<T>()};
   auto       smtx = std::make_shared<semaphore>(ctx, 1);
 
-  auto l = [smtx](error_code ec) { BOOST_CHECK(false); };
+  auto l = [smtx](error_code ec) { CHECK(false); };
 
   smtx->async_acquire(l);
   smtx->async_acquire(l);
   smtx->async_acquire(l);
 }
 
-BOOST_AUTO_TEST_CASE(mt_shutdown)
+TEST_CASE("mt_shutdown" * doctest::timeout(1.))
 {
   std::weak_ptr<semaphore> wp;
-  std::thread              thr;
+  std::thread thr;
   {
     net::thread_pool ctx{2u};
-    auto             smtx = std::make_shared<semaphore>(ctx);
+    auto smtx = std::make_shared<semaphore>(ctx);
     smtx->acquire();
-    thr = std::thread([smtx] { BOOST_CHECK_THROW(smtx->acquire(), system_error); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    wp     = smtx;
-    auto l = [smtx](error_code ec) { BOOST_CHECK(false); };
+    std::atomic<bool> started{false};
+    thr = std::thread([smtx, &started]
+                      {
+                        started = true;
+                        CHECK_THROWS(smtx->acquire());
+                      });
+    wp = smtx;
+    auto l =  [smtx](error_code ec) { CHECK(false); };
+    while(!started)
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
   thr.join();
-  BOOST_CHECK(wp.expired());
+  CHECK(wp.expired());
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+TEST_SUITE_END();

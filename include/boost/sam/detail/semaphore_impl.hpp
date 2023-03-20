@@ -28,7 +28,7 @@ struct semaphore_impl : detail::service_member
   semaphore_impl &operator=(const semaphore_impl &) = delete;
   semaphore_impl &operator=(semaphore_impl &&lhs) noexcept
   {
-    auto _ = internal_lock();
+    lock_type _{mtx_};
     count_ = lhs.count_;
     std::swap(lhs.waiters_, waiters_);
     return *this;
@@ -36,7 +36,7 @@ struct semaphore_impl : detail::service_member
 
   void shutdown() override
   {
-    auto l = internal_lock();
+    lock_type l{mtx_};;
     auto w = std::move(waiters_);
     l.unlock();
     w.shutdown();
@@ -65,5 +65,10 @@ private:
 } // namespace detail
 
 BOOST_SAM_END_NAMESPACE
+
+#if defined(BOOST_SAM_HEADER_ONLY)
+#include <boost/sam/detail/impl/semaphore_impl.ipp>
+#endif
+
 
 #endif // BOOST_SAM_DETAIL_SEMAPHORE_IMPL_HPP

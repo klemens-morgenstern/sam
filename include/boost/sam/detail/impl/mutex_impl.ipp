@@ -29,11 +29,8 @@ struct mutex_impl::lock_op_t final : detail::wait_op
   {
     done     = true;
     this->ec = ec;
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     var.signal_all(lock);
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     this->unlink();
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
   }
 
   void shutdown() override
@@ -64,7 +61,7 @@ void mutex_impl::lock(error_code &ec)
     }
   }
 
-  auto      lock = this->internal_lock();
+  lock_type lock{mtx_};
   lock_op_t op{ec, lock};
   add_waiter(&op);
   if (!locked_)
@@ -78,8 +75,7 @@ void mutex_impl::lock(error_code &ec)
 
 void mutex_impl::unlock()
 {
-  auto lock = internal_lock();
-
+  lock_type lock{mtx_};
   // release a pending operations
   if (waiters_.next_ == &waiters_)
   {

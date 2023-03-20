@@ -11,55 +11,55 @@
 #include <boost/asio/thread_pool.hpp>
 #endif
 
-#include <boost/test/unit_test.hpp>
+#include "doctest.h"
 
-BOOST_AUTO_TEST_SUITE(concurrency_hint);
+TEST_SUITE_BEGIN("concurrency_hint");
 
 using namespace BOOST_SAM_NAMESPACE;
 using BOOST_SAM_NAMESPACE::detail::is_single_threaded;
 
-BOOST_AUTO_TEST_CASE(io_context_1)
+TEST_CASE("io_context_1" * doctest::timeout(1.))
 {
   net::io_context ctx{1};
-  BOOST_TEST_CHECK(is_single_threaded(ctx));
-  BOOST_TEST_CHECK(is_single_threaded(ctx.get_executor()));
-  BOOST_TEST_CHECK(is_single_threaded(net::any_io_executor(ctx.get_executor())));
+  CHECK(is_single_threaded(ctx));
+  CHECK(is_single_threaded(ctx.get_executor()));
+  CHECK(is_single_threaded(net::any_io_executor(ctx.get_executor())));
   auto e2 = net::require(ctx.get_executor(), net::execution::outstanding_work.tracked);
-  BOOST_TEST_CHECK(is_single_threaded(e2));
-  BOOST_TEST_CHECK(is_single_threaded(net::any_io_executor(e2)));
+  CHECK(is_single_threaded(e2));
+  CHECK(is_single_threaded(net::any_io_executor(e2)));
 }
 
-BOOST_AUTO_TEST_CASE(io_context_2)
+TEST_CASE("io_context_2" * doctest::timeout(1.))
 {
   net::io_context ctx{2};
-  BOOST_TEST_CHECK(!is_single_threaded(ctx));
-  BOOST_TEST_CHECK(!is_single_threaded(ctx.get_executor()));
-  BOOST_TEST_CHECK(!is_single_threaded(net::any_io_executor(ctx.get_executor())));
+  CHECK(!is_single_threaded(ctx));
+  CHECK(!is_single_threaded(ctx.get_executor()));
+  CHECK(!is_single_threaded(net::any_io_executor(ctx.get_executor())));
   auto e2 = net::require(ctx.get_executor(), net::execution::outstanding_work.tracked);
-  BOOST_TEST_CHECK(!is_single_threaded(e2));
-  BOOST_TEST_CHECK(!is_single_threaded(net::any_io_executor(e2)));
+  CHECK(!is_single_threaded(e2));
+  CHECK(!is_single_threaded(net::any_io_executor(e2)));
 }
 
-BOOST_AUTO_TEST_CASE(thread_pool_1)
+TEST_CASE("thread_pool_1" * doctest::timeout(1.))
 {
   net::thread_pool ctx{1};
-  BOOST_TEST_CHECK(is_single_threaded(ctx));
-  BOOST_TEST_CHECK(is_single_threaded(ctx.get_executor()));
-  BOOST_TEST_CHECK(is_single_threaded(net::any_io_executor(ctx.get_executor())));
+  CHECK(is_single_threaded(ctx));
+  CHECK(is_single_threaded(ctx.get_executor()));
+  CHECK(is_single_threaded(net::any_io_executor(ctx.get_executor())));
   auto e2 = net::require(ctx.get_executor(), net::execution::outstanding_work.tracked);
-  BOOST_TEST_CHECK(is_single_threaded(e2));
-  BOOST_TEST_CHECK(is_single_threaded(net::any_io_executor(e2)));
+  CHECK(is_single_threaded(e2));
+  CHECK(is_single_threaded(net::any_io_executor(e2)));
 }
 
-BOOST_AUTO_TEST_CASE(thread_pool_2)
+TEST_CASE("thread_pool_2" * doctest::timeout(1.))
 {
   net::thread_pool ctx{2};
-  BOOST_TEST_CHECK(!is_single_threaded(ctx));
-  BOOST_TEST_CHECK(!is_single_threaded(ctx.get_executor()));
-  BOOST_TEST_CHECK(!is_single_threaded(net::any_io_executor(ctx.get_executor())));
+  CHECK(!is_single_threaded(ctx));
+  CHECK(!is_single_threaded(ctx.get_executor()));
+  CHECK(!is_single_threaded(net::any_io_executor(ctx.get_executor())));
   auto e2 = net::require(ctx.get_executor(), net::execution::outstanding_work.tracked);
-  BOOST_TEST_CHECK(!is_single_threaded(e2));
-  BOOST_TEST_CHECK(!is_single_threaded(net::any_io_executor(e2)));
+  CHECK(!is_single_threaded(e2));
+  CHECK(!is_single_threaded(net::any_io_executor(e2)));
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+TEST_SUITE_END();

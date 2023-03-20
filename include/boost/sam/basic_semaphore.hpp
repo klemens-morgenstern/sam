@@ -55,7 +55,7 @@ struct basic_semaphore
   /// @brief Rebind a semaphore to a new executor - this cancels all outstanding operations.
   template <typename Executor_>
   basic_semaphore(basic_semaphore<Executor_> &&sem,
-                  std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
+                  typename std::enable_if<std::is_convertible<Executor_, executor_type>::value>::type * = nullptr)
       : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
   {
   }
@@ -66,7 +66,7 @@ struct basic_semaphore
   /// Move assign a semaphore with a different executor.
   template <typename Executor_>
   auto operator=(basic_semaphore<Executor_> &&sem)
-      -> std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_semaphore> &
+      -> typename std::enable_if<std::is_convertible<Executor_, executor_type>::value, basic_semaphore>::type &
   {
     exec_ = std::move(sem.exec_);
     impl_ = std::move(sem.impl_);

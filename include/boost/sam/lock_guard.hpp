@@ -12,10 +12,12 @@
 
 #if defined(BOOST_SAM_STANDALONE)
 #include <asio/async_result.hpp>
+#include <asio/compose.hpp>
 #include <asio/deferred.hpp>
 
 #else
 #include <boost/asio/async_result.hpp>
+#include <boost/asio/compose.hpp>
 #include <boost/asio/deferred.hpp>
 #endif
 
@@ -97,6 +99,32 @@ lock_guard lock(basic_mutex<Executor> &mtx, error_code &ec)
     return lock_guard(mtx);
 }
 
+namespace detail
+{
+
+template<typename Executor>
+struct async_lock_op
+{
+  basic_mutex<Executor> &mtx;
+
+  template<typename Self>
+  void operator()(Self && self)
+  {
+    mtx.async_lock(std::move(self));
+  }
+
+  template<typename Self>
+  void operator()(Self && self, error_code ec)
+  {
+    if (ec)
+      self.complete(ec, lock_guard{});
+    else
+      self.complete(ec, lock_guard{mtx, std::adopt_lock});
+  }
+};
+
+}
+
 /** Acquire a lock_guard asynchronously.
  *
  * @param mtx The mutex to lock.
@@ -121,20 +149,18 @@ lock_guard lock(basic_mutex<Executor> &mtx, error_code &ec)
  * @endcode
  *
  */
-template <typename Executor, BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard))
-                                 CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
-inline BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock_guard))
+template <typename Executor,
+    BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard))
+                                   CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
+BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock_guard))
     async_lock(basic_mutex<Executor> &mtx, CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
-  using net::deferred;
-  return mtx.async_lock(deferred(
-      [&](error_code ec)
-      {
-        if (ec)
-          return deferred.values(ec, lock_guard{});
-        else
-          return deferred.values(ec, lock_guard{mtx, std::adopt_lock});
-      }))(std::forward<CompletionToken>(token));
+  return net::async_compose<
+      CompletionToken, void(error_code, lock_guard)>
+      (
+          detail::async_lock_op<Executor>{mtx},
+          token, mtx
+      );
 }
 
 BOOST_SAM_END_NAMESPACE

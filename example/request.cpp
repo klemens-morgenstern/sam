@@ -3,11 +3,18 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/asio.hpp>
+#define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
+
+
 #include <boost/asio/coroutine.hpp>
+#include <boost/asio/detached.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/yield.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
-#include <boost/beast/http.hpp>
+#include <boost/beast/http/empty_body.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/read.hpp>
+#include <boost/beast/http/write.hpp>
 #include <boost/sam/guarded.hpp>
 #include <boost/sam/mutex.hpp>
 #include <iostream>
@@ -23,6 +30,12 @@ struct request_op : boost::asio::coroutine
 
   http::request<RequestBody>                &request;
   http::response<ResponseBody>              &response;
+  request_op(
+      boost::asio::ip::tcp::socket &sock,
+      http::request<RequestBody>                &request,
+      http::response<ResponseBody>              &response
+      ) : sock(sock), request(request), response(response) {}
+
   std::unique_ptr<boost::beast::flat_buffer> ptr = std::make_unique<boost::beast::flat_buffer>();
 
   template <typename Self>
@@ -48,7 +61,7 @@ auto async_request(boost::asio::ip::tcp::socket &sock, http::request<RequestBody
                    http::response<ResponseBody> &response, CompletionToken &&completion_token)
 {
   return boost::asio::async_compose<CompletionToken, void(boost::system::error_code)>(
-      request_op<RequestBody, ResponseBody>{{}, sock, request, response}, completion_token, sock);
+      request_op<RequestBody, ResponseBody>(sock, request, response), completion_token, sock);
 }
 
 int main(int argc, const char **argv)

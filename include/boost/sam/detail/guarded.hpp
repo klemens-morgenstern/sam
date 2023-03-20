@@ -45,11 +45,11 @@ struct guard_by_semaphore_op<Executor, Op, void(Err, Args...)>
   {
   };
 
-  static auto make_error_impl(error_code ec, error_code *) { return ec; }
+  static error_code make_error_impl(error_code ec, error_code *) { return ec; }
 
-  static auto make_error_impl(error_code ec, std::exception_ptr *) { return std::make_exception_ptr(system_error(ec)); }
+  static std::exception_ptr make_error_impl(error_code ec, std::exception_ptr *) { return std::make_exception_ptr(system_error(ec)); }
 
-  static auto make_error(error_code ec) { return make_error_impl(ec, static_cast<Err *>(nullptr)); }
+  static Err make_error(error_code ec) { return make_error_impl(ec, static_cast<Err *>(nullptr)); }
 
   template <typename Self>
   void operator()(Self &&self) // init
@@ -94,14 +94,14 @@ struct guard_by_mutex_op<Executor, Op, void(Err, Args...)>
   {
   };
 
-  static auto make_error_impl(error_code ec, error_code *) { return ec; }
+  static error_code make_error_impl(error_code ec, error_code *) { return ec; }
 
-  static auto make_error_impl(error_code ec, std::exception_ptr *)
+  static std::exception_ptr make_error_impl(error_code ec, std::exception_ptr *)
   {
     return std::make_exception_ptr(std::system_error(ec));
   }
 
-  static auto make_error(error_code ec) { return make_error_impl(ec, static_cast<Err *>(nullptr)); }
+  static Err make_error(error_code ec) { return make_error_impl(ec, static_cast<Err *>(nullptr)); }
 
   template <typename Self>
   void operator()(Self &&self) // init

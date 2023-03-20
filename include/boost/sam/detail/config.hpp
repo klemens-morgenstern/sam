@@ -62,13 +62,6 @@
 #error Unsupported operating system
 #endif
 
-#if defined(BOOST_PROCESS_USE_STD_FS)
-#include <filesystem>
-#else
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-#endif
-
 #define BOOST_SAM_BEGIN_NAMESPACE                                                                                      \
   namespace boost                                                                                                      \
   {                                                                                                                    \

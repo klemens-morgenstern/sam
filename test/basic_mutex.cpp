@@ -3,37 +3,48 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/test/unit_test.hpp>
+#if defined(BOOST_SAM_STANDALONE)
+#define ASIO_DISABLE_BOOST_DATE_TIME 1
+#else
+#define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
+#endif
 
 #include <boost/sam/lock_guard.hpp>
 #include <boost/sam/mutex.hpp>
+#include <algorithm>
 #include <chrono>
 #include <random>
 
+#include <thread>
+#include "doctest.h"
+
+
 #if !defined(BOOST_SAM_STANDALONE)
-namespace asio = boost::asio;
-#include <boost/asio.hpp>
+#include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/compose.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <boost/asio/yield.hpp>
-#else
 
-#include <asio.hpp>
+#else
+#include <asio/bind_cancellation_slot.hpp>
 #include <asio/compose.hpp>
 #include <asio/experimental/parallel_group.hpp>
+#include <asio/steady_timer.hpp>
+#include <asio/thread_pool.hpp>
 #include <asio/yield.hpp>
-
 #endif
 
-#include <thread>
 
 using namespace BOOST_SAM_NAMESPACE;
 using namespace net;
 using namespace net::experimental;
 
-using models = std::tuple<io_context, thread_pool>;
+
+
 template <typename T>
-const static int init = std::is_same<T, io_context>::value ? 1 : 4;
+constexpr static int init() {return std::is_same<T, io_context>::value ? 1 : 4; }
 
 inline void run_impl(io_context &ctx) { ctx.run(); }
 
@@ -57,7 +68,7 @@ struct basic_main : net::coroutine
     mutex            &mtx;
     int               i;
 
-    std::unique_ptr<asio::steady_timer> tim;
+    std::unique_ptr<net::steady_timer> tim;
 
     template <typename Self>
     void operator()(Self &self)
@@ -69,7 +80,7 @@ struct basic_main : net::coroutine
     void operator()(Self &self, error_code ec, lock_guard l)
     {
       v.push_back(i);
-      tim = std::make_unique<asio::steady_timer>(mtx.get_executor(), std::chrono::milliseconds(10));
+      tim.reset(new net::steady_timer(mtx.get_executor(), std::chrono::milliseconds(10)));
       tim->async_wait(std::move(self));
       v.push_back(i + 1);
     };
@@ -81,14 +92,14 @@ struct basic_main : net::coroutine
     }
   };
 
-  basic_main(net::any_io_executor exec) : impl_(std::make_unique<basic_main_impl<T>>(exec)) {}
+  basic_main(net::any_io_executor exec) : impl_(new basic_main_impl<T>(exec)) {}
 
   std::unique_ptr<basic_main_impl<T>> impl_;
 
-  static auto f(std::vector<int> &v, mutex &mtx, int i) -> asio::deferred_async_operation<
-      void(error_code), asio::detail::initiate_composed_op<void(error_code), void(asio::any_io_executor)>, step_impl>
+  static auto f(std::vector<int> &v, mutex &mtx, int i) -> net::deferred_async_operation<
+      void(error_code), net::detail::initiate_composed_op<void(error_code), void(net::any_io_executor)>, step_impl>
   {
-    return async_compose<const asio::deferred_t &, void(error_code)>(step_impl{v, mtx, i}, asio::deferred, mtx);
+    return async_compose<const net::deferred_t &, void(error_code)>(step_impl{v, mtx, i}, net::deferred, mtx);
   }
 
   void operator()(error_code = {})
@@ -103,73 +114,81 @@ struct basic_main : net::coroutine
 
   void operator()(std::array<std::size_t, 4> order, error_code ec1, error_code ec2, error_code ec3, error_code ec4)
   {
-    BOOST_CHECK(!ec1);
-    BOOST_CHECK(!ec2);
-    BOOST_CHECK(!ec3);
-    BOOST_CHECK(!ec4);
-    BOOST_CHECK(impl_->seq.size() == 8);
-    BOOST_CHECK_EQUAL(impl_->seq[0] + 1, impl_->seq[1]);
-    BOOST_CHECK_EQUAL(impl_->seq[2] + 1, impl_->seq[3]);
-    BOOST_CHECK_EQUAL(impl_->seq[4] + 1, impl_->seq[5]);
-    BOOST_CHECK_EQUAL(impl_->seq[6] + 1, impl_->seq[7]);
+    CHECK(!ec1);
+    CHECK(!ec2);
+    CHECK(!ec3);
+    CHECK(!ec4);
+    CHECK(impl_->seq.size() == 8);
+    CHECK((impl_->seq[0] + 1) == impl_->seq[1]);
+    CHECK((impl_->seq[2] + 1) == impl_->seq[3]);
+    CHECK((impl_->seq[4] + 1) == impl_->seq[5]);
+    CHECK((impl_->seq[6] + 1) == impl_->seq[7]);
   }
 };
 
-BOOST_AUTO_TEST_SUITE(basic_mutex_test)
+TEST_SUITE_BEGIN("basic_mutex_test");
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(random_mtx, T, models)
+TEST_CASE_TEMPLATE("random_mtx" * doctest::timeout(1.), T, io_context, thread_pool)
 {
-  T ctx;
+  T ctx{init<T>()};
   net::post(ctx, basic_main<T>{ctx.get_executor()});
   run_impl(ctx);
 }
 
-BOOST_AUTO_TEST_CASE(rebind_mutex)
+TEST_CASE("rebind_mutex" * doctest::timeout(1.))
 {
   net::io_context ctx;
   auto            res = net::deferred.as_default_on(mutex{ctx.get_executor()});
 }
 
-BOOST_AUTO_TEST_CASE(sync_lock_st)
+TEST_CASE("sync_lock_st" * doctest::timeout(1.))
 {
-  asio::io_context ctx{1u};
+  net::io_context ctx{1u};
   mutex            mtx{ctx};
 
   mtx.lock();
-  BOOST_CHECK_THROW(mtx.lock(), system_error);
+  CHECK_THROWS(mtx.lock());
 
   mtx.unlock();
   mtx.lock();
 }
 
-BOOST_AUTO_TEST_CASE(sync_lock_mt)
+TEST_CASE("sync_lock_mt" * doctest::timeout(1.))
 {
-  asio::io_context ctx;
+  net::io_context ctx;
   mutex            mtx{ctx};
 
   mtx.lock();
-  asio::post(ctx, [&] { mtx.unlock(); });
+  net::post(ctx, [&] { mtx.unlock(); });
+  std::atomic<bool> locked{false};
+
   std::thread thr{[&]
                   {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                    ctx.run();
+                    do
+                    {
+                      ctx.restart();
+                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                      ctx.run();
+                    }
+                    while(!locked);
                   }};
 
   mtx.lock();
+  locked = true;
   thr.join();
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(multi_lock, T, models)
+TEST_CASE_TEMPLATE("multi_lock" * doctest::timeout(1.), T, io_context, thread_pool)
 {
-  T     ctx{init<T>};
+  T     ctx{init<T>()};
   mutex mtx{ctx};
 
   run_impl(ctx);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_twice, T, models)
+TEST_CASE_TEMPLATE("cancel_twice" * doctest::timeout(1.), T, io_context, thread_pool)
 {
-  asio::io_context        ctx{init<T>};
+  net::io_context        ctx{init<T>()};
   std::vector<error_code> ecs;
   auto                    res = [&](error_code ec) { ecs.push_back(ec); };
 
@@ -193,23 +212,23 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_twice, T, models)
   }
   ctx.run_for(std::chrono::milliseconds(10));
 
-  BOOST_CHECK_EQUAL(ecs.size(), 7u);
-  BOOST_CHECK(!ecs.at(0));
-  BOOST_CHECK(!ecs.at(1));
-  BOOST_CHECK(!ecs.at(2));
+  CHECK(ecs.size() == 7u);
+  CHECK(!ecs.at(0));
+  CHECK(!ecs.at(1));
+  CHECK(!ecs.at(2));
 
-  BOOST_CHECK_EQUAL(4u, std::count(ecs.begin(), ecs.end(), error::operation_aborted));
+  CHECK(4u == std::count(ecs.begin(), ecs.end(), error::operation_aborted));
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
+TEST_CASE_TEMPLATE("cancel_lock" * doctest::timeout(1.), T, io_context, thread_pool)
 {
-  asio::io_context ctx{init<T>};
+  net::io_context ctx{init<T>()};
 
   std::vector<error_code> ecs;
   auto                    res = [&](error_code ec) { ecs.push_back(ec); };
 
   {
-    mutex::template rebind_executor<asio::io_context::executor_type>::other mtx{ctx};
+    mutex::template rebind_executor<net::io_context::executor_type>::other mtx{ctx};
     mtx.async_lock(res);
     mtx.async_lock(res);
     mtx.async_lock(res);
@@ -228,60 +247,67 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_lock, T, models)
   }
   ctx.run_for(std::chrono::milliseconds(10));
 
-  BOOST_CHECK_EQUAL(ecs.size(), 7u);
-  BOOST_CHECK(!ecs.at(0));
-  BOOST_CHECK(!ecs.at(1));
-  BOOST_CHECK(!ecs.at(2));
+  CHECK(ecs.size() == 7u);
+  CHECK(!ecs.at(0));
+  CHECK(!ecs.at(1));
+  CHECK(!ecs.at(2));
 
-  BOOST_CHECK_EQUAL(4u, std::count(ecs.begin(), ecs.end(), error::operation_aborted));
+  CHECK(4u == std::count(ecs.begin(), ecs.end(), error::operation_aborted));
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
+TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, io_context, thread_pool)
 {
-  io_context ctx{init<T>};
+  io_context ctx{init<T>()};
   auto       smtx = std::make_shared<mutex>(ctx);
 
-  auto l = [smtx](error_code ec) { BOOST_CHECK(false); };
+  auto l = [smtx](error_code ec) { CHECK(false); };
 
   smtx->async_lock(l);
   smtx->async_lock(l);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_, T, models)
+TEST_CASE_TEMPLATE("cancel_" * doctest::timeout(1.), T, io_context, thread_pool)
 {
-  T    ctx{init<T>};
+  T    ctx{init<T>()};
   auto smtx = std::make_shared<mutex>(ctx);
 
-  auto                     l = [smtx](error_code ec) { BOOST_CHECK(false); };
+  auto                     l = [smtx](error_code ec) { CHECK(false); };
   net::cancellation_signal csig;
+  smtx->lock();
   smtx->async_lock(
       [&](error_code ec)
       {
-        BOOST_CHECK(!ec);
+        CHECK(!ec);
         csig.emit(net::cancellation_type::all);
       });
   smtx->async_lock(net::bind_cancellation_slot(csig.slot(), [&](error_code ec)
-                                               { BOOST_CHECK(ec == net::error::operation_aborted); }));
+                                               {
+          CHECK(ec == net::error::operation_aborted);
+        }
+        ));
 
+  smtx->unlock();
   run_impl(ctx);
 }
 
-BOOST_AUTO_TEST_CASE(mt_shutdown)
+TEST_CASE("mt_shutdown" * doctest::timeout(1.))
 {
   std::weak_ptr<mutex> wp;
-  std::thread          thr;
+  std::thread thr;
   {
-    asio::thread_pool ctx{2u};
-    auto              smtx = std::make_shared<mutex>(ctx);
+    net::thread_pool ctx{2u};
+    auto smtx = std::make_shared<mutex>(ctx);
     smtx->lock();
-    thr = std::thread([smtx] { BOOST_CHECK_THROW(smtx->lock(), system_error); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    wp     = smtx;
-    auto l = [smtx](error_code ec) { BOOST_CHECK(false); };
+    std::atomic<bool> started{false};
+    thr = std::thread([smtx, &started] { started = true; CHECK_THROWS(smtx->lock()); });
+    wp = smtx;
+    auto l =  [smtx](error_code ec) { CHECK(false); };
+    while(!started)
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
   thr.join();
-  BOOST_CHECK(wp.expired());
+  CHECK(wp.expired());
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+TEST_SUITE_END();

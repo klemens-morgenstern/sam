@@ -3,4 +3,5 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-exe request : request.cpp /boost//sam : <cxxstd>11:<build>no ;
+exe condition_variable : condition_variable.cpp /boost//sam ;
+exe mutex              : mutex.cpp              /boost//sam ;

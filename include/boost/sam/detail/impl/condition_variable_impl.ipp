@@ -19,7 +19,7 @@ void condition_variable_impl::add_waiter(detail::predicate_wait_op *waiter) noex
 
 BOOST_SAM_DECL void condition_variable_impl::notify_one()
 {
-  auto lock = this->internal_lock();
+  lock_type lock{this->mtx_};
   // release a pending operations
   if (waiters_.next_ == &waiters_)
     return;
@@ -30,7 +30,7 @@ BOOST_SAM_DECL void condition_variable_impl::notify_one()
 
 BOOST_SAM_DECL void condition_variable_impl::notify_all()
 {
-  auto lock = this->internal_lock();
+  lock_type lock{this->mtx_};
   // release a pending operations
   for (auto c = waiters_.next_; c != &waiters_;)
   {

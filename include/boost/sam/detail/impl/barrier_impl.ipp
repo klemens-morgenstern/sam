@@ -15,7 +15,7 @@ namespace detail
 
 bool barrier_impl::try_arrive()
 {
-  auto _ = internal_lock();
+  lock_type _{mtx_};
   if (--counter_ == 0u)
   {
     waiters_.complete_all({});
@@ -70,7 +70,7 @@ void barrier_impl::arrive(error_code &ec)
       return;
     }
   }
-  auto lock = this->internal_lock();
+  lock_type lock{this->mtx_};
 
   arrive_op_t op{ec, lock};
   add_waiter(&op);

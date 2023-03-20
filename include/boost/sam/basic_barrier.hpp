@@ -52,7 +52,7 @@ struct basic_barrier
   /// Rebind a barrier to a new executor - this cancels all outstanding operations.
   template <typename Executor_>
   basic_barrier(basic_barrier<Executor_> &&sem,
-                std::enable_if_t<std::is_convertible<Executor_, executor_type>::value> * = nullptr)
+                typename std::enable_if<std::is_convertible<Executor_, executor_type>::value>::type * = nullptr)
       : exec_(sem.get_executor()), impl_(std::move(sem.impl_))
   {
   }
@@ -77,7 +77,7 @@ struct basic_barrier
   /// Move assign a barrier with a different executor.
   template <typename Executor_>
   auto operator=(basic_barrier<Executor_> &&sem)
-      -> std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_barrier> &
+      -> typename std::enable_if<std::is_convertible<Executor_, executor_type>::value, basic_barrier>::type &
   {
     exec_ = std::move(sem.exec_);
     impl_ = std::move(sem.impl_);

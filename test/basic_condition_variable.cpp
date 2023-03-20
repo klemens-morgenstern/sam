@@ -10,241 +10,165 @@
 
 // Test that header file is self-contained.
 
-#include <boost/test/unit_test.hpp>
 
-#include <boost/optional.hpp>
+#if defined(BOOST_SAM_STANDALONE)
+#define ASIO_DISABLE_BOOST_DATE_TIME 1
+#else
+#define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
+#endif
+
 #include <boost/sam/condition_variable.hpp>
 #include <chrono>
+#include <atomic>
 #include <random>
 
 #if defined(BOOST_SAM_STANDALONE)
-
-#include <asio.hpp>
-#include <asio/append.hpp>
-#include <asio/as_tuple.hpp>
-#include <asio/coroutine.hpp>
-#include <asio/detached.hpp>
-#include <asio/experimental/parallel_group.hpp>
-#include <asio/yield.hpp>
-
-namespace net = ::asio;
-
+#include <asio/bind_cancellation_slot.hpp>
+#include <asio/deferred.hpp>
+#include <asio/steady_timer.hpp>
+#include <asio/thread_pool.hpp>
 #else
-
-namespace asio = boost::asio;
-#include <boost/asio.hpp>
-#include <boost/asio/append.hpp>
-#include <boost/asio/coroutine.hpp>
-#include <boost/asio/experimental/as_tuple.hpp>
-#include <boost/asio/experimental/parallel_group.hpp>
-#include <boost/asio/yield.hpp>
-
-namespace net = boost::asio;
+#include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/deferred.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/thread_pool.hpp>
 
 #endif
 
-using namespace std::literals;
+#include "doctest.h"
+
+
 using namespace BOOST_SAM_NAMESPACE;
 using namespace net;
 
-using models = std::tuple<net::io_context, net::thread_pool>;
 template <typename T>
-const static int init = std::is_same<T, io_context>::value ? 1 : 4;
+constexpr static int init() {return std::is_same<T, io_context>::value ? 1 : 4; }
 
 inline void run_impl(io_context &ctx) { ctx.run(); }
 
 inline void run_impl(thread_pool &ctx) { ctx.join(); }
 
-BOOST_AUTO_TEST_SUITE(basic_condition_variable_test)
+TEST_SUITE_BEGIN("basic_condition_variable_test");
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_all, T, models)
+TEST_CASE_TEMPLATE("cancel_all" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  T    ioc{init<T>};
-  auto l = [&]
-  {
-    auto cv = condition_variable(ioc.get_executor());
-    cv.async_wait([](error_code ec) { BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted); });
-    cv.async_wait([](error_code ec) { BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted); });
-    cv.async_wait([](error_code ec) { BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted); });
-    cv.async_wait([](error_code ec) { BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted); });
-  };
-  post(ioc, l);
-  run_impl(ioc);
+    T ioc{init<T>()};
+    auto l =
+            [&]
+            {
+                auto cv  = condition_variable(ioc.get_executor());
+                cv.async_wait([](error_code ec){BOOST_ASSERT(ec == net::error::operation_aborted);});
+                cv.async_wait([](error_code ec){BOOST_ASSERT(ec == net::error::operation_aborted);});
+                cv.async_wait([](error_code ec){BOOST_ASSERT(ec == net::error::operation_aborted);});
+                cv.async_wait([](error_code ec){BOOST_ASSERT(ec == net::error::operation_aborted);});
+            };
+    post(ioc, l);
+    run_impl(ioc);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(notify_all, T, models)
+TEST_CASE_TEMPLATE("notify_all" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  T                ioc{init<T>};
+  T                ioc{init<T>()};
   auto             cv  = condition_variable(ioc.get_executor());
-  std::atomic<int> cnt = 0;
+  std::atomic<int> cnt{0};
   cv.async_wait(
       [&](error_code ec)
       {
         cnt |= 1;
-        BOOST_CHECK(!ec);
+        BOOST_ASSERT(!ec);
       });
   cv.async_wait(
       [&](error_code ec)
       {
         cnt |= 2;
-        BOOST_CHECK(!ec);
+        BOOST_ASSERT(!ec);
       });
   cv.async_wait(
       [&](error_code ec)
       {
         cnt |= 4;
-        BOOST_CHECK(!ec);
+        BOOST_ASSERT(!ec);
       });
   cv.async_wait(
       [&](error_code ec)
       {
         cnt |= 8;
-        BOOST_CHECK(!ec);
+        BOOST_ASSERT(!ec);
       });
   post(ioc, [&] { cv.notify_all(); });
   run_impl(ioc);
 
-  BOOST_CHECK_EQUAL(cnt, 15);
+  CHECK(cnt == 15);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(notify_one, T, models)
+TEST_CASE_TEMPLATE("notify_one" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  T                                   ioc{init<T>};
-  boost::optional<condition_variable> store{ioc.get_executor()};
-  auto                               &cv  = *store;
-  std::atomic<int>                    cnt = 0;
-  cv.async_wait(
-      [&](error_code ec)
-      {
-        if (!ec)
-          cnt |= 1;
-        BOOST_TEST_CHECK(!ec);
-      });
-  cv.async_wait(
-      [&](error_code ec)
-      {
-        if (!ec)
-          cnt |= 2;
-        BOOST_TEST_CHECK(!ec);
-      });
-  cv.async_wait(
-      [&](error_code ec)
-      {
-        if (!ec)
-          cnt |= 4;
-        BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted);
-      });
-  cv.async_wait(
-      [&](error_code ec)
-      {
-        if (!ec)
-          cnt |= 8;
-        BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted);
-      });
-  cv.notify_one();
-  cv.notify_one();
+    T ioc{init<T>()};
+    std::unique_ptr<condition_variable> store{new condition_variable(ioc.get_executor())};
+    auto & cv = *store;
+    std::atomic<int> cnt{0};
+    cv.notify_one();
 
-  asio::steady_timer tim{ioc, std::chrono::milliseconds{100}};
+    cv.async_wait([&](error_code ec){if (!ec) cnt |= 1; CHECK(!ec);});
+    cv.async_wait([&](error_code ec){if (!ec) cnt |= 2; CHECK(!ec);});
+    cv.async_wait([&](error_code ec){if (!ec) cnt |= 4; CHECK(ec == net::error::operation_aborted);});
+    cv.async_wait([&](error_code ec){if (!ec) cnt |= 8; CHECK(ec == net::error::operation_aborted);});
+    cv.notify_one();
+    cv.notify_one();
+
+  net::steady_timer tim{ioc, std::chrono::milliseconds{100}};
   tim.async_wait([&](error_code ec) { store.reset(); });
 
   run_impl(ioc);
-  BOOST_CHECK_GT(cnt, 2);
+  CHECK_GT(cnt, 2);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(notify_some, T, models)
+TEST_CASE_TEMPLATE("notify_some" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  T     ioc{init<T>};
-  auto  store = boost::optional<condition_variable>(ioc.get_executor());
+  T     ioc{init<T>()};
+  std::unique_ptr<condition_variable> store{new condition_variable(ioc.get_executor())};
   auto &cv    = *store;
 
-  std::atomic<int> cnt = 0;
-  cv.async_wait([] { return false; },
-                [&](error_code ec)
-                {
-                  if (!ec)
-                    cnt |= 1;
-                  BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted);
-                });
-  cv.async_wait([] { return true; },
-                [&](error_code ec)
-                {
-                  if (!ec)
-                    cnt |= 2;
-                  BOOST_TEST_CHECK(!ec);
-                });
-  cv.async_wait([] { return false; },
-                [&](error_code ec)
-                {
-                  if (!ec)
-                    cnt |= 4;
-                  BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted);
-                });
-  cv.async_wait([] { return true; },
-                [&](error_code ec)
-                {
-                  if (!ec)
-                    cnt |= 8;
-                  BOOST_TEST_CHECK(!ec);
-                });
+    std::atomic<int> cnt{0};
+    cv.async_wait([]{return false;}, [&](error_code ec){if (!ec) cnt |= 1; CHECK(ec == net::error::operation_aborted);});
+    cv.async_wait([]{return true;},  [&](error_code ec){if (!ec) cnt |= 2; CHECK(!ec);});
+    cv.async_wait([]{return false;}, [&](error_code ec){if (!ec) cnt |= 4; CHECK(ec == net::error::operation_aborted);});
+    cv.async_wait([]{return true;},  [&](error_code ec){if (!ec) cnt |= 8; CHECK(!ec);});
 
   cv.notify_all();
 
-  asio::steady_timer tim{ioc, std::chrono::milliseconds{100}};
+  net::steady_timer tim{ioc, std::chrono::milliseconds{100}};
   tim.async_wait([&](error_code ec) { store.reset(); });
 
   run_impl(ioc);
 
-  BOOST_CHECK_EQUAL(cnt, 10);
+  CHECK(cnt == 10);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(notify_some_more, T, models)
+TEST_CASE_TEMPLATE("notify_some_more" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  T     ioc{init<T>};
-  auto  store = boost::optional<condition_variable>(ioc.get_executor());
-  auto &cv    = *store;
-  cv.notify_one();
-  std::atomic<int> cnt = 0;
-  cv.async_wait(
-      [&](error_code ec)
-      {
-        if (!ec)
-          cnt |= 1;
-        BOOST_CHECK(!ec);
-      });
-  cv.async_wait(
-      [&](error_code ec)
-      {
-        if (!ec)
-          cnt |= 2;
-        BOOST_CHECK(!ec);
-      });
-  cv.async_wait(
-      [&](error_code ec)
-      {
-        if (!ec)
-          cnt |= 4;
-        BOOST_CHECK(!ec);
-      });
-  cv.async_wait(
-      [&](error_code ec)
-      {
-        if (!ec)
-          cnt |= 8;
-        BOOST_CHECK_EQUAL(ec, asio::error::operation_aborted);
-      });
+    T ioc{init<T>()};
+    std::unique_ptr<condition_variable> store{new condition_variable(ioc.get_executor())};
+    auto & cv = *store;
+
+    std::atomic<int> cnt{0};
+    cv.async_wait([&](error_code ec){if (!ec) cnt |= 1; CHECK(!ec);});
+    cv.async_wait([&](error_code ec){if (!ec) cnt |= 2; CHECK(!ec);});
+    cv.async_wait([&](error_code ec){if (!ec) cnt |= 4; CHECK(!ec);});
+    cv.async_wait([&](error_code ec){if (!ec) cnt |= 8; CHECK(ec == net::error::operation_aborted); });
 
   cv.notify_one();
   cv.notify_one();
   cv.notify_one();
 
-  asio::steady_timer tim{ioc, std::chrono::milliseconds{100}};
+  net::steady_timer tim{ioc, std::chrono::milliseconds{100}};
   tim.async_wait([&](error_code ec) { store.reset(); });
 
   run_impl(ioc);
-  BOOST_CHECK_GT(cnt, 5);
+  CHECK_GT(cnt, 5);
 }
 
-BOOST_AUTO_TEST_CASE(rebind_condition_variable)
+TEST_CASE("rebind_condition_variable" * doctest::timeout(1.))
 {
   net::io_context ctx;
   auto            res = net::deferred.as_default_on(condition_variable{ctx.get_executor()});
@@ -252,47 +176,47 @@ BOOST_AUTO_TEST_CASE(rebind_condition_variable)
   res = condition_variable{ctx.get_executor()};
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(shutdown_, T, models)
+TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  io_context ctx{init<T>};
+  io_context ctx{init<T>()};
   auto       smtx = std::make_shared<condition_variable>(ctx);
 
-  auto l = [smtx](error_code ec) { BOOST_CHECK(false); };
+  auto l = [smtx](error_code ec) { CHECK(false); };
 
   smtx->async_wait(l);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_, T, models)
+TEST_CASE_TEMPLATE("cancel_" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  T    ctx{init<T>};
+  T    ctx{init<T>()};
   auto smtx = std::make_shared<condition_variable>(ctx);
 
   net::cancellation_signal csig;
   smtx->async_wait([] { return true; },
                    [&](error_code ec)
                    {
-                     BOOST_TEST_CHECK(!ec);
+                     CHECK(!ec);
                      csig.emit(net::cancellation_type::all);
                    });
   smtx->async_wait([] { return false; },
                    net::bind_cancellation_slot(csig.slot(), [&](error_code ec)
-                                               { BOOST_TEST_CHECK(ec == net::error::operation_aborted); }));
+                                               { CHECK(ec == net::error::operation_aborted); }));
 
   net::post(ctx, [&] { smtx->notify_all(); });
   run_impl(ctx);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(cancel_2, T, models)
+TEST_CASE_TEMPLATE("cancel_2" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
 {
-  T    ctx{init<T>};
+  T    ctx{init<T>()};
   auto smtx = std::make_shared<condition_variable>(ctx);
 
   net::cancellation_signal csig;
   smtx->async_wait(net::bind_cancellation_slot(csig.slot(), [&](error_code ec)
-                                               { BOOST_TEST_CHECK(ec == net::error::operation_aborted); }));
+                                               { CHECK(ec == net::error::operation_aborted); }));
 
   net::post(ctx, [&] { csig.emit(net::cancellation_type::all); });
   run_impl(ctx);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+TEST_SUITE_END();

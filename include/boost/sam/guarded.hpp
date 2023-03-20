@@ -22,11 +22,12 @@ BOOST_SAM_BEGIN_NAMESPACE
 template <typename Executor, typename Op,
           BOOST_SAM_COMPLETION_TOKEN_FOR(typename net::completion_signature_of<Op>::type)
               CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
-auto guarded(basic_semaphore<Executor> &sm, Op &&op,
-             CompletionToken &&completion_token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
+BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, typename net::completion_signature_of<Op>::type)
+guarded(basic_semaphore<Executor> &sm, Op &&op,
+        CompletionToken &&completion_token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
   using sig_t = typename decltype(std::declval<Op>()(net::detail::completion_signature_probe{}))::type;
-  using cop   = detail::guard_by_semaphore_op<Executor, std::decay_t<Op>, sig_t>;
+  using cop   = detail::guard_by_semaphore_op<Executor, typename std::decay<Op>::type, sig_t>;
   return net::async_compose<CompletionToken, sig_t>(cop{sm, std::forward<Op>(op)}, completion_token, sm);
 }
 
@@ -43,11 +44,12 @@ auto guarded(basic_semaphore<Executor> &sm, Op &&op,
 template <typename Executor, typename Op,
           BOOST_SAM_COMPLETION_TOKEN_FOR(typename net::completion_signature_of<Op>::type)
               CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
-auto guarded(basic_mutex<Executor> &mtx, Op &&op,
-             CompletionToken &&completion_token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
+BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, typename net::completion_signature_of<Op>::type)
+guarded(basic_mutex<Executor> &mtx, Op &&op,
+        CompletionToken &&completion_token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
   using sig_t = typename decltype(std::declval<Op>()(net::detail::completion_signature_probe{}))::type;
-  using cop   = detail::guard_by_mutex_op<Executor, std::decay_t<Op>, sig_t>;
+  using cop   = detail::guard_by_mutex_op<Executor, typename std::decay<Op>::type, sig_t>;
   return net::async_compose<CompletionToken, sig_t>(cop{mtx, std::forward<Op>(op)}, completion_token, mtx);
 }
 

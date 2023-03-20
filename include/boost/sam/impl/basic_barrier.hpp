@@ -14,9 +14,11 @@
 #include <boost/sam/detail/basic_op_model.hpp>
 
 #if defined(BOOST_SAM_STANDALONE)
+#include <asio/associated_immediate_executor.hpp>
 #include <asio/deferred.hpp>
 #include <asio/post.hpp>
 #else
+#include <boost/asio/associated_immediate_executor.hpp>
 #include <boost/asio/deferred.hpp>
 #include <boost/asio/post.hpp>
 #endif
@@ -39,10 +41,10 @@ struct basic_barrier<Executor>::async_arrive_op
       return net::post(ie, net::append(std::forward<Handler>(handler), error_code()));
     }
 
-    auto l = self->impl_.internal_lock();
+    detail::op_list_service::lock_type l{self->impl_.mtx_};
     self->impl_.decrement();
     ignore_unused(l);
-    using handler_type = std::decay_t<Handler>;
+    using handler_type = typename std::decay<Handler>::type;
     using model_type   = detail::basic_op_model<decltype(e), handler_type, void(error_code)>;
     model_type *model  = model_type::construct(std::move(e), std::forward<Handler>(handler));
 
@@ -56,7 +58,7 @@ struct basic_barrier<Executor>::async_arrive_op
             if (type != net::cancellation_type::none)
             {
               auto sl   = slot;
-              auto lock = impl.internal_lock();
+              detail::op_list_service::lock_type lock{impl.mtx_};
               ignore_unused(lock);
               // completed already
               if (!sl.is_connected())

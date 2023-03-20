@@ -3,7 +3,15 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#if defined(BOOST_SAM_STANDALONE)
+#define ASIO_DISABLE_BOOST_DATE_TIME 1
+#else
+#define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
+#endif
+
 #include <boost/sam/mutex.hpp>
+
+#if __cplusplus >= 201703L
 
 #if defined(BOOST_SAM_STANDALONE)
 #include <asio/compose.hpp>
@@ -11,7 +19,6 @@
 #include <asio/detached.hpp>
 #include <asio/experimental/channel.hpp>
 #include <asio/experimental/concurrent_channel.hpp>
-#include <asio/steady_timer.hpp>
 #include <asio/yield.hpp>
 
 #else
@@ -19,9 +26,8 @@
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/channel.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/yield.hpp>
-#include <boost/experimental/concurrent_channel.hpp>
+#include <boost/asio/experimental/concurrent_channel.hpp>
 
 #endif
 
@@ -72,7 +78,7 @@ struct run_benchmark_impl : net::coroutine
 };
 
 template <typename Mutex>
-void run_benchmark(asio::io_context::executor_type exec, std::size_t n)
+void run_benchmark(net::io_context::executor_type exec, std::size_t n)
 {
   Mutex cv{exec};
 
@@ -102,7 +108,7 @@ int main(int argc, char *argv[])
     net::io_context ctx{1};
     ctx.run();
   }
-  const std::size_t cnt = 10'000'000;
+  const std::size_t cnt = 10000000;
   if (auto b = benchmark("no-mutex asio"))
   {
     net::io_context ctx{1};
@@ -128,3 +134,15 @@ int main(int argc, char *argv[])
   }
   return 0;
 }
+
+#else
+
+#include <cstdio>
+
+int main(int argc, char * argv[])
+{
+  std::fprintf(stderr, "Mutex benchmark needs C++17\n");
+  return 1;
+}
+
+#endif

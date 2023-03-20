@@ -91,7 +91,7 @@ struct basic_condition_variable
   /// Move assign a condition_variable with a different executor.
   template <typename Executor_>
   auto operator=(basic_condition_variable<Executor_> &&sem)
-      -> std::enable_if_t<std::is_convertible<Executor_, executor_type>::value, basic_condition_variable> &
+      -> typename std::enable_if<std::is_convertible<Executor_, executor_type>::value, basic_condition_variable>::type &
   {
     exec_ = std::move(sem.exec_);
     impl_ = std::move(sem.impl_);

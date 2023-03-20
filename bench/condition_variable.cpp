@@ -3,13 +3,18 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#if defined(BOOST_SAM_STANDALONE)
+#define ASIO_DISABLE_BOOST_DATE_TIME 1
+#else
+#define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
+#endif
+
 #include <boost/sam/condition_variable.hpp>
 
 #if defined(BOOST_SAM_STANDALONE)
 #include <asio/compose.hpp>
 #include <asio/detached.hpp>
 #include <asio/steady_timer.hpp>
-
 #else
 #include <boost/asio/compose.hpp>
 #include <boost/asio/detached.hpp>
@@ -28,26 +33,41 @@ struct tcondvar
 
   net::io_context::executor_type get_executor() { return tim.get_executor(); }
 
+  template<typename Predicate>
+  struct async_wait_op
+  {
+    Predicate p;
+    steady_timer &tim;
+
+    template<typename Predicate_>
+    async_wait_op(Predicate_ && p, steady_timer &tim)
+      : p(std::forward<Predicate_>(p)), tim(tim) {}
+
+    bool initial = true;
+
+    template<typename Self>
+    void operator()(Self &&self, error_code = {})
+    {
+      if (initial)
+      {
+        initial = false;
+        return net::post(std::move(self));
+      }
+      error_code ec;
+      if (self.cancelled() != net::cancellation_type::none)
+        ec = net::error::operation_aborted;
+      if (ec || p())
+        self.complete(ec);
+      else
+        tim.async_wait(std::move(self));
+    }
+  };
+
   template <typename Predicate, typename Handler>
-  auto async_wait(Predicate &&p, Handler &&h)
+  void async_wait(Predicate &&p, Handler &&h)
   {
     return net::async_compose<Handler, void(error_code)>(
-        [this, p = std::move(p), initial = true](auto &&self, error_code = {}) mutable
-        {
-          if (initial)
-          {
-            initial = false;
-            return net::post(std::move(self));
-          }
-          error_code ec;
-          if (self.cancelled() != net::cancellation_type::none)
-            ec = net::error::operation_aborted;
-          if (ec || p())
-            self.complete(ec);
-          else
-            tim.async_wait(std::move(self));
-        },
-        h, tim.get_executor());
+        async_wait_op<typename std::decay<Predicate>::type>(std::move(p), tim), h, tim);
   }
 
   void notify_one() { tim.cancel_one(); }
@@ -56,7 +76,7 @@ struct tcondvar
 };
 
 template <typename CondVar>
-void run_benchmark(asio::io_context::executor_type exec, std::size_t n)
+void run_benchmark(net::io_context::executor_type exec, std::size_t n)
 {
   CondVar cv{exec};
 
@@ -66,7 +86,7 @@ void run_benchmark(asio::io_context::executor_type exec, std::size_t n)
     void     operator()(error_code ec, std::size_t i)
     {
       if (i != 0u)
-        cv.async_wait([&i = i] { return i % 4 == 0; }, net::detached);
+        cv.async_wait([i] { return i % 4 == 0; }, net::detached);
 
       if (i % 100 == 0)
         cv.notify_all();
@@ -104,27 +124,27 @@ int main(int argc, char *argv[])
     net::io_context ctx{1};
     ctx.run();
   }
-  const std::size_t cnt = 1'000'000;
+  const std::size_t cnt = 1000000;
   if (auto b = benchmark("no-mutex asio"))
   {
-    asio::io_context ctx{1};
+    net::io_context ctx{1};
     run_benchmark<tcondvar>(ctx.get_executor(), cnt);
   }
 
   if (auto b = benchmark("no-mutex  sam"))
   {
-    asio::io_context ctx{1};
+    net::io_context ctx{1};
     run_benchmark<basic_condition_variable<net::io_context::executor_type>>(ctx.get_executor(), cnt);
   }
   if (auto b = benchmark("mutexed  asio"))
   {
-    asio::io_context ctx{-1};
+    net::io_context ctx{-1};
     run_benchmark<tcondvar>(ctx.get_executor(), cnt);
   }
 
   if (auto b = benchmark("mutexed   sam"))
   {
-    asio::io_context ctx{-1};
+    net::io_context ctx{-1};
     run_benchmark<basic_condition_variable<net::io_context::executor_type>>(ctx.get_executor(), cnt);
   }
 

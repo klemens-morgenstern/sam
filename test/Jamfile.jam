@@ -25,8 +25,6 @@ lib header_test : header_1.cpp header_2.cpp :
 lib test_impl : test_impl.cpp /boost//sam :
         <define>BOOST_TEST_IGNORE_SIGCHLD=1
         <link>static
-        <target-os>windows:<source>shell32
-        <target-os>windows:<source>user32
         ;
 
 test-suite standalone :

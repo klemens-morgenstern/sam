@@ -31,8 +31,8 @@ struct service_member;
 // Default service implementation for a strand.
 struct op_list_service final : net::detail::execution_context_service_base<op_list_service>
 {
+  BOOST_SAM_DECL explicit op_list_service(asio::execution_context &ctx);
 
-  explicit BOOST_SAM_DECL op_list_service(asio::execution_context &ctx);
   bilist_node             entries;
 
   using mutex_type = detail::conditionally_enabled_mutex;
@@ -58,7 +58,7 @@ struct service_member : bilist_node
 {
   op_list_service *service;
 
-  explicit service_member(net::execution_context &ctx)
+  BOOST_SAM_DECL explicit service_member(net::execution_context &ctx)
       : service(&net::use_service<op_list_service>(ctx)), mtx_(!detail::is_single_threaded(ctx))
   {
     service->register_queue(this);
@@ -84,7 +84,7 @@ struct service_member : bilist_node
 
   ~service_member()
   {
-    auto _ = internal_lock();
+    lock_type _{mtx_};;
     if (service != nullptr)
       service->unregister_queue(this);
   }
@@ -94,10 +94,13 @@ struct service_member : bilist_node
   virtual void shutdown() = 0;
 
   mutable mutex_type mtx_;
-  auto               internal_lock() const -> lock_type { return lock_type{mtx_}; }
 };
 
 } // namespace detail
 BOOST_SAM_END_NAMESPACE
+
+#if defined(BOOST_SAM_HEADER_ONLY)
+#include <boost/sam/detail/impl/service.ipp>
+#endif
 
 #endif // BOOST_SAM_DETAIL_SERVICE_HPP

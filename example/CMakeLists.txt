@@ -7,5 +7,7 @@ cmake_minimum_required(VERSION 3.5...3.16)
 
 project(boost_sam VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 
-add_executable(boost_sam_request request.cpp)
-target_link_libraries(boost_sam_request Boost::sam)
+if (CMAKE_CXX_STANDARD GREATER_EQUAL 14)
+    add_executable(boost_sam_request request.cpp)
+    target_link_libraries(boost_sam_request Boost::sam)
+endif()

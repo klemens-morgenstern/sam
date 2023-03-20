@@ -23,7 +23,7 @@ struct mutex_impl : detail::service_member
   BOOST_SAM_DECL void unlock();
   bool                try_lock()
   {
-    auto _ = internal_lock();
+    lock_type _{mtx_};
     if (locked_)
       return false;
     else
@@ -35,7 +35,7 @@ struct mutex_impl : detail::service_member
 
   void shutdown() override
   {
-    auto l = internal_lock();
+    lock_type l{mtx_};;
     auto w = std::move(waiters_);
     l.unlock();
     w.shutdown();
@@ -56,7 +56,7 @@ struct mutex_impl : detail::service_member
   mutex_impl &operator=(const mutex_impl &lhs) = delete;
   mutex_impl &operator=(mutex_impl &&lhs) noexcept
   {
-    auto _       = lhs.internal_lock();
+    lock_type _{lhs.mtx_};
     locked_      = lhs.locked_;
     lhs.locked_  = false;
     lhs.waiters_ = std::move(waiters_);
@@ -69,5 +69,9 @@ struct mutex_impl : detail::service_member
 } // namespace detail
 
 BOOST_SAM_END_NAMESPACE
+
+#if defined(BOOST_SAM_HEADER_ONLY)
+#include <boost/sam/detail/impl/mutex_impl.ipp>
+#endif
 
 #endif // BOOST_SAM_DETAIL_MUTEX_IMPL_HPP

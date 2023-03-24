@@ -13,10 +13,15 @@
 #define BOOST_SAM_INITFN_AUTO_RESULT_TYPE(Token, Signature) ASIO_INITFN_AUTO_RESULT_TYPE(Token, Signature)
 #define BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor)        ASIO_DEFAULT_COMPLETION_TOKEN(Executor)
 
-#include <asio/detail/conditionally_enabled_mutex.hpp>
-#include <asio/detail/event.hpp>
 #include <asio/error.hpp>
 #include <system_error>
+
+#if __cplusplus >= 201703L && ASIO_WINDOWS
+#include <shared_mutex>
+#else
+#include <mutex>
+#endif
+#include <condition_variable>
 
 #define BOOST_SAM_BEGIN_NAMESPACE                                                                                      \
   namespace sam                                                                                                        \
@@ -35,8 +40,6 @@
 #define BOOST_SAM_INITFN_AUTO_RESULT_TYPE(Token, Signature) BOOST_ASIO_INITFN_AUTO_RESULT_TYPE(Token, Signature)
 #define BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor)        BOOST_ASIO_DEFAULT_COMPLETION_TOKEN(Executor)
 
-#include <boost/asio/detail/conditionally_enabled_mutex.hpp>
-#include <boost/asio/detail/event.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/config.hpp>
 #include <boost/core/ignore_unused.hpp>
@@ -44,23 +47,14 @@
 #include <boost/system/system_category.hpp>
 #include <boost/system/system_error.hpp>
 
-#if defined(BOOST_WINDOWS_API)
-#define BOOST_SAM_WINDOWS 1
-
-// Windows: suppress definition of "min" and "max" macros.
-#if !defined(NOMINMAX)
-#define NOMINMAX 1
+#if BOOST_ASIO_WINDOWS
+#include <boost/thread/shared_mutex.hpp>
+#else
+#include <mutex>
 #endif
 
-#endif
+#include <condition_variable>
 
-#if defined(BOOST_POSIX_API)
-#define BOOST_SAM_POSIX 1
-#endif
-
-#if !defined(BOOST_SAM_WINDOWS) && !defined(BOOST_POSIX_API)
-#error Unsupported operating system
-#endif
 
 #define BOOST_SAM_BEGIN_NAMESPACE                                                                                      \
   namespace boost                                                                                                      \
@@ -109,10 +103,17 @@ namespace net = ::boost::asio;
 
 namespace detail
 {
-// maybe ported over.
-using net::detail::conditionally_enabled_mutex;
-using net::detail::event;
-} // namespace detail
+
+#if __cplusplus >= 201703L && ASIO_WINDOWS
+using internal_mutex = std::shared_mutex;
+#elif BOOST_ASIO_WINDOWS
+using internal_mutex = boost::shared_mutex;
+#else
+using internal_mutex = std::mutex;
+#endif
+using internal_condition_variable = std::condition_variable_any;
+
+}
 
 BOOST_SAM_END_NAMESPACE
 

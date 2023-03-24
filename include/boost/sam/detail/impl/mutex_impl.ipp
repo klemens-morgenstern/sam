@@ -21,15 +21,14 @@ struct mutex_impl::lock_op_t final : detail::wait_op
 {
   error_code   &ec;
   bool          done = false;
-  detail::event var;
-  lock_type    &lock;
-  lock_op_t(error_code &ec, lock_type &lock) : ec(ec), lock(lock) {}
+  detail::internal_condition_variable var;
+  lock_op_t(error_code &ec) : ec(ec) {}
 
   void complete(error_code ec) override
   {
     done     = true;
     this->ec = ec;
-    var.signal_all(lock);
+    var.notify_all();
     this->unlink();
   }
 
@@ -37,14 +36,13 @@ struct mutex_impl::lock_op_t final : detail::wait_op
   {
     done = true;
     BOOST_SAM_ASSIGN_EC(this->ec, net::error::shut_down);
-    var.signal_all(lock);
+    var.notify_all();
     this->unlink();
   }
 
-  void wait()
+  void wait(lock_type &lock)
   {
-    while (!done)
-      var.wait(lock);
+    var.wait(lock, [this]{return done;});
   }
 };
 
@@ -62,7 +60,7 @@ void mutex_impl::lock(error_code &ec)
   }
 
   lock_type lock{mtx_};
-  lock_op_t op{ec, lock};
+  lock_op_t op{ec};
   add_waiter(&op);
   if (!locked_)
   {
@@ -70,7 +68,7 @@ void mutex_impl::lock(error_code &ec)
     op.unlink();
     return;
   }
-  op.wait();
+  op.wait(lock);
 }
 
 void mutex_impl::unlock()

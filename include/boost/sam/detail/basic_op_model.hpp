@@ -10,6 +10,9 @@
 #ifndef BOOST_SAM_DETAIL_SEMAPHORE_WAIT_OP_MODEL_HPP
 #define BOOST_SAM_DETAIL_SEMAPHORE_WAIT_OP_MODEL_HPP
 
+#include <boost/sam/detail/config.hpp>
+#include <boost/sam/detail/basic_op.hpp>
+
 #if defined(BOOST_SAM_STANDALONE)
 #include <asio/associated_allocator.hpp>
 #include <asio/associated_cancellation_slot.hpp>
@@ -20,7 +23,6 @@
 #include <boost/asio/executor_work_guard.hpp>
 #endif
 
-#include <boost/sam/detail/basic_op.hpp>
 
 BOOST_SAM_BEGIN_NAMESPACE
 

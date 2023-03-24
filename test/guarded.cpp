@@ -24,8 +24,7 @@
 #include <boost/asio/thread_pool.hpp>
 #else
 #include <asio/compose.hpp>
-#include <boost/detached.hpp>
-#include <asio/experimental/parallel_group.hpp>
+#include <asio/detached.hpp>
 #include <asio/steady_timer.hpp>
 #include <asio/thread_pool.hpp>
 

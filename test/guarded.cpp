@@ -91,8 +91,8 @@ struct op_t
     auto operator()(Token && token)
         -> decltype(async_impl(se2, 0, active, std::forward<Token>(token)))
     {
-      static int i = 0;
-      fprintf(stderr, "Op  %d\n", i);
+      static std::atomic<int> i{0};
+      fprintf(stderr, "Op  %d\n", i.load());
       return async_impl(se2, i++, active, std::forward<Token>(token));
     }
 };

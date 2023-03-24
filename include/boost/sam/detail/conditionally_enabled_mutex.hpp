@@ -25,7 +25,7 @@ struct conditionally_enabled_mutex
 
   void unlock()
   {
-    locked_ = true;
+    locked_ = false;
     if (enabled_)
       mtx_.unlock();
   }

@@ -34,7 +34,7 @@ inline bool is_single_threaded(net::execution_context &ctx)
 }
 
 // only io_context or strands can be thread-safe
-inline bool is_single_threaded(net::any_io_executor exec, boost::source_location loc = BOOST_CURRENT_LOCATION)
+inline bool is_single_threaded(net::any_io_executor exec)
 {
   using namespace net;
   return is_single_threaded(exec.context());

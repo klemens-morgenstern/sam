@@ -22,13 +22,15 @@ else()
   set(BOOST_SAM_SHOULD_BE_INLINE OFF)
 endif()
 
+option(BOOST_SAM_BUILD_INLINE "Configure as if part of the boost source tree" ${BOOST_SAM_SHOULD_BE_INLINE})
+
 if(BOOST_SAM_IS_ROOT AND BOOST_SAM_BUILD_INLINE)
   #
   # Building inside Boost tree, but as a separate project e.g. on Travis or
   # other CI, or when producing Visual Studio Solution and Projects.
 
-  set(BOOST_INCLUDE_LIBRARIES SAM)
-  set(BOOST_EXCLUDE_LIBRARIES SAM)
+  set(BOOST_INCLUDE_LIBRARIES sam)
+  set(BOOST_EXCLUDE_LIBRARIES sam)
 
   set(CMAKE_FOLDER _deps)
   add_subdirectory(../.. _deps/boost EXCLUDE_FROM_ALL)
@@ -41,7 +43,11 @@ if (BOOST_SAM_STANDALONE)
   add_compile_definitions(BOOST_SAM_STANDALONE=1)
 else()
   if (BOOST_SAM_BUILD_INLINE)
-    target_link_libraries(boost_sam PUBLIC Boost::asio Boost::system)
+    target_link_libraries(boost_sam PUBLIC
+            Boost::asio
+            Boost::core
+            Boost::system
+            )
   else()
     target_link_libraries(boost_sam PUBLIC Boost::system)
   endif()

@@ -57,10 +57,10 @@ TEST_CASE_TEMPLATE("cancel_all" * doctest::timeout(1.), T, net::io_context, net:
             [&]
             {
                 auto cv  = condition_variable(ioc.get_executor());
-                cv.async_wait([](error_code ec){BOOST_ASSERT(ec == net::error::operation_aborted);});
-                cv.async_wait([](error_code ec){BOOST_ASSERT(ec == net::error::operation_aborted);});
-                cv.async_wait([](error_code ec){BOOST_ASSERT(ec == net::error::operation_aborted);});
-                cv.async_wait([](error_code ec){BOOST_ASSERT(ec == net::error::operation_aborted);});
+                cv.async_wait([](error_code ec){CHECK(ec == net::error::operation_aborted);});
+                cv.async_wait([](error_code ec){CHECK(ec == net::error::operation_aborted);});
+                cv.async_wait([](error_code ec){CHECK(ec == net::error::operation_aborted);});
+                cv.async_wait([](error_code ec){CHECK(ec == net::error::operation_aborted);});
             };
     post(ioc, l);
     run_impl(ioc);
@@ -75,25 +75,25 @@ TEST_CASE_TEMPLATE("notify_all" * doctest::timeout(1.), T, net::io_context, net:
       [&](error_code ec)
       {
         cnt |= 1;
-        BOOST_ASSERT(!ec);
+        CHECK(!ec);
       });
   cv.async_wait(
       [&](error_code ec)
       {
         cnt |= 2;
-        BOOST_ASSERT(!ec);
+        CHECK(!ec);
       });
   cv.async_wait(
       [&](error_code ec)
       {
         cnt |= 4;
-        BOOST_ASSERT(!ec);
+        CHECK(!ec);
       });
   cv.async_wait(
       [&](error_code ec)
       {
         cnt |= 8;
-        BOOST_ASSERT(!ec);
+        CHECK(!ec);
       });
   post(ioc, [&] { cv.notify_all(); });
   run_impl(ioc);

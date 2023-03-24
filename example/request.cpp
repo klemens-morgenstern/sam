@@ -9,7 +9,6 @@
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/yield.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/empty_body.hpp>
 #include <boost/beast/http/string_body.hpp>
@@ -19,6 +18,9 @@
 #include <boost/sam/mutex.hpp>
 #include <iostream>
 #include <memory>
+
+#include <boost/asio/yield.hpp>
+
 
 namespace http = boost::beast::http;
 

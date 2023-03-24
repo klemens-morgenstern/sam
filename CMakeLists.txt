@@ -12,6 +12,9 @@ add_library(Boost::sam ALIAS boost_sam)
 
 set(BOOST_SAM_IS_ROOT OFF)
 
+add_compile_options(-fsanitize=thread)
+add_link_options(-fsanitize=thread)
+
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(BOOST_SAM_IS_ROOT ON)
 endif()

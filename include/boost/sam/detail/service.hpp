@@ -11,6 +11,7 @@
 #include <boost/sam/detail/config.hpp>
 #include <boost/sam/detail/bilist_node.hpp>
 #include <boost/sam/detail/concurrency_hint.hpp>
+#include <boost/sam/detail/conditionally_enabled_mutex.hpp>
 #include <mutex>
 
 #if defined(BOOST_SAM_STANDALONE)

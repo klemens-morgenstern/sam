@@ -40,16 +40,15 @@ void semaphore_impl::release()
 struct semaphore_impl::acquire_op_t final : detail::wait_op
 {
   error_code   &ec;
-  lock_type    &lock_;
   bool          done = false;
-  detail::event var;
-  acquire_op_t(error_code &ec, lock_type &lock_) : ec(ec), lock_(lock_) {}
+  detail::internal_condition_variable var;
+  acquire_op_t(error_code &ec) : ec(ec) {}
 
   void complete(error_code ec) override
   {
     done     = true;
     this->ec = ec;
-    var.signal_all(lock_);
+    var.notify_all();
     this->unlink();
   }
 
@@ -57,14 +56,13 @@ struct semaphore_impl::acquire_op_t final : detail::wait_op
   {
     done = true;
     BOOST_SAM_ASSIGN_EC(this->ec, net::error::shut_down);
-    var.signal_all(lock_);
+    var.notify_all();
     this->unlink();
   }
 
-  void wait()
+  void wait(lock_type &lock)
   {
-    while (!done)
-      var.wait(lock_);
+    var.wait(lock, [this]{return done;});
   }
 };
 
@@ -82,7 +80,7 @@ void semaphore_impl::acquire(error_code &ec)
   }
 
   lock_type    lock{mtx_};
-  acquire_op_t op{ec, lock};
+  acquire_op_t op{ec};
   add_waiter(&op);
   if (count_ > 0)
   {
@@ -90,7 +88,7 @@ void semaphore_impl::acquire(error_code &ec)
     op.unlink();
     return;
   }
-  op.wait();
+  op.wait(lock);
 }
 
 BOOST_SAM_NODISCARD int semaphore_impl::value() const noexcept

@@ -31,15 +31,14 @@ struct barrier_impl::arrive_op_t final : detail::wait_op
 {
   error_code   &ec;
   bool          done = false;
-  detail::event var;
-  lock_type    &lock;
-  arrive_op_t(error_code &ec, lock_type &lock) : ec(ec), lock(lock) {}
+  detail::internal_condition_variable var;
+  arrive_op_t(error_code &ec) : ec(ec) {}
 
   void complete(error_code ec) override
   {
     done     = true;
     this->ec = ec;
-    var.signal_all(lock);
+    var.notify_all();
     this->unlink();
   }
 
@@ -47,14 +46,13 @@ struct barrier_impl::arrive_op_t final : detail::wait_op
   {
     done = true;
     BOOST_SAM_ASSIGN_EC(this->ec, net::error::shut_down);
-    var.signal_all(lock);
+    var.notify_all();
     this->unlink();
   }
 
-  void wait()
+  void wait(lock_type &lock)
   {
-    while (!done)
-      var.wait(lock);
+    var.wait(lock, [this]{return done;});
   }
 };
 
@@ -72,7 +70,7 @@ void barrier_impl::arrive(error_code &ec)
   }
   lock_type lock{this->mtx_};
 
-  arrive_op_t op{ec, lock};
+  arrive_op_t op{ec};
   add_waiter(&op);
   // try_arrive
   counter_--;
@@ -84,7 +82,7 @@ void barrier_impl::arrive(error_code &ec)
     return;
   }
   // try_arrive is over
-  op.wait();
+  op.wait(lock);
 }
 
 void barrier_impl::add_waiter(detail::wait_op *waiter) noexcept { waiter->link_before(&waiters_); }

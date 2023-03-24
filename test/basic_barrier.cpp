@@ -171,7 +171,7 @@ TEST_CASE_TEMPLATE("cancel" * doctest::timeout(1.), T, io_context, thread_pool)
 
   smtx->async_arrive(net::bind_cancellation_slot(sig.slot(), l));
 
-  net::post([&] { sig.emit(net::cancellation_type::total); });
+  net::post(ctx, [&] { sig.emit(net::cancellation_type::total); });
 
   run_impl(ctx);
 }

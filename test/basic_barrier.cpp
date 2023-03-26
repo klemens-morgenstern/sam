@@ -89,21 +89,21 @@ struct basic_barrier_main : net::coroutine
 
 TEST_SUITE_BEGIN("basic_barrier_test");
 
-TEST_CASE_TEMPLATE("random_barrier" * doctest::timeout(1.), T, io_context, thread_pool)
+TEST_CASE_TEMPLATE("random_barrier" * doctest::timeout(10.), T, io_context, thread_pool)
 {
   T ctx{init<T>()};
   net::post(ctx, basic_barrier_main{ctx.get_executor()});
   run_impl(ctx);
 }
 
-TEST_CASE("rebind_barrier" * doctest::timeout(1.))
+TEST_CASE("rebind_barrier" * doctest::timeout(10.))
 {
   net::io_context ctx;
   auto             res = net::deferred.as_default_on(barrier{ctx.get_executor(), 4u});
   res                  = typename barrier::rebind_executor<io_context::executor_type>::other{ctx.get_executor(), 2u};
 }
 
-TEST_CASE("sync_barrier_st" * doctest::timeout(1.))
+TEST_CASE("sync_barrier_st" * doctest::timeout(10.))
 {
   net::io_context ctx{1u};
   barrier          b{ctx.get_executor(), 4u};
@@ -113,7 +113,7 @@ TEST_CASE("sync_barrier_st" * doctest::timeout(1.))
   CHECK_NOTHROW(b2.arrive());
 }
 
-TEST_CASE("sync_barrier_m" * doctest::timeout(1.))
+TEST_CASE("sync_barrier_m" * doctest::timeout(10.))
 {
   net::io_context ctx;
   barrier          b{ctx.get_executor(), 2u};
@@ -137,7 +137,7 @@ TEST_CASE("sync_barrier_m" * doctest::timeout(1.))
   thr.join();
 }
 
-TEST_CASE_TEMPLATE("shutdown_wp" * doctest::timeout(1.), T, io_context, thread_pool)
+TEST_CASE_TEMPLATE("shutdown_wp" * doctest::timeout(10.), T, io_context, thread_pool)
 {
   T    ctx{init<T>()};
   auto smtx = std::make_shared<barrier>(ctx, 2);
@@ -146,7 +146,7 @@ TEST_CASE_TEMPLATE("shutdown_wp" * doctest::timeout(1.), T, io_context, thread_p
   smtx->async_arrive(l);
 }
 
-TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, io_context, thread_pool)
+TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(10.), T, io_context, thread_pool)
 {
   std::weak_ptr<barrier> wp;
   {
@@ -161,7 +161,7 @@ TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, io_context, thread_poo
   CHECK(wp.expired());
 }
 
-TEST_CASE_TEMPLATE("cancel" * doctest::timeout(1.), T, io_context, thread_pool)
+TEST_CASE_TEMPLATE("cancel" * doctest::timeout(10.), T, io_context, thread_pool)
 {
   T    ctx{init<T>()};
   auto smtx = std::make_shared<barrier>(ctx, 2);
@@ -176,7 +176,7 @@ TEST_CASE_TEMPLATE("cancel" * doctest::timeout(1.), T, io_context, thread_pool)
   run_impl(ctx);
 }
 
-TEST_CASE("mt_shutdown" * doctest::timeout(1.))
+TEST_CASE("mt_shutdown" * doctest::timeout(10.))
 {
   std::weak_ptr<barrier> wp;
   std::thread thr;

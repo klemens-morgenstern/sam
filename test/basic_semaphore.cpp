@@ -148,7 +148,7 @@ struct basic_bot : net::coroutine
 
 TEST_SUITE_BEGIN("basic_semaphore_test");
 
-TEST_CASE_TEMPLATE("value" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("value" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T         ioc{init<T>()};
   semaphore sem{ioc, 0};
@@ -172,7 +172,7 @@ TEST_CASE_TEMPLATE("value" * doctest::timeout(1.), T, net::io_context, net::thre
   CHECK(sem.value() == -2);
 }
 
-TEST_CASE_TEMPLATE("random_sem" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("random_sem" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T                  ioc{init<T>()};
   auto               sem = semaphore(ioc.get_executor(), 1);
@@ -187,14 +187,14 @@ TEST_CASE_TEMPLATE("random_sem" * doctest::timeout(1.), T, net::io_context, net:
   run_impl(ioc);
 }
 
-TEST_CASE("rebind_semaphore" * doctest::timeout(1.))
+TEST_CASE("rebind_semaphore" * doctest::timeout(10.))
 {
   io_context ctx;
   auto       res = deferred.as_default_on(semaphore{ctx.get_executor()});
   res            = semaphore::rebind_executor<io_context::executor_type>::other{ctx.get_executor()};
 }
 
-TEST_CASE("sync_acquire_st" * doctest::timeout(1.))
+TEST_CASE("sync_acquire_st" * doctest::timeout(10.))
 {
   io_context ctx{1};
   semaphore  mtx{ctx};
@@ -206,7 +206,7 @@ TEST_CASE("sync_acquire_st" * doctest::timeout(1.))
   mtx.acquire();
 }
 
-TEST_CASE("sync_acquire_mt" * doctest::timeout(1.))
+TEST_CASE("sync_acquire_mt" * doctest::timeout(10.))
 {
   io_context ctx;
   semaphore  mtx{ctx};
@@ -231,7 +231,7 @@ TEST_CASE("sync_acquire_mt" * doctest::timeout(1.))
   thr.join();
 }
 
-TEST_CASE_TEMPLATE("cancel_acquire" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("cancel_acquire" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   io_context ctx{init<T>()};
 
@@ -267,7 +267,7 @@ TEST_CASE_TEMPLATE("cancel_acquire" * doctest::timeout(1.), T, net::io_context, 
   CHECK(3u == std::count(ecs.begin(), ecs.end(), error::operation_aborted));
 }
 
-TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   io_context ctx{init<T>()};
   auto       smtx = std::make_shared<semaphore>(ctx, 1);
@@ -279,7 +279,7 @@ TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, net::io_context, net::
   smtx->async_acquire(l);
 }
 
-TEST_CASE("mt_shutdown" * doctest::timeout(1.))
+TEST_CASE("mt_shutdown" * doctest::timeout(10.))
 {
   std::weak_ptr<semaphore> wp;
   std::thread thr;

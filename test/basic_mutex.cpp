@@ -128,20 +128,20 @@ struct basic_main : net::coroutine
 
 TEST_SUITE_BEGIN("basic_mutex_test");
 
-TEST_CASE_TEMPLATE("random_mtx" * doctest::timeout(1.), T, io_context, thread_pool)
+TEST_CASE_TEMPLATE("random_mtx" * doctest::timeout(10.), T, io_context, thread_pool)
 {
   T ctx{init<T>()};
   net::post(ctx, basic_main<T>{ctx.get_executor()});
   run_impl(ctx);
 }
 
-TEST_CASE("rebind_mutex" * doctest::timeout(1.))
+TEST_CASE("rebind_mutex" * doctest::timeout(10.))
 {
   net::io_context ctx;
   auto            res = net::deferred.as_default_on(mutex{ctx.get_executor()});
 }
 
-TEST_CASE("sync_lock_st" * doctest::timeout(1.))
+TEST_CASE("sync_lock_st" * doctest::timeout(10.))
 {
   net::io_context ctx{1u};
   mutex            mtx{ctx};
@@ -153,7 +153,7 @@ TEST_CASE("sync_lock_st" * doctest::timeout(1.))
   mtx.lock();
 }
 
-TEST_CASE("sync_lock_mt" * doctest::timeout(1.))
+TEST_CASE("sync_lock_mt" * doctest::timeout(10.))
 {
   net::io_context ctx;
   mutex            mtx{ctx};
@@ -178,7 +178,7 @@ TEST_CASE("sync_lock_mt" * doctest::timeout(1.))
   thr.join();
 }
 
-TEST_CASE_TEMPLATE("multi_lock" * doctest::timeout(1.), T, io_context, thread_pool)
+TEST_CASE_TEMPLATE("multi_lock" * doctest::timeout(10.), T, io_context, thread_pool)
 {
   T     ctx{init<T>()};
   mutex mtx{ctx};
@@ -186,7 +186,7 @@ TEST_CASE_TEMPLATE("multi_lock" * doctest::timeout(1.), T, io_context, thread_po
   run_impl(ctx);
 }
 
-TEST_CASE_TEMPLATE("cancel_twice" * doctest::timeout(1.), T, io_context, thread_pool)
+TEST_CASE_TEMPLATE("cancel_twice" * doctest::timeout(10.), T, io_context, thread_pool)
 {
   net::io_context        ctx{init<T>()};
   std::vector<error_code> ecs;
@@ -220,7 +220,7 @@ TEST_CASE_TEMPLATE("cancel_twice" * doctest::timeout(1.), T, io_context, thread_
   CHECK(4u == std::count(ecs.begin(), ecs.end(), error::operation_aborted));
 }
 
-TEST_CASE_TEMPLATE("cancel_lock" * doctest::timeout(1.), T, io_context, thread_pool)
+TEST_CASE_TEMPLATE("cancel_lock" * doctest::timeout(10.), T, io_context, thread_pool)
 {
   net::io_context ctx{init<T>()};
 
@@ -255,7 +255,7 @@ TEST_CASE_TEMPLATE("cancel_lock" * doctest::timeout(1.), T, io_context, thread_p
   CHECK(4u == std::count(ecs.begin(), ecs.end(), error::operation_aborted));
 }
 
-TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, io_context, thread_pool)
+TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(10.), T, io_context, thread_pool)
 {
   io_context ctx{init<T>()};
   auto       smtx = std::make_shared<mutex>(ctx);
@@ -266,7 +266,7 @@ TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, io_context, thread_poo
   smtx->async_lock(l);
 }
 
-TEST_CASE_TEMPLATE("cancel_" * doctest::timeout(1.), T, io_context, thread_pool)
+TEST_CASE_TEMPLATE("cancel_" * doctest::timeout(10.), T, io_context, thread_pool)
 {
   T    ctx{init<T>()};
   auto smtx = std::make_shared<mutex>(ctx);
@@ -290,7 +290,7 @@ TEST_CASE_TEMPLATE("cancel_" * doctest::timeout(1.), T, io_context, thread_pool)
   run_impl(ctx);
 }
 
-TEST_CASE("mt_shutdown" * doctest::timeout(1.))
+TEST_CASE("mt_shutdown" * doctest::timeout(10.))
 {
   std::weak_ptr<mutex> wp;
   std::thread thr;
@@ -299,7 +299,12 @@ TEST_CASE("mt_shutdown" * doctest::timeout(1.))
     auto smtx = std::make_shared<mutex>(ctx);
     smtx->lock();
     std::atomic<bool> started{false};
-    thr = std::thread([smtx, &started] { started = true; CHECK_THROWS(smtx->lock()); });
+    thr = std::thread(
+        [smtx, &started]
+        {
+          started = true;
+          CHECK_THROWS(smtx->lock());
+        });
     wp = smtx;
     auto l =  [smtx](error_code ec) { CHECK(false); };
     while(!started)

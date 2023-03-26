@@ -109,7 +109,8 @@ struct basic_barrier
     error_code ec;
     arrive(ec);
     if (ec)
-      throw system_error(ec, "arrive");
+      throw system_error(ec, std::string("arrive"));
+
   }
 
   /// Rebinds the barrier type to another executor.

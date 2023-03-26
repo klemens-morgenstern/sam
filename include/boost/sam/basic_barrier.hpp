@@ -7,6 +7,7 @@
 
 #include <boost/sam/detail/config.hpp>
 #include <boost/sam/detail/barrier_impl.hpp>
+#include <boost/sam/detail/exception.hpp>
 #include <boost/sam/detail/service.hpp>
 
 #if defined(BOOST_SAM_STANDALONE)
@@ -109,7 +110,7 @@ struct basic_barrier
     error_code ec;
     arrive(ec);
     if (ec)
-      throw system_error(ec, std::string("arrive"));
+      detail::throw_error(ec, "arrive");
 
   }
 

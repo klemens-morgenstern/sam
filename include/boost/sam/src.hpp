@@ -18,5 +18,6 @@
 #include <boost/sam/detail/impl/mutex_impl.ipp>
 #include <boost/sam/detail/impl/semaphore_impl.ipp>
 #include <boost/sam/detail/impl/service.ipp>
+#include <boost/sam/detail/impl/exception.ipp>
 
 #endif // BOOST_SAM_SRC_HPP

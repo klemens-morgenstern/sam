@@ -8,6 +8,7 @@
 
 #include <boost/sam/detail/config.hpp>
 #include <boost/sam/detail/bilist_node.hpp>
+#include <boost/sam/detail/exception.hpp>
 #include <boost/sam/detail/semaphore_impl.hpp>
 
 #if defined(BOOST_SAM_STANDALONE)
@@ -132,7 +133,7 @@ struct basic_semaphore
     error_code ec;
     acquire(ec);
     if (ec)
-      throw system_error(ec, std::string("acquire"));
+      detail::throw_error(ec, "acquire");
   }
 
   /// @brief Attempt to immediately acquire the semaphore.

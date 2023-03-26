@@ -6,6 +6,7 @@
 #define BOOST_SAM_BASIC_MUTEX_HPP
 
 #include <boost/sam/detail/config.hpp>
+#include <boost/sam/detail/exception.hpp>
 #include <boost/sam/detail/mutex_impl.hpp>
 
 #if defined(BOOST_SAM_STANDALONE)
@@ -100,7 +101,7 @@ struct basic_mutex
     error_code ec;
     lock(ec);
     if (ec)
-      throw system_error(ec, std::string("lock"));
+      detail::throw_error(ec, "lock");
   }
   /// Unlock the mutex, and complete one pending lock if pending.
   void unlock() { impl_.unlock(); }

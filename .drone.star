@@ -195,7 +195,7 @@ def main(ctx):
         linux("gcc-12 (asan)",   branch, "docker.io/library/gcc:12",  variant="release", cxxstd="11,20", debug_symbols="on", address_sanitizer="on"),
         linux("gcc-10",   branch, "docker.io/library/gcc:10",  variant="release", cxxstd="11,14,17,20"),
         linux("gcc-8",    branch, "docker.io/library/gcc:8",   variant="release", cxxstd="11,14,17"),
-        #linux("gcc-6",    branch, "docker.io/library/gcc:6",   variant="release", cxxstd="11,14"),
+        linux("gcc-6",    branch, "docker.io/library/gcc:6",   variant="release", cxxstd="11,14"),
         linux("clang",          branch, "docker.io/silkeh/clang", toolset='clang', variant="release", cxxstd="11,14,17,20"),
         linux("clang (asan)",   branch, "docker.io/silkeh/clang", toolset='clang', variant="release", cxxstd="11,20", debug_symbols="on", address_sanitizer="on"),
         linux("clang (tsan)",   branch, "docker.io/silkeh/clang", toolset='clang', variant="release", cxxstd="11,20", debug_symbols="on", thread_sanitizer="on"),

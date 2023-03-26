@@ -116,7 +116,7 @@ struct basic_bot : net::coroutine
             timer->async_wait(net::deferred))
             .async_wait(experimental::wait_for_one(),
                         deferred([](std::array<std::size_t, 2u> seq, error_code ec_sem, error_code ec_tim)
-                                 { return net::deferred.values(ec_sem, seq[0]); }))(std::move(*this));
+                                 { return net::deferred.values(ec_sem, seq[0]); }))(*this);
 
         if (index == 1u)
         {
@@ -133,8 +133,11 @@ struct basic_bot : net::coroutine
       }
       else
       {
-        timer->expires_after(std::chrono::milliseconds(50));
-        yield timer->async_wait(std::move(*this));
+        timer->expires_after(std::chrono::milliseconds(10));
+        yield {
+            auto t = timer.get();
+            t->async_wait(std::move(*this));
+        };
         say("semaphore acquired immediately\n");
       }
 
@@ -179,7 +182,7 @@ TEST_CASE_TEMPLATE("random_sem" * doctest::timeout(10.), T, net::io_context, net
   std::random_device rng;
   std::seed_seq      ss{rng(), rng(), rng(), rng(), rng()};
   auto               eng  = std::default_random_engine(ss);
-  auto               dist = std::uniform_int_distribution<unsigned int>(1000, 10000);
+  auto               dist = std::uniform_int_distribution<unsigned int>(5000, 10000);
 
   auto random_time = [&eng, &dist] { return std::chrono::milliseconds(dist(eng)); };
   for (int i = 0; i < 100; i++)

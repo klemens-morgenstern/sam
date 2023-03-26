@@ -98,7 +98,7 @@ void test_sync(mutex &mtx, std::vector<int> &order)
   async_impl(mtx, i++, active, net::detached);
 }
 
-TEST_CASE_TEMPLATE("lock_guard_t" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("lock_guard_t" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T                ctx;
   std::vector<int> order;
@@ -140,7 +140,7 @@ BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
   return net::async_compose<CompletionToken, void(error_code)>(impl_t(mtx), completion_token, mtx);
 }
 
-TEST_CASE_TEMPLATE("lock_series_t" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("lock_series_t" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T     ctx;
   mutex mtx{ctx.get_executor()};

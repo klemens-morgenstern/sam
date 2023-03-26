@@ -100,7 +100,7 @@ struct basic_mutex
     error_code ec;
     lock(ec);
     if (ec)
-      throw system_error(ec, "lock");
+      throw system_error(ec, std::string("lock"));
   }
   /// Unlock the mutex, and complete one pending lock if pending.
   void unlock() { impl_.unlock(); }

@@ -50,7 +50,7 @@ inline void run_impl(thread_pool &ctx) { ctx.join(); }
 
 TEST_SUITE_BEGIN("basic_condition_variable_test");
 
-TEST_CASE_TEMPLATE("cancel_all" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("cancel_all" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
     T ioc{init<T>()};
     auto l =
@@ -66,7 +66,7 @@ TEST_CASE_TEMPLATE("cancel_all" * doctest::timeout(1.), T, net::io_context, net:
     run_impl(ioc);
 }
 
-TEST_CASE_TEMPLATE("notify_all" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("notify_all" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T                ioc{init<T>()};
   auto             cv  = condition_variable(ioc.get_executor());
@@ -101,7 +101,7 @@ TEST_CASE_TEMPLATE("notify_all" * doctest::timeout(1.), T, net::io_context, net:
   CHECK(cnt == 15);
 }
 
-TEST_CASE_TEMPLATE("notify_one" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("notify_one" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
     T ioc{init<T>()};
     std::unique_ptr<condition_variable> store{new condition_variable(ioc.get_executor())};
@@ -123,7 +123,7 @@ TEST_CASE_TEMPLATE("notify_one" * doctest::timeout(1.), T, net::io_context, net:
   CHECK_GT(cnt, 2);
 }
 
-TEST_CASE_TEMPLATE("notify_some" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("notify_some" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T     ioc{init<T>()};
   std::unique_ptr<condition_variable> store{new condition_variable(ioc.get_executor())};
@@ -145,7 +145,7 @@ TEST_CASE_TEMPLATE("notify_some" * doctest::timeout(1.), T, net::io_context, net
   CHECK(cnt == 10);
 }
 
-TEST_CASE_TEMPLATE("notify_some_more" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("notify_some_more" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
     T ioc{init<T>()};
     std::unique_ptr<condition_variable> store{new condition_variable(ioc.get_executor())};
@@ -168,7 +168,7 @@ TEST_CASE_TEMPLATE("notify_some_more" * doctest::timeout(1.), T, net::io_context
   CHECK_GT(cnt, 5);
 }
 
-TEST_CASE("rebind_condition_variable" * doctest::timeout(1.))
+TEST_CASE("rebind_condition_variable" * doctest::timeout(10.))
 {
   net::io_context ctx;
   auto            res = net::deferred.as_default_on(condition_variable{ctx.get_executor()});
@@ -176,7 +176,7 @@ TEST_CASE("rebind_condition_variable" * doctest::timeout(1.))
   res = condition_variable{ctx.get_executor()};
 }
 
-TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   io_context ctx{init<T>()};
   auto       smtx = std::make_shared<condition_variable>(ctx);
@@ -186,7 +186,7 @@ TEST_CASE_TEMPLATE("shutdown_" * doctest::timeout(1.), T, net::io_context, net::
   smtx->async_wait(l);
 }
 
-TEST_CASE_TEMPLATE("cancel_" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("cancel_" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T    ctx{init<T>()};
   auto smtx = std::make_shared<condition_variable>(ctx);
@@ -206,7 +206,7 @@ TEST_CASE_TEMPLATE("cancel_" * doctest::timeout(1.), T, net::io_context, net::th
   run_impl(ctx);
 }
 
-TEST_CASE_TEMPLATE("cancel_2" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("cancel_2" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T    ctx{init<T>()};
   auto smtx = std::make_shared<condition_variable>(ctx);

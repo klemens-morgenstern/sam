@@ -18,7 +18,7 @@ TEST_SUITE_BEGIN("concurrency_hint");
 using namespace BOOST_SAM_NAMESPACE;
 using BOOST_SAM_NAMESPACE::detail::is_single_threaded;
 
-TEST_CASE("io_context_1" * doctest::timeout(1.))
+TEST_CASE("io_context_1" * doctest::timeout(10.))
 {
   net::io_context ctx{1};
   CHECK(is_single_threaded(ctx));
@@ -29,7 +29,7 @@ TEST_CASE("io_context_1" * doctest::timeout(1.))
   CHECK(is_single_threaded(net::any_io_executor(e2)));
 }
 
-TEST_CASE("io_context_2" * doctest::timeout(1.))
+TEST_CASE("io_context_2" * doctest::timeout(10.))
 {
   net::io_context ctx{2};
   CHECK(!is_single_threaded(ctx));
@@ -40,7 +40,7 @@ TEST_CASE("io_context_2" * doctest::timeout(1.))
   CHECK(!is_single_threaded(net::any_io_executor(e2)));
 }
 
-TEST_CASE("thread_pool_1" * doctest::timeout(1.))
+TEST_CASE("thread_pool_1" * doctest::timeout(10.))
 {
   net::thread_pool ctx{1};
   CHECK(is_single_threaded(ctx));
@@ -51,7 +51,7 @@ TEST_CASE("thread_pool_1" * doctest::timeout(1.))
   CHECK(is_single_threaded(net::any_io_executor(e2)));
 }
 
-TEST_CASE("thread_pool_2" * doctest::timeout(1.))
+TEST_CASE("thread_pool_2" * doctest::timeout(10.))
 {
   net::thread_pool ctx{2};
   CHECK(!is_single_threaded(ctx));

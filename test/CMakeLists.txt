@@ -3,13 +3,6 @@
 add_library(boost_sam_test_impl test_impl.cpp)
 target_compile_definitions(boost_sam_test_impl PUBLIC -DBOOST_SAM_SEPARATE_COMPILATION=1)
 
-if (BOOST_SAM_STANDALONE)
-    find_package(Boost REQUIRED unit_test_framework)
-    target_link_libraries(boost_sam_test_impl Boost::headers Boost::unit_test_framework)
-else()
-    target_link_libraries(boost_sam_test_impl Boost::headers)
-endif()
-
 
 if(NOT TARGET tests)
     add_custom_target(tests)

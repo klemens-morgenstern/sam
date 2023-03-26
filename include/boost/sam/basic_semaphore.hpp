@@ -132,7 +132,7 @@ struct basic_semaphore
     error_code ec;
     acquire(ec);
     if (ec)
-      throw system_error(ec, "acquire");
+      throw system_error(ec, std::string("acquire"));
   }
 
   /// @brief Attempt to immediately acquire the semaphore.

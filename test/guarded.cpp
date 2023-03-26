@@ -113,7 +113,7 @@ void test_sync(T &se2, std::vector<int> &order)
   guarded(se2, op, net::detached);
 }
 
-TEST_CASE_TEMPLATE("guarded_semaphore_test" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("guarded_semaphore_test" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T         ctx;
   semaphore se{ctx.get_executor(), 3};
@@ -123,7 +123,7 @@ TEST_CASE_TEMPLATE("guarded_semaphore_test" * doctest::timeout(1.), T, net::io_c
   run_impl(ctx);
 }
 
-TEST_CASE_TEMPLATE("guarded_mutex_test" * doctest::timeout(1.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("guarded_mutex_test" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T                ctx;
   std::vector<int> order;

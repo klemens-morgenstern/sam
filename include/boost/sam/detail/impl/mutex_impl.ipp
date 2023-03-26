@@ -28,16 +28,16 @@ struct mutex_impl::lock_op_t final : detail::wait_op
   {
     done     = true;
     this->ec = ec;
-    var.notify_all();
     this->unlink();
+    var.notify_all();
   }
 
   void shutdown() override
   {
     done = true;
     BOOST_SAM_ASSIGN_EC(this->ec, net::error::shut_down);
-    var.notify_all();
     this->unlink();
+    var.notify_all();
   }
 
   void wait(lock_type &lock)

@@ -133,7 +133,7 @@ struct basic_bot : net::coroutine
       }
       else
       {
-        timer->expires_after(std::chrono::milliseconds(10));
+        timer->expires_after(std::chrono::milliseconds(50));
         yield timer->async_wait(std::move(*this));
         say("semaphore acquired immediately\n");
       }

@@ -64,8 +64,12 @@ struct impl : net::coroutine
       concurrent++;
       CHECK(concurrent == 1);
       printf("Acquired lock %d\n", id);
+      assert(tim);
       tim->expires_after(std::chrono::milliseconds{10});
-      yield tim->async_wait(net::append(std::move(self), std::move(lock)));
+      yield {
+        auto p = tim.get();
+        p->async_wait(net::append(std::move(self), std::move(lock)));
+      };
       concurrent--;
       CHECK(concurrent == 0);
       CHECK(!ec);
@@ -147,8 +151,9 @@ TEST_CASE_TEMPLATE("lock_series_t" * doctest::timeout(10.), T, net::io_context, 
   bool  called = false;
   async_impl(mtx,
              [&](error_code ec)
-             {CHECK(!ec);
-               called = true;
+             {
+                CHECK(!ec);
+                called = true;
              });
   run_impl(ctx);
   mtx.lock();

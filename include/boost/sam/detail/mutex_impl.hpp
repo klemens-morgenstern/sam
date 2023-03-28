@@ -18,7 +18,9 @@ namespace detail
 
 struct mutex_impl : detail::service_member
 {
-  mutex_impl(net::execution_context &ctx) : detail::service_member(ctx), locked_(false) {}
+  mutex_impl(net::execution_context &ctx,
+             int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+         : detail::service_member(ctx, concurrency_hint), locked_(false) {}
 
   BOOST_SAM_DECL void unlock();
   bool                try_lock()

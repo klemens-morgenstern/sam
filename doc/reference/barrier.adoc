@@ -13,12 +13,14 @@ struct basic_barrier
     using executor_type = Executor;
 
     /// The executor to be used by the barrier.
-    explicit basic_barrier(executor_type exec, std::ptrdiff_t init_count);
+    explicit basic_barrier(executor_type exec, std::ptrdiff_t init_count,
+                           int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT);
 
     /// A constructor.
     /// ctx The execution context used by the barrier.
     template<typename ExecutionContext>
-    explicit basic_barrier(ExecutionContext & ctx, std::size_t init_count);
+    explicit basic_barrier(ExecutionContext & ctx, std::size_t init_count,
+                           int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT);
 
     /// Rebind a barrier to a new executor - this cancels all outstanding operations.
     template<typename OtherExecutor>

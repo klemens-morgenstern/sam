@@ -13,7 +13,8 @@ BOOST_SAM_BEGIN_NAMESPACE
 namespace detail
 {
 
-condition_variable_impl::condition_variable_impl(net::execution_context &ctx) : detail::service_member(ctx) {}
+condition_variable_impl::condition_variable_impl(net::execution_context &ctx,
+                                                 int concurrency_hint) : detail::service_member(ctx, concurrency_hint) {}
 
 void condition_variable_impl::add_waiter(detail::predicate_wait_op *waiter) noexcept { waiter->link_before(&waiters_); }
 

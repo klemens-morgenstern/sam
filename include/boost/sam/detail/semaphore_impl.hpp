@@ -17,7 +17,9 @@ namespace detail
 
 struct semaphore_impl : detail::service_member
 {
-  BOOST_SAM_DECL semaphore_impl(net::execution_context &ctx, int initial_count = 1);
+  BOOST_SAM_DECL semaphore_impl(net::execution_context &ctx,
+                                int initial_count = 1,
+                                int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT);
 
   semaphore_impl(const semaphore_impl &) = delete;
   semaphore_impl(semaphore_impl &&mi)

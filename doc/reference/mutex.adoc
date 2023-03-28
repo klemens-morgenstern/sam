@@ -12,11 +12,13 @@ struct basic_mutex
     using executor_type = Executor;
 
     /// Construct from an executor to be used by the mutex.
-    explicit basic_mutex(executor_type exec);
+    explicit basic_mutex(executor_type exec,
+                         int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT);
 
     /// Consturct a mutex from an execution context to be used by the mutex.
     template<typename ExecutionContext>
-    explicit basic_mutex(ExecutionContext & ctx);
+    explicit basic_mutex(ExecutionContext & ctx,
+                         int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT);
 
     /// Rebind a mutex to a new executor.
     template<typename Executor_>

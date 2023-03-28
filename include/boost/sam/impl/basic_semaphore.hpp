@@ -22,8 +22,8 @@
 BOOST_SAM_BEGIN_NAMESPACE
 
 template <class Executor>
-basic_semaphore<Executor>::basic_semaphore(executor_type exec, int initial_count)
-    : exec_(std::move(exec)), impl_(net::query(exec_, net::execution::context), initial_count)
+basic_semaphore<Executor>::basic_semaphore(executor_type exec, int initial_count, int concurrency_hint)
+    : exec_(std::move(exec)), impl_(net::query(exec_, net::execution::context), initial_count, concurrency_hint)
 {
 }
 

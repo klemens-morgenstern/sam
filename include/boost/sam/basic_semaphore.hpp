@@ -51,7 +51,8 @@ struct basic_semaphore
   /// @pre initial_count >= 0
   /// @pre initial_count <= MAX_INT
   ///
-  basic_semaphore(executor_type exec, int initial_count = 1);
+  basic_semaphore(executor_type exec, int initial_count = 1,
+                  int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT);
 
   /// @brief Rebind a semaphore to a new executor - this cancels all outstanding operations.
   template <typename Executor_>
@@ -80,9 +81,9 @@ struct basic_semaphore
   template <typename ExecutionContext>
   explicit basic_semaphore(
       ExecutionContext &ctx, int initial_count = 1,
-      typename std::enable_if<std::is_convertible<ExecutionContext &, net::execution_context &>::value>::type * =
-          nullptr)
-      : exec_(ctx.get_executor()), impl_(ctx, initial_count)
+      typename std::enable_if<std::is_convertible<ExecutionContext &, net::execution_context &>::value, int>::type
+      concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+      : exec_(ctx.get_executor()), impl_(ctx, initial_count, concurrency_hint)
   {
   }
 

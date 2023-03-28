@@ -19,8 +19,9 @@ namespace detail
 
 struct barrier_impl : detail::service_member
 {
-  barrier_impl(net::execution_context &ctx, std::ptrdiff_t init)
-      : detail::service_member(ctx), init_(init), counter_(init_)
+  barrier_impl(net::execution_context &ctx, std::ptrdiff_t init,
+               int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+      : detail::service_member(ctx, concurrency_hint), init_(init), counter_(init_)
 
   {
   }

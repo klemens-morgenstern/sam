@@ -34,8 +34,9 @@ struct basic_barrier
   /// The constructor.
   /// @param exec The executor to be used by the barrier.
   /// @param init_count The number of thread for the barrier.
-  explicit basic_barrier(executor_type exec, std::ptrdiff_t init_count)
-      : exec_(std::move(exec)), impl_{net::query(exec_, net::execution::context), init_count}
+  explicit basic_barrier(executor_type exec, std::ptrdiff_t init_count,
+                         int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+      : exec_(std::move(exec)), impl_{net::query(exec_, net::execution::context), init_count, concurrency_hint}
   {
   }
 
@@ -45,8 +46,9 @@ struct basic_barrier
   explicit basic_barrier(
       ExecutionContext                             &ctx,
       typename std::enable_if<std::is_convertible<ExecutionContext &, net::execution_context &>::value,
-                              std::ptrdiff_t>::type init_count)
-      : exec_(ctx.get_executor()), impl_{ctx, init_count}
+                              std::ptrdiff_t>::type init_count,
+      int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+      : exec_(ctx.get_executor()), impl_{ctx, init_count, concurrency_hint}
   {
   }
 

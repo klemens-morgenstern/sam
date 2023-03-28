@@ -59,8 +59,10 @@ struct service_member : bilist_node
 {
   op_list_service *service;
 
-  BOOST_SAM_DECL explicit service_member(net::execution_context &ctx)
-      : service(&net::use_service<op_list_service>(ctx)), mtx_(!detail::is_single_threaded(ctx))
+  explicit service_member(net::execution_context &ctx,
+                          int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+      : service(&net::use_service<op_list_service>(ctx)),
+        mtx_(!detail::is_single_threaded(ctx, concurrency_hint))
   {
     service->register_queue(this);
   }

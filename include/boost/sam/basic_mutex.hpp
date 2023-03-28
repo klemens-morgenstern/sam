@@ -31,17 +31,18 @@ struct basic_mutex
   using executor_type = Executor;
 
   /// A constructor. @param exec The executor to be used by the mutex.
-  explicit basic_mutex(executor_type exec) : exec_(std::move(exec)), impl_{{net::query(exec_, net::execution::context)}}
+  explicit basic_mutex(executor_type exec,
+                       int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+    : exec_(std::move(exec)), impl_{net::query(exec_, net::execution::context), concurrency_hint}
   {
   }
 
   /// A constructor. @param ctx The execution context used by the mutex.
   template <typename ExecutionContext>
-  explicit basic_mutex(
-      ExecutionContext &ctx,
-      typename std::enable_if<std::is_convertible<ExecutionContext &, net::execution_context &>::value>::type * =
-          nullptr)
-      : exec_(ctx.get_executor()), impl_(ctx)
+  explicit basic_mutex(ExecutionContext &ctx,
+          typename std::enable_if<std::is_convertible<ExecutionContext &, net::execution_context &>::value, int>::type
+          concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+      : exec_(ctx.get_executor()), impl_(ctx, concurrency_hint)
   {
   }
 

@@ -36,7 +36,9 @@ asio::awaitable<void> work(sam::semaphore & sem)
 .Threading Mode
 ****
 Sam deduces the threading mode from the executor following
-the concurrency_hint by asio.
+the concurrency_hint by asio, unless explicitly set.
+
+The objects allow setting the concurrency_hint manually, as well.
 
 See the
 https://www.boost.org/doc/libs/master/doc/html/boost_asio/overview/core/concurrency_hint.html[

@@ -22,7 +22,8 @@ struct basic_semaphore
     /// Construct a semaphore
     /// `exec` is the default executor associated with the async_semaphore
     /// `initial_count` is the initial value of the internal counter. ( 0 =< initial_count =< MAX_INT)
-    basic_semaphore(executor_type exec, int initial_count = 1);
+    basic_semaphore(executor_type exec, int initial_count = 1,
+                    int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT);
 
     /// Rebind a semaphore to a new executor.
     template<typename Executor_>
@@ -39,14 +40,15 @@ struct basic_semaphore
     template<typename ExecutionContext>
     explicit basic_semaphore(
             ExecutionContext & ctx,
-            int initial_count = 1);
+            int initial_count = 1,
+            int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT);
 
     /// return the default executor.
     executor_type get_executor() const noexcept;
 
     /// Initiate an asynchronous acquire of the semaphore <1>
     template < net::completion_token_for<void(error_code)> CompletionHandler >
-    auto async_acquire( CompletionHandler &&token = net::default_token<executor_type>);
+    auto async_acquire(CompletionHandler &&token = net::default_token<executor_type>);
 
     /// Acquire synchronously. This may fail depending on the implementation. <2>
     void acquire(error_code & ec);

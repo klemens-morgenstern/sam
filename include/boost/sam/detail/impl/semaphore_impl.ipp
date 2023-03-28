@@ -15,8 +15,10 @@ BOOST_SAM_BEGIN_NAMESPACE
 namespace detail
 {
 
-semaphore_impl::semaphore_impl(net::execution_context &ctx, int initial_count)
-    : detail::service_member(ctx), count_(initial_count)
+semaphore_impl::semaphore_impl(net::execution_context &ctx,
+                               int initial_count,
+                               int concurrency_hint)
+    : detail::service_member(ctx, concurrency_hint), count_(initial_count)
 {
 }
 

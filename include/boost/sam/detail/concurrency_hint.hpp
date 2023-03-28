@@ -18,17 +18,16 @@
 BOOST_SAM_BEGIN_NAMESPACE
 namespace detail
 {
-inline bool is_single_threaded(net::execution_context &ctx)
+inline bool is_single_threaded(net::execution_context &ctx,
+                               int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
 {
-#if defined(BOOST_SAM_STANDALONE)
-  constexpr static int asio_concurrency_1 = ASIO_CONCURRENCY_HINT_1;
-#else
-  constexpr static int asio_concurrency_1 = BOOST_ASIO_CONCURRENCY_HINT_1;
-#endif
+  if (concurrency_hint != BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+    return BOOST_SAM_CONCURRENCY_HINT_1 == concurrency_hint;
+
   if (net::has_service<net::detail::scheduler>(ctx))
-    return net::use_service<net::detail::scheduler>(ctx).concurrency_hint() == asio_concurrency_1;
+    return net::use_service<net::detail::scheduler>(ctx).concurrency_hint() == BOOST_SAM_CONCURRENCY_HINT_1;
   else if (net::has_service<net::detail::io_context_impl>(ctx))
-    return net::use_service<net::detail::io_context_impl>(ctx).concurrency_hint() == asio_concurrency_1;
+    return net::use_service<net::detail::io_context_impl>(ctx).concurrency_hint() == BOOST_SAM_CONCURRENCY_HINT_1;
   else
     return false;
 }

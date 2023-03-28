@@ -28,8 +28,9 @@ struct basic_condition_variable
   using executor_type = Executor;
 
   /// A constructor. @param exec The executor to be used by the condition variable
-  explicit basic_condition_variable(executor_type exec)
-      : exec_(std::move(exec)), impl_{{net::query(exec_, net::execution::context)}}
+  explicit basic_condition_variable(executor_type exec,
+                                    int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+      : exec_(std::move(exec)), impl_(net::query(exec_, net::execution::context), concurrency_hint)
   {
   }
 
@@ -38,9 +39,9 @@ struct basic_condition_variable
   template <typename ExecutionContext>
   explicit basic_condition_variable(
       ExecutionContext &ctx,
-      typename std::enable_if<std::is_convertible<ExecutionContext &, net::execution_context &>::value>::type * =
-          nullptr)
-      : exec_(ctx.get_executor()), impl_(ctx)
+      typename std::enable_if<std::is_convertible<ExecutionContext &, net::execution_context &>::value, int>::type
+       concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
+      : exec_(ctx.get_executor()), impl_(ctx, concurrency_hint)
   {
   }
 

@@ -16,7 +16,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(BOOST_SAM_IS_ROOT ON)
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../boost.css)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../boost.css AND NOT BOOST_SAM_IS_ROOT)
   set(BOOST_SAM_SHOULD_BE_INLINE ON)
 else()
   set(BOOST_SAM_SHOULD_BE_INLINE OFF)
@@ -24,14 +24,13 @@ endif()
 
 option(BOOST_SAM_BUILD_INLINE "Configure as if part of the boost source tree" ${BOOST_SAM_SHOULD_BE_INLINE})
 
-if(BOOST_SAM_IS_ROOT AND BOOST_SAM_BUILD_INLINE)
+if(BOOST_SAM_BUILD_INLINE)
   #
   # Building inside Boost tree, but as a separate project e.g. on Travis or
   # other CI, or when producing Visual Studio Solution and Projects.
 
   set(BOOST_INCLUDE_LIBRARIES sam)
   set(BOOST_EXCLUDE_LIBRARIES sam)
-
   set(CMAKE_FOLDER _deps)
   add_subdirectory(../.. _deps/boost EXCLUDE_FROM_ALL)
   unset(CMAKE_FOLDER)

@@ -56,9 +56,10 @@ struct guard_by_semaphore_op<Executor, Op, void(Err, Args...)>
   {
     if (self.get_cancellation_state().cancelled() != net::cancellation_type::none)
       return std::move(self).complete(make_error(net::error::operation_aborted), Args{}...);
-
-    auto h2 = net::prepend(std::move(self), semaphore_tag{});
-    sm.async_acquire(std::move(h2));
+    else if (sm.try_acquire())
+      std::move(op)(net::prepend(std::move(self), op_tag{}));
+    else
+      sm.async_acquire(net::prepend(std::move(self), semaphore_tag{}));
   }
 
   template <typename Self>
@@ -107,9 +108,11 @@ struct guard_by_mutex_op<Executor, Op, void(Err, Args...)>
   void operator()(Self &&self) // init
   {
     if (self.get_cancellation_state().cancelled() != net::cancellation_type::none)
-      return std::move(self).complete(make_error(net::error::operation_aborted), Args{}...);
-
-    sm.async_lock(net::prepend(std::move(self), semaphore_tag{}));
+      std::move(self).complete(make_error(net::error::operation_aborted), Args{}...);
+    else if (sm.try_lock())
+      std::move(op)(net::prepend(std::move(self), op_tag{}));
+    else
+      sm.async_lock(net::prepend(std::move(self), semaphore_tag{}));
   }
 
   template <typename Self>

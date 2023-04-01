@@ -10,6 +10,9 @@ project(boost_sam VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 add_library(boost_sam STATIC src/src.cpp)
 add_library(Boost::sam ALIAS boost_sam)
 
+add_link_options(--coverage)
+add_compile_options(--coverage)
+
 set(BOOST_SAM_IS_ROOT OFF)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)

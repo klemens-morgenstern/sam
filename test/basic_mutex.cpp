@@ -280,8 +280,10 @@ TEST_CASE_TEMPLATE("cancel_" * doctest::timeout(10.), T, io_context, thread_pool
         CHECK(!ec);
         csig.emit(net::cancellation_type::all);
       });
-  smtx->async_lock(net::bind_cancellation_slot(csig.slot(), [&](error_code ec)
-                                               {
+  smtx->async_lock(net::bind_cancellation_slot(
+        csig.slot(),
+        [&](error_code ec)
+        {
           CHECK(ec == net::error::operation_aborted);
         }
         ));

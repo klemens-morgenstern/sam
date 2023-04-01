@@ -15,9 +15,11 @@
 
 #if defined(BOOST_SAM_STANDALONE)
 #include <asio/deferred.hpp>
+#include <asio/dispatch.hpp>
 #include <asio/post.hpp>
 #else
 #include <boost/asio/deferred.hpp>
+#include <boost/asio/dispatch.hpp>
 #include <boost/asio/post.hpp>
 #endif
 
@@ -39,7 +41,7 @@ struct basic_mutex<Executor>::async_lock_op
     {
       self->impl_.locked_ = true;
       auto ie             = net::get_associated_immediate_executor(handler, self->get_executor());
-      return net::post(ie, net::append(std::forward<Handler>(handler), error_code()));
+      return net::dispatch(ie, net::append(std::forward<Handler>(handler), error_code()));
     }
     using handler_type = typename std::decay<Handler>::type;
     using model_type   = detail::basic_op_model<decltype(e), handler_type, void(error_code)>;

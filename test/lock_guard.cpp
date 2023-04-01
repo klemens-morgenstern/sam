@@ -18,12 +18,14 @@
 #include <vector>
 
 #if !defined(BOOST_SAM_STANDALONE)
+#include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/compose.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/yield.hpp>
 #else
+#include <asio/bind_cancellation_slot.hpp>
 #include <asio/compose.hpp>
 #include <asio/detached.hpp>
 #include <asio/steady_timer.hpp>
@@ -172,4 +174,29 @@ TEST_CASE_TEMPLATE("lock_sync" * doctest::timeout(10.), T, net::io_context, net:
   error_code ec;
   ignore_unused(lock(mtx, ec));
   REQUIRE(!ec);
+}
+
+TEST_CASE("async_lock_cancel" * doctest::timeout(10.))
+{
+  net::io_context ctx;
+  mutex mtx{ctx.get_executor()};
+  mtx.lock();
+  net::cancellation_signal sig;
+  async_lock(mtx, net::bind_cancellation_slot(sig.slot(), net::detached));
+
+  net::post(ctx, [&] {sig.emit(net::cancellation_type::all); });
+  ctx.run();
+}
+
+
+TEST_CASE("lock_sync_fail")
+{
+  net::io_context ctx{BOOST_SAM_CONCURRENCY_HINT_1};
+  mutex mtx{ctx};
+  lock_guard l1 = lock(mtx);
+  CHECK_THROWS(lock(mtx));
+
+  error_code ec;
+  lock(mtx, ec);
+  CHECK(ec == net::error::in_progress);
 }

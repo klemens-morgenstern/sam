@@ -14,8 +14,12 @@
 #include <boost/sam/detail/basic_op_model.hpp>
 
 #if defined(BOOST_SAM_STANDALONE)
+#include <asio/associated_immediate_executor.hpp>
+#include <asio/dispatch.hpp>
 #include <asio/post.hpp>
 #else
+#include <boost/asio/associated_immediate_executor.hpp>
+#include <boost/asio/dispatch.hpp>
 #include <boost/asio/post.hpp>
 #endif
 
@@ -48,7 +52,7 @@ struct basic_semaphore<Executor>::async_aquire_op
     {
       self->impl_.decrement();
       auto ie = net::get_associated_immediate_executor(handler, self->get_executor());
-      net::post(ie, net::append(std::forward<Handler>(handler), error_code()));
+      net::dispatch(ie, net::append(std::forward<Handler>(handler), error_code()));
       return;
     }
 

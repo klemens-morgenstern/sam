@@ -16,10 +16,12 @@
 #if defined(BOOST_SAM_STANDALONE)
 #include <asio/associated_immediate_executor.hpp>
 #include <asio/deferred.hpp>
+#include <asio/dispatch.hpp>
 #include <asio/post.hpp>
 #else
 #include <boost/asio/associated_immediate_executor.hpp>
 #include <boost/asio/deferred.hpp>
+#include <boost/asio/dispatch.hpp>
 #include <boost/asio/post.hpp>
 #endif
 
@@ -38,7 +40,7 @@ struct basic_barrier<Executor>::async_arrive_op
     if (self->impl_.try_arrive())
     {
       auto ie = net::get_associated_immediate_executor(handler, self->get_executor());
-      return net::post(ie, net::append(std::forward<Handler>(handler), error_code()));
+      return net::dispatch(ie, net::append(std::forward<Handler>(handler), error_code()));
     }
 
     detail::op_list_service::lock_type l{self->impl_.mtx_};

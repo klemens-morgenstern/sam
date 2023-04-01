@@ -87,9 +87,10 @@ struct op_t
 {
     T & se2;
     std::atomic<bool> &active;
+
     template<typename Token>
     auto operator()(Token && token)
-        -> decltype(async_impl(se2, 0, active, std::forward<Token>(token)))
+        -> decltype(async_impl(std::declval<T&>(), 0, std::declval<std::atomic<bool>&>(), std::forward<Token>(token)))
     {
       static std::atomic<int> i{0};
       fprintf(stderr, "Op  %d\n", i.load());
@@ -130,5 +131,61 @@ TEST_CASE_TEMPLATE("guarded_mutex_test" * doctest::timeout(10.), T, net::io_cont
   mutex            mtx{ctx.get_executor()};
   cmp = 1;
   test_sync<mutex>(mtx, order);
+  run_impl(ctx);
+}
+
+template<typename T>
+struct once_op
+{
+  T & ctx;
+  std::unique_ptr<int> ptr;
+
+  template<typename Token>
+  auto operator()(Token && token) &&
+    -> decltype(net::post(ctx, net::append(std::forward<Token>(token), error_code(), std::move(ptr))))
+  {
+    REQUIRE(ptr != nullptr);
+    return net::post(ctx, net::append(std::forward<Token>(token), error_code(), std::move(ptr)));
+  }
+};
+
+// basically just a compile test
+TEST_CASE_TEMPLATE("guarded_mutex_deferred_test" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
+{
+  T                    ctx;
+  int *                pp;
+  std::unique_ptr<int> ptr{pp = new int(42)};
+  mutex                mtx{ctx.get_executor()};
+  guarded(mtx,
+          once_op<T>{ctx, std::move(ptr)},
+          [&](error_code ec, std::unique_ptr<int> ptr_)
+          {
+            CHECK(ec == error_code{});
+            CHECK(ptr == nullptr);
+            CHECK(ptr_.get() == pp);
+            CHECK(*pp == 42);
+          });
+  run_impl(ctx);
+}
+
+
+// basically just a compile test
+TEST_CASE_TEMPLATE("guarded_semaphore_deferred_test" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
+{
+  T                    ctx;
+  std::unique_ptr<int> ptr{new int(42)};
+  int *                pp = ptr.get();
+  semaphore            sem{ctx.get_executor()};
+
+  guarded(sem,
+          net::post(ctx, net::append(net::deferred, error_code{}, std::move(ptr))),
+          [&](error_code ec, std::unique_ptr<int> ptr_)
+          {
+            CHECK(ec == error_code{});
+            CHECK(ptr == nullptr);
+            CHECK(ptr_.get() == pp);
+            CHECK(*pp == 42);
+          });
+
   run_impl(ctx);
 }

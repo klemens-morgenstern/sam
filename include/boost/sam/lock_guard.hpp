@@ -79,7 +79,7 @@ template <typename Executor>
 lock_guard lock(basic_mutex<Executor> &mtx)
 {
   mtx.lock();
-  return lock_guard(std::adopt_lock, mtx);
+  return lock_guard(mtx, std::adopt_lock);
 }
 
 /** Acquire a lock_guard synchronously.
@@ -96,7 +96,7 @@ lock_guard lock(basic_mutex<Executor> &mtx, error_code &ec)
   if (ec)
     return lock_guard();
   else
-    return lock_guard(mtx);
+    return lock_guard(mtx, std::adopt_lock);
 }
 
 namespace detail

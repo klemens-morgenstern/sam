@@ -159,3 +159,17 @@ TEST_CASE_TEMPLATE("lock_series_t" * doctest::timeout(10.), T, net::io_context, 
   mtx.lock();
   CHECK(called);
 }
+
+
+
+TEST_CASE_TEMPLATE("lock_sync" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
+{
+  T     ctx;
+  mutex mtx{ctx.get_executor()};
+
+  ignore_unused(lock(mtx));
+
+  error_code ec;
+  ignore_unused(lock(mtx, ec));
+  REQUIRE(!ec);
+}

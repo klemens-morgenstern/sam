@@ -26,8 +26,9 @@ BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, typename net::completion_sign
 guarded(basic_semaphore<Executor> &sm, Op &&op,
         CompletionToken &&completion_token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
-  using sig_t = typename decltype(std::declval<Op>()(net::detail::completion_signature_probe{}))::type;
-  using cop   = detail::guard_by_semaphore_op<Executor, typename std::decay<Op>::type, sig_t>;
+  using op_t  = typename std::decay<Op>::type;
+  using sig_t = typename decltype(std::declval<op_t>()(net::detail::completion_signature_probe{}))::type;
+  using cop   = detail::guard_by_semaphore_op<Executor, op_t, sig_t>;
   return net::async_compose<CompletionToken, sig_t>(cop{sm, std::forward<Op>(op)}, completion_token, sm);
 }
 
@@ -48,8 +49,9 @@ BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, typename net::completion_sign
 guarded(basic_mutex<Executor> &mtx, Op &&op,
         CompletionToken &&completion_token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
-  using sig_t = typename decltype(std::declval<Op>()(net::detail::completion_signature_probe{}))::type;
-  using cop   = detail::guard_by_mutex_op<Executor, typename std::decay<Op>::type, sig_t>;
+  using op_t  = typename std::decay<Op>::type;
+  using sig_t = typename decltype(std::declval<op_t>()(net::detail::completion_signature_probe{}))::type;
+  using cop   = detail::guard_by_mutex_op<Executor, op_t, sig_t>;
   return net::async_compose<CompletionToken, sig_t>(cop{mtx, std::forward<Op>(op)}, completion_token, mtx);
 }
 

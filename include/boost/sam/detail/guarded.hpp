@@ -55,9 +55,12 @@ struct guard_by_semaphore_op<Executor, Op, void(Err, Args...)>
   void operator()(Self &&self) // init
   {
     if (self.get_cancellation_state().cancelled() != net::cancellation_type::none)
-      return std::move(self).complete(make_error(net::error::operation_aborted), Args{}...);
+      std::move(self).complete(make_error(net::error::operation_aborted), Args{}...);
     else if (sm.try_acquire())
-      std::move(op)(net::prepend(std::move(self), op_tag{}));
+    {
+      auto oo = std::move(op);
+      std::move(oo)(net::prepend(std::move(self), op_tag{}));
+    }
     else
       sm.async_acquire(net::prepend(std::move(self), semaphore_tag{}));
   }
@@ -68,7 +71,10 @@ struct guard_by_semaphore_op<Executor, Op, void(Err, Args...)>
     if (ec)
       self.complete(make_error(ec), Args{}...);
     else
-      std::move(op)(net::prepend(std::move(self), op_tag{}));
+    {
+      auto oo = std::move(op);
+      std::move(oo)(net::prepend(std::move(self), op_tag{}));
+    }
   }
 
   template <typename Self, typename... Args_>
@@ -95,8 +101,7 @@ struct guard_by_mutex_op<Executor, Op, void(Err, Args...)>
   {
   };
 
-  static error_code make_error_impl(error_code ec, error_code *) { return ec; }
-
+  static error_code         make_error_impl(error_code ec, error_code *) { return ec; }
   static std::exception_ptr make_error_impl(error_code ec, std::exception_ptr *)
   {
     return std::make_exception_ptr(std::system_error(ec));
@@ -110,7 +115,10 @@ struct guard_by_mutex_op<Executor, Op, void(Err, Args...)>
     if (self.get_cancellation_state().cancelled() != net::cancellation_type::none)
       std::move(self).complete(make_error(net::error::operation_aborted), Args{}...);
     else if (sm.try_lock())
-      std::move(op)(net::prepend(std::move(self), op_tag{}));
+    {
+      auto oo = std::move(op);
+      std::move(oo)(net::prepend(std::move(self), op_tag{}));
+    }
     else
       sm.async_lock(net::prepend(std::move(self), semaphore_tag{}));
   }
@@ -121,7 +129,10 @@ struct guard_by_mutex_op<Executor, Op, void(Err, Args...)>
     if (ec)
       self.complete(make_error(ec), Args{}...);
     else
-      std::move(op)(net::prepend(std::move(self), op_tag{}));
+    {
+      auto oo = std::move(op);
+      std::move(oo)(net::prepend(std::move(self), op_tag{}));
+    }
   }
 
   template <typename Self, typename... Args_>

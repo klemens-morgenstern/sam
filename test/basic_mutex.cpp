@@ -47,7 +47,6 @@ template <typename T>
 constexpr static int init() {return std::is_same<T, io_context>::value ? 1 : 4; }
 
 inline void run_impl(io_context &ctx) { ctx.run(); }
-
 inline void run_impl(thread_pool &ctx) { ctx.join(); }
 
 template <typename T>
@@ -316,5 +315,21 @@ TEST_CASE("mt_shutdown" * doctest::timeout(10.))
   thr.join();
   CHECK(wp.expired());
 }
+
+
+TEST_CASE("holds-work" * doctest::timeout(10.))
+{
+  io_context ctx{1u};
+  mutex mtx{ctx};
+  mtx.lock();
+
+  auto l = [](error_code ec) { CHECK(false); };
+  mtx.async_lock(l);
+  mtx.async_lock(l);
+
+  CHECK(ctx.run_for(std::chrono::milliseconds(1000)) == 0);
+}
+
+
 
 TEST_SUITE_END();

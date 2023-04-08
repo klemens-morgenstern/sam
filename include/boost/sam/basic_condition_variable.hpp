@@ -69,7 +69,7 @@ struct basic_condition_variable
 
   /** Wait for the condition_variable to become notified & the predicate to return true.
    *
-   * The async_wait completes immediately if the condition is true when calling.
+   * The async_wait will always invoke the predicate from the executor.
    *
    * @tparam CompletionToken The completion token type.
    * @param token The token for completion.

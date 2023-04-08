@@ -1,5 +1,3 @@
-
-
 add_library(boost_sam_test_impl test_impl.cpp)
 target_compile_definitions(boost_sam_test_impl PUBLIC -DBOOST_SAM_SEPARATE_COMPILATION=1)
 
@@ -18,6 +16,7 @@ endfunction()
 
 boost_sam_standalone_test(basic_semaphore)
 boost_sam_standalone_test(basic_mutex)
+boost_sam_standalone_test(basic_shared_mutex)
 boost_sam_standalone_test(basic_condition_variable)
 boost_sam_standalone_test(basic_barrier)
 boost_sam_standalone_test(concurrency_hint)

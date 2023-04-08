@@ -18,12 +18,12 @@ namespace detail
 
 struct mutex_impl : detail::service_member
 {
-  mutex_impl(net::execution_context &ctx,
-             int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
-         : detail::service_member(ctx, concurrency_hint), locked_(false) {}
+  BOOST_SAM_DECL mutex_impl(net::execution_context &ctx,
+                            int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT);
 
-  BOOST_SAM_DECL void unlock();
-  bool                try_lock()
+  virtual BOOST_SAM_DECL void lock(error_code &ec);
+  virtual BOOST_SAM_DECL void unlock();
+  virtual bool                try_lock()
   {
     lock_type _{mtx_};
     if (locked_)
@@ -33,7 +33,6 @@ struct mutex_impl : detail::service_member
   }
 
   BOOST_SAM_DECL void add_waiter(detail::wait_op *waiter) noexcept;
-  BOOST_SAM_DECL void lock(error_code &ec);
 
   void shutdown() override
   {
@@ -64,6 +63,8 @@ struct mutex_impl : detail::service_member
     lhs.waiters_ = std::move(waiters_);
     return *this;
   }
+
+  BOOST_SAM_DECL ~mutex_impl();
 
   struct lock_op_t;
 };

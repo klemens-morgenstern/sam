@@ -84,6 +84,11 @@ void mutex_impl::unlock()
   static_cast<detail::wait_op *>(waiters_.next_)->complete(std::error_code());
 }
 
+mutex_impl::mutex_impl(net::execution_context &ctx, int concurrency_hint)
+          : detail::service_member(ctx, concurrency_hint), locked_(false) {}
+
+mutex_impl::~mutex_impl() = default;
+
 } // namespace detail
 BOOST_SAM_END_NAMESPACE
 

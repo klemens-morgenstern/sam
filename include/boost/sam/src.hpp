@@ -16,6 +16,7 @@
 #include <boost/sam/detail/impl/barrier_impl.ipp>
 #include <boost/sam/detail/impl/condition_variable_impl.ipp>
 #include <boost/sam/detail/impl/mutex_impl.ipp>
+#include <boost/sam/detail/impl/shared_mutex_impl.ipp>
 #include <boost/sam/detail/impl/semaphore_impl.ipp>
 #include <boost/sam/detail/impl/service.ipp>
 #include <boost/sam/detail/impl/exception.ipp>

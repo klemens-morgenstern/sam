@@ -26,6 +26,9 @@ BOOST_SAM_BEGIN_NAMESPACE
 template <typename Executor>
 struct basic_mutex;
 
+template <typename Executor>
+struct basic_shared_mutex;
+
 /** A lock-guard used as an RAII object that automatically unlocks on destruction
  *
  * To use with with async_clock.
@@ -52,13 +55,12 @@ struct lock_guard
   }
 
   template <typename Executor>
-  friend lock_guard lock(basic_mutex<Executor> &mtx);
-
-  template <typename Executor>
-  friend lock_guard lock(basic_mutex<Executor> &mtx, error_code &ec);
-
-  template <typename Executor>
   lock_guard(basic_mutex<Executor> &mtx, const std::adopt_lock_t &) : mtx_(&mtx.impl_)
+  {
+  }
+
+  template <typename Executor>
+  lock_guard(basic_shared_mutex<Executor> &mtx, const std::adopt_lock_t &) : mtx_(&mtx.impl_)
   {
   }
 
@@ -99,13 +101,30 @@ lock_guard lock(basic_mutex<Executor> &mtx, error_code &ec)
     return lock_guard(mtx, std::adopt_lock);
 }
 
+template <typename Executor>
+lock_guard lock(basic_shared_mutex<Executor> &mtx)
+{
+  mtx.lock();
+  return lock_guard(mtx, std::adopt_lock);
+}
+
+template <typename Executor>
+lock_guard lock(basic_shared_mutex<Executor> &mtx, error_code &ec)
+{
+  mtx.lock(ec);
+  if (ec)
+    return lock_guard();
+  else
+    return lock_guard(mtx, std::adopt_lock);
+}
+
 namespace detail
 {
 
-template<typename Executor>
+template<typename Mutex>
 struct async_lock_op
 {
-  basic_mutex<Executor> &mtx;
+  Mutex &mtx;
 
   template<typename Self>
   void operator()(Self && self)
@@ -122,6 +141,7 @@ struct async_lock_op
       self.complete(ec, lock_guard{mtx, std::adopt_lock});
   }
 };
+
 
 }
 
@@ -158,7 +178,21 @@ BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock_guard))
   return net::async_compose<
       CompletionToken, void(error_code, lock_guard)>
       (
-          detail::async_lock_op<Executor>{mtx},
+          detail::async_lock_op<basic_mutex<Executor>>{mtx},
+          token, mtx
+      );
+}
+
+template <typename Executor,
+          BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard))
+              CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
+BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock_guard))
+async_lock(basic_shared_mutex<Executor> &mtx, CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
+{
+  return net::async_compose<
+      CompletionToken, void(error_code, lock_guard)>
+      (
+          detail::async_lock_op<basic_shared_mutex<Executor>>{mtx},
           token, mtx
       );
 }

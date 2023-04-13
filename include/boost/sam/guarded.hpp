@@ -51,7 +51,56 @@ guarded(basic_mutex<Executor> &mtx, Op &&op,
 {
   using op_t  = typename std::decay<Op>::type;
   using sig_t = typename decltype(std::declval<op_t>()(net::detail::completion_signature_probe{}))::type;
-  using cop   = detail::guard_by_mutex_op<Executor, op_t, sig_t>;
+  using cop   = detail::guard_by_mutex_op<basic_mutex<Executor>, op_t, sig_t>;
+  return net::async_compose<CompletionToken, sig_t>(cop{mtx, std::forward<Op>(op)}, completion_token, mtx);
+}
+
+/** Function to run OPs only when the mutex can be locked.
+ * Unlocks the mutex on completion.
+ *
+ *  @tparam Executor The executor of the semaphore.
+ *  @tparam token The completion token
+ *
+ *  @param sm The mutex to guard the protection
+ *  @param op The operation to guard.
+ *  @param completion_token The completion token to use for the async completion.
+ */
+template <typename Executor, typename Op,
+          BOOST_SAM_COMPLETION_TOKEN_FOR(typename net::completion_signature_of<Op>::type)
+              CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
+BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, typename net::completion_signature_of<Op>::type)
+guarded(basic_shared_mutex<Executor> &mtx, Op &&op,
+        CompletionToken &&completion_token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
+{
+  using op_t  = typename std::decay<Op>::type;
+  using sig_t = typename decltype(std::declval<op_t>()(net::detail::completion_signature_probe{}))::type;
+  using cop   = detail::guard_by_mutex_op<basic_shared_mutex<Executor>, op_t, sig_t>;
+  return net::async_compose<CompletionToken, sig_t>(cop{mtx, std::forward<Op>(op)}, completion_token, mtx);
+}
+
+
+
+/** Function to run OPs only when the mutex can be locked in shared mode.
+ * Unlocks the shared state the mutex on completion.
+ *
+ *  @tparam Executor The executor of the semaphore.
+ *  @tparam token The completion token
+ *
+ *  @param sm The mutex to guard the protection
+ *  @param op The operation to guard.
+ *  @param completion_token The completion token to use for the async completion.
+ */
+template <typename Executor, typename Op,
+          BOOST_SAM_COMPLETION_TOKEN_FOR(typename net::completion_signature_of<Op>::type)
+              CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
+BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, typename net::completion_signature_of<Op>::type)
+guarded_shared(
+    basic_shared_mutex<Executor> &mtx, Op &&op,
+    CompletionToken &&completion_token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
+{
+  using op_t  = typename std::decay<Op>::type;
+  using sig_t = typename decltype(std::declval<op_t>()(net::detail::completion_signature_probe{}))::type;
+  using cop   = detail::guard_by_shared_mutex_op<basic_shared_mutex<Executor>, op_t, sig_t>;
   return net::async_compose<CompletionToken, sig_t>(cop{mtx, std::forward<Op>(op)}, completion_token, mtx);
 }
 

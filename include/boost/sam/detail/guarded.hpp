@@ -23,8 +23,10 @@ template <typename>
 struct basic_semaphore;
 template <typename>
 struct basic_mutex;
+template <typename>
+struct basic_shared_mutex;
 
-struct lock_guard;
+struct unique_lock;
 
 namespace detail
 {
@@ -66,7 +68,7 @@ struct guard_by_semaphore_op<Executor, Op, void(Err, Args...)>
   }
 
   template <typename Self>
-  void operator()(Self &&self, semaphore_tag, error_code ec) // semaphore obtained
+  void operator()(Self &&self, semaphore_tag, error_code ec)
   {
     if (ec)
       self.complete(make_error(ec), Args{}...);
@@ -78,21 +80,21 @@ struct guard_by_semaphore_op<Executor, Op, void(Err, Args...)>
   }
 
   template <typename Self, typename... Args_>
-  void operator()(Self &&self, op_tag, Args_ &&...args) // semaphore obtained
+  void operator()(Self &&self, op_tag, Args_ &&...args)
   {
     sm.release();
     self.complete(std::forward<Args_>(args)...);
   }
 };
 
-template <typename Executor, typename Op, typename Signature>
+template <typename Mutex, typename Op, typename Signature>
 struct guard_by_mutex_op;
 
-template <typename Executor, typename Op, typename Err, typename... Args>
-struct guard_by_mutex_op<Executor, Op, void(Err, Args...)>
+template <typename Mutex, typename Op, typename Err, typename... Args>
+struct guard_by_mutex_op<Mutex, Op, void(Err, Args...)>
 {
-  basic_mutex<Executor> &sm;
-  Op                     op;
+  Mutex &sm;
+  Op     op;
 
   struct semaphore_tag
   {
@@ -124,7 +126,7 @@ struct guard_by_mutex_op<Executor, Op, void(Err, Args...)>
   }
 
   template <typename Self>
-  void operator()(Self &&self, semaphore_tag, error_code ec) // semaphore obtained
+  void operator()(Self &&self, semaphore_tag, error_code ec)
   {
     if (ec)
       self.complete(make_error(ec), Args{}...);
@@ -136,9 +138,67 @@ struct guard_by_mutex_op<Executor, Op, void(Err, Args...)>
   }
 
   template <typename Self, typename... Args_>
-  void operator()(Self &&self, op_tag, Args_ &&...args) // semaphore obtained
+  void operator()(Self &&self, op_tag, Args_ &&...args)
   {
     sm.unlock();
+    std::move(self).complete(std::forward<Args_>(args)...);
+  }
+};
+
+template <typename Mutex, typename Op, typename Signature>
+struct guard_by_shared_mutex_op;
+
+template <typename Mutex, typename Op, typename Err, typename... Args>
+struct guard_by_shared_mutex_op<Mutex, Op, void(Err, Args...)>
+{
+  Mutex &sm;
+  Op     op;
+
+  struct semaphore_tag
+  {
+  };
+  struct op_tag
+  {
+  };
+
+  static error_code         make_error_impl(error_code ec, error_code *) { return ec; }
+  static std::exception_ptr make_error_impl(error_code ec, std::exception_ptr *)
+  {
+    return std::make_exception_ptr(std::system_error(ec));
+  }
+
+  static Err make_error(error_code ec) { return make_error_impl(ec, static_cast<Err *>(nullptr)); }
+
+  template <typename Self>
+  void operator()(Self &&self) // init
+  {
+    if (self.get_cancellation_state().cancelled() != net::cancellation_type::none)
+      std::move(self).complete(make_error(net::error::operation_aborted), Args{}...);
+    else if (sm.try_lock_shared())
+    {
+      auto oo = std::move(op);
+      std::move(oo)(net::prepend(std::move(self), op_tag{}));
+    }
+    else
+      sm.async_lock_shared(net::prepend(std::move(self), semaphore_tag{}));
+  }
+
+  template <typename Self>
+  void operator()(Self &&self, semaphore_tag, error_code ec)
+  {
+    if (ec)
+      self.complete(make_error(ec), Args{}...);
+    else
+    {
+      auto oo = std::move(op);
+      std::move(oo)(net::prepend(std::move(self), op_tag{}));
+    }
+  }
+
+  template <typename Self, typename... Args_>
+  void operator()(Self &&self, op_tag, Args_ &&...args)
+  {
+    sm.unlock_shared();
     std::move(self).complete(std::forward<Args_>(args)...);
   }
 };

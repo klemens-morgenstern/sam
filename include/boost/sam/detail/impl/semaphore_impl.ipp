@@ -93,7 +93,7 @@ void semaphore_impl::acquire(error_code &ec)
   op.wait(lock);
 }
 
-BOOST_SAM_NODISCARD int semaphore_impl::value() const noexcept
+BOOST_SAM_NODISCARD int semaphore_impl::value() const
 {
   lock_type lock_{mtx_};;
   if (waiters_.next_ == &waiters_)

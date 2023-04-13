@@ -78,7 +78,7 @@ struct shared_mutex_impl : mutex_impl
   }
 
   shared_mutex_impl &operator=(const shared_mutex_impl &lhs) = delete;
-  shared_mutex_impl &operator=(shared_mutex_impl &&lhs) noexcept
+  shared_mutex_impl &operator=(shared_mutex_impl &&lhs)
   {
     lock_type _{lhs.mtx_};
     locked_      = lhs.locked_;

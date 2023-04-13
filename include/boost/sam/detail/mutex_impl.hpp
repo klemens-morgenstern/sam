@@ -56,7 +56,7 @@ struct mutex_impl : detail::service_member
   }
 
   mutex_impl &operator=(const mutex_impl &lhs) = delete;
-  mutex_impl &operator=(mutex_impl &&lhs) noexcept
+  mutex_impl &operator=(mutex_impl &&lhs)
   {
     lock_type _{lhs.mtx_};
     locked_      = lhs.locked_;

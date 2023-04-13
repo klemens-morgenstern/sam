@@ -87,9 +87,17 @@ struct service_member : bilist_node
 
   ~service_member()
   {
-    lock_type _{mtx_};;
-    if (service != nullptr)
-      service->unregister_queue(this);
+    try
+    {
+      lock_type _{mtx_};
+      if (service != nullptr)
+        service->unregister_queue(this);
+    }
+    catch(std::system_error & se)
+    {
+      if (service != nullptr)
+        service->unregister_queue(this);
+    }
   }
 
   using mutex_type        = detail::conditionally_enabled_mutex;

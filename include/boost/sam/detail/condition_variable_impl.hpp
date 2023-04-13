@@ -28,8 +28,10 @@ struct condition_variable_impl : detail::service_member
 
   condition_variable_impl &operator=(condition_variable_impl const &) = delete;
 
-  condition_variable_impl &operator=(condition_variable_impl &&lhs) noexcept
+  condition_variable_impl &operator=(condition_variable_impl &&lhs)
   {
+    lock_type _{mtx_};
+
     detail::service_member::operator=(std::move(lhs));
     std::swap(lhs.waiters_, waiters_);
     return *this;

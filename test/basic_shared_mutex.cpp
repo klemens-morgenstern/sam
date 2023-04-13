@@ -9,9 +9,9 @@
 #define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
 #endif
 
-#include <boost/sam/lock_guard.hpp>
-#include <boost/sam/shared_mutex.hpp>
 #include <algorithm>
+#include <boost/sam/shared_mutex.hpp>
+#include <boost/sam/unique_lock.hpp>
 #include <chrono>
 #include <random>
 
@@ -76,7 +76,7 @@ struct basic_main : net::coroutine
     }
 
     template <typename Self>
-    void operator()(Self &self, error_code ec, lock_guard l)
+    void operator()(Self &self, error_code ec, unique_lock l)
     {
       v.push_back(i);
       tim.reset(new net::steady_timer(mtx.get_executor(), std::chrono::milliseconds(10)));

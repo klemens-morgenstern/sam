@@ -32,8 +32,10 @@ struct barrier_impl : detail::service_member
   {
   }
 
-  barrier_impl &operator=(barrier_impl &&rhs) noexcept
+  barrier_impl &operator=(barrier_impl &&rhs)
   {
+    lock_type l{mtx_};
+
     detail::service_member::operator=(std::move(rhs));
     init_    = rhs.init_;
     waiters_ = std::move(rhs.waiters_);

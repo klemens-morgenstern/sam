@@ -34,7 +34,7 @@ struct shared_mutex_impl : mutex_impl
       return locked_ = true;
   }
   BOOST_SAM_DECL void unlock() override;
-
+  bool is_locked() override { return locked_ || locked_shared_ != 0u; }
 
   BOOST_SAM_DECL void lock_shared(error_code &ec);
   bool                try_lock_shared()
@@ -49,6 +49,8 @@ struct shared_mutex_impl : mutex_impl
     }
   }
   BOOST_SAM_DECL void unlock_shared();
+
+
 
   BOOST_SAM_DECL void add_shared_waiter(detail::wait_op *waiter) noexcept;
 

@@ -547,9 +547,12 @@ TEST_CASE_TEMPLATE("cancel_shared" * doctest::timeout(10.), T, io_context, threa
     mtx.async_lock(res);
     mtx.async_lock(res);
     mtx.async_lock(res);
-    ctx.run_for(std::chrono::milliseconds(10));
+    ctx.run_for(std::chrono::milliseconds(20));
+    CHECK(ecs.size() == 0u);
+
   }
-  ctx.run_for(std::chrono::milliseconds(10));
+  CHECK(ecs.size() == 0u);
+  ctx.run_for(std::chrono::milliseconds(20));
 
   CHECK(ecs.size() == 7u);
   CHECK(7u == std::count(ecs.begin(), ecs.end(), error::operation_aborted));

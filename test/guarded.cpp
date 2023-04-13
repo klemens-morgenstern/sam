@@ -19,11 +19,13 @@
 
 #if !defined(BOOST_SAM_STANDALONE)
 #include <boost/asio/compose.hpp>
+#include <boost/asio/deferred.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
 #else
 #include <asio/compose.hpp>
+#include <asio/deferred.hpp>
 #include <asio/detached.hpp>
 #include <asio/steady_timer.hpp>
 #include <asio/thread_pool.hpp>

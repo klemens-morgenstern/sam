@@ -31,6 +31,7 @@ struct mutex_impl : detail::service_member
     else
       return locked_ = true;
   }
+  virtual bool is_locked() { return locked_; }
 
   BOOST_SAM_DECL void add_waiter(detail::wait_op *waiter) noexcept;
 

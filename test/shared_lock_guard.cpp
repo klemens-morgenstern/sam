@@ -46,7 +46,7 @@ inline void run_impl(io_context &ctx) { ctx.run(); }
 
 inline void run_impl(thread_pool &ctx) { ctx.join(); }
 
-static int concurrent = 0;
+static std::atomic<int> concurrent = 0;
 
 struct impl : net::coroutine
 {

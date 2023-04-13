@@ -1,46 +1,45 @@
 //
-// Copyright (c) 2021 Richard Hodges (hodges.r@gmail.com)
+// Copyright (c) 2023 Klemens Morgenstern (klemens.morgenstern@gmx.net)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Official repository: https://github.com/madmongo1/asio_experiments
-//
 
-#ifndef BOOST_SAM_IMPL_BASIC_MUTEX_HPP
-#define BOOST_SAM_IMPL_BASIC_MUTEX_HPP
+#ifndef BOOST_SAM_ASYNC_LOCK_SHARED_MUTEX_OP_HPP
+#define BOOST_SAM_ASYNC_LOCK_SHARED_MUTEX_OP_HPP
 
-#include <boost/sam/basic_mutex.hpp>
-#include <boost/sam/detail/basic_op_model.hpp>
+#include <boost/sam/basic_shared_mutex.hpp>
+#include <boost/sam/detail/shared_mutex_impl.hpp>
 
 #if defined(BOOST_SAM_STANDALONE)
-#include <asio/deferred.hpp>
+#include <asio/associated_immediate_executor.hpp>
+#include <asio/cancellation_signal.hpp>
 #include <asio/dispatch.hpp>
-#include <asio/post.hpp>
 #else
-#include <boost/asio/deferred.hpp>
+#include <boost/asio/associated_immediate_executor.hpp>
+#include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/dispatch.hpp>
-#include <boost/asio/post.hpp>
 #endif
 
 BOOST_SAM_BEGIN_NAMESPACE
 
-template <class Executor>
-struct basic_mutex<Executor>::async_lock_op
+namespace detail
 {
-  basic_mutex<Executor> *self;
 
-  template <class Handler>
-  void operator()(Handler &&handler)
+struct async_lock_shared_mutex_op
+{
+  detail::shared_mutex_impl &impl_;
+
+  template <typename Handler, typename Executor>
+  void operator()(Handler &&handler, Executor executor)
   {
-    auto e = get_associated_executor(handler, self->get_executor());
-    detail::op_list_service::lock_type l{self->impl_.mtx_};
+    auto e = get_associated_executor(handler, executor);
+    detail::op_list_service::lock_type l{impl_.mtx_};
     ignore_unused(l);
-
-    if (!self->impl_.locked_)
+    if (!impl_.locked_)
     {
-      self->impl_.locked_ = true;
-      auto ie             = net::get_associated_immediate_executor(handler, self->get_executor());
+      impl_.locked_shared_ ++;
+      auto ie             = net::get_associated_immediate_executor(handler, executor);
       return net::dispatch(ie, net::append(std::forward<Handler>(handler), error_code()));
     }
     using handler_type = typename std::decay<Handler>::type;
@@ -50,7 +49,7 @@ struct basic_mutex<Executor>::async_lock_op
     auto slot = model->get_cancellation_slot();
     if (slot.is_connected())
     {
-      auto &impl = self->impl_;
+      auto &impl = impl_;
       slot.assign(
           [model, &impl](net::cancellation_type type)
           {
@@ -63,10 +62,12 @@ struct basic_mutex<Executor>::async_lock_op
             }
           });
     }
-    self->impl_.add_waiter(model);
+    impl_.add_shared_waiter(model);
   }
 };
 
+}
+
 BOOST_SAM_END_NAMESPACE
 
-#endif
+#endif // BOOST_SAM_ASYNC_LOCK_SHARED_MUTEX_OP_HPP

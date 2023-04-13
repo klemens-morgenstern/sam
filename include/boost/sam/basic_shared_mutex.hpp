@@ -154,6 +154,7 @@ private:
   template <typename>
   friend struct basic_shared_mutex;
   friend struct lock_guard;
+  friend struct shared_lock_guard;
 
   Executor           exec_;
   detail::shared_mutex_impl impl_;

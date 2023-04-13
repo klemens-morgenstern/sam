@@ -67,14 +67,14 @@ private:
 template <typename Executor>
 shared_lock_guard lock_shared(basic_shared_mutex<Executor> &mtx)
 {
-  mtx.lock();
+  mtx.lock_shared();
   return shared_lock_guard(mtx, std::adopt_lock);
 }
 
 template <typename Executor>
 shared_lock_guard lock_shared(basic_shared_mutex<Executor> &mtx, error_code &ec)
 {
-  mtx.lock(ec);
+  mtx.lock_shared(ec);
   if (ec)
     return shared_lock_guard();
   else

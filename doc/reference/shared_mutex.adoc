@@ -85,7 +85,7 @@ https://www.boost.org/doc/libs/master/doc/html/boost_asio/overview/composition/t
 This function will not block, but return immediately.
 
 [#async_lock_shared]
-=== `async_lock`
+=== `async_lock_shared`
 
 The async arrive function follows the `asio` completion token pattern, including
 https://www.boost.org/doc/libs/master/doc/html/boost_asio/overview/composition/token_adapters.html[default tokens].

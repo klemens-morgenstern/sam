@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="generator" content="Asciidoctor 2.0.17">
 <meta name="author" content="Klemens Morgenstern">
-<title>ASem: Asio based semaphore</title>
+<title>Sam: Asio based semaphore</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -85,10 +85,10 @@ code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;
 ul,ol,dl{line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
 ul,ol{margin-left:1.5em}
 ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0}
+ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
+ul.square{list-style-type:square}
 ul.circle{list-style-type:circle}
 ul.disc{list-style-type:disc}
-ul.square{list-style-type:square}
-ul.circle ul:not([class]),ul.disc ul:not([class]),ul.square ul:not([class]){list-style:inherit}
 ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
 dl dt{margin-bottom:.3125em;font-weight:bold}
 dl dd{margin-bottom:1.25em}
@@ -654,7 +654,7 @@ pre.rouge {
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>ASem: Asio based semaphore</h1>
+<h1>Sam: Asio based semaphore</h1>
 <div class="details">
 <span id="author" class="author">Klemens Morgenstern</span><br>
 </div>
@@ -709,7 +709,7 @@ pre.rouge {
 <h2 id="overview">Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>ASem is a library providing synchronization primitives for asio based application.</p>
+<p>Sam is a library providing synchronization primitives for asio based application.</p>
 </div>
 <div class="paragraph">
 <p>The primitives are modeled on common concepts, as listed below:</p>
@@ -722,7 +722,7 @@ pre.rouge {
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">ASem</th>
+<th class="tableblock halign-left valign-top">Sam</th>
 <th class="tableblock halign-left valign-top">C++ Standard</th>
 </tr>
 </thead>
@@ -767,16 +767,16 @@ but to be used by library developers.
 <h2 id="config">Config</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>ASem is by default considered a part of boost, thus it will use <code>boost/asio.hpp</code>.
-it is however possible to use it standalone, by defining <code>BOOST_ASEM_STANDALONE</code>.
-In standalone mode the namespace will be <code>asem</code> and it will include standalone <code>asio</code>.</p>
+<p>Sam is by default considered a part of boost, thus it will use <code>boost/asio.hpp</code>.
+it is however possible to use it standalone, by defining <code>BOOST_SAM_STANDALONE</code>.
+In standalone mode the namespace will be <code>sam</code> and it will include standalone <code>asio</code>.</p>
 </div>
 <div class="paragraph">
-<p>ASem is compiled by default, but a header only mode
-can be switched on by defining <code>BOOST_ASEM_HEADER_ONLY</code>.</p>
+<p>Sam is compiled by default, but a header only mode
+can be switched on by defining <code>BOOST_SAM_HEADER_ONLY</code>.</p>
 </div>
 <div class="paragraph">
-<p>The user needs can include <code>boost/asem/src.hpp</code> as an alternative to linking.</p>
+<p>The user needs can include <code>boost/sam/src.hpp</code> as an alternative to linking.</p>
 </div>
 </div>
 </div>
@@ -814,7 +814,7 @@ it allows notifying workers trying to acquire a resource.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="cpp"><span class="n">asio</span><span class="o">::</span><span class="n">awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">work</span><span class="p">(</span><span class="n">asem</span><span class="o">::</span><span class="n">semaphore</span> <span class="o">&amp;</span> <span class="n">sem</span><span class="p">)</span>
+<pre class="rouge highlight"><code data-lang="cpp"><span class="n">asio</span><span class="o">::</span><span class="n">awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">work</span><span class="p">(</span><span class="n">sam</span><span class="o">::</span><span class="n">semaphore</span> <span class="o">&amp;</span> <span class="n">sem</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">co_await</span> <span class="n">sem</span><span class="p">.</span><span class="n">async_acquire</span><span class="p">(</span><span class="n">asio</span><span class="o">::</span><span class="n">use_awaitable</span><span class="p">);</span>
     <span class="k">co_await</span> <span class="n">do_work</span><span class="p">();</span>
@@ -825,8 +825,11 @@ it allows notifying workers trying to acquire a resource.</p>
 <div class="content">
 <div class="title">Threading Mode</div>
 <div class="paragraph">
-<p>ASem deduces the threading mode from the executor following
-the concurrency_hint by asio.</p>
+<p>Sam deduces the threading mode from the executor following
+the concurrency_hint by asio, unless explicitly set.</p>
+</div>
+<div class="paragraph">
+<p>The objects allow setting the concurrency_hint manually, as well.</p>
 </div>
 <div class="paragraph">
 <p>See the
@@ -856,12 +859,14 @@ asio reference</a> for details.</p>
     <span class="k">using</span> <span class="n">executor_type</span> <span class="o">=</span> <span class="n">Executor</span><span class="p">;</span>
 
     <span class="c1">/// The executor to be used by the barrier.</span>
-    <span class="k">explicit</span> <span class="n">basic_barrier</span><span class="p">(</span><span class="n">executor_type</span> <span class="n">exec</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">ptrdiff_t</span> <span class="n">init_count</span><span class="p">);</span>
+    <span class="k">explicit</span> <span class="n">basic_barrier</span><span class="p">(</span><span class="n">executor_type</span> <span class="n">exec</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">ptrdiff_t</span> <span class="n">init_count</span><span class="p">,</span>
+                           <span class="kt">int</span> <span class="n">concurrency_hint</span> <span class="o">=</span> <span class="n">BOOST_SAM_CONCURRENCY_HINT_DEFAULT</span><span class="p">);</span>
 
     <span class="c1">/// A constructor.</span>
     <span class="c1">/// ctx The execution context used by the barrier.</span>
     <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">ExecutionContext</span><span class="p">&gt;</span>
-    <span class="k">explicit</span> <span class="n">basic_barrier</span><span class="p">(</span><span class="n">ExecutionContext</span> <span class="o">&amp;</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">init_count</span><span class="p">);</span>
+    <span class="k">explicit</span> <span class="n">basic_barrier</span><span class="p">(</span><span class="n">ExecutionContext</span> <span class="o">&amp;</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">init_count</span><span class="p">,</span>
+                           <span class="kt">int</span> <span class="n">concurrency_hint</span> <span class="o">=</span> <span class="n">BOOST_SAM_CONCURRENCY_HINT_DEFAULT</span><span class="p">);</span>
 
     <span class="c1">/// Rebind a barrier to a new executor - this cancels all outstanding operations.</span>
     <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">OtherExecutor</span><span class="p">&gt;</span>
@@ -959,11 +964,13 @@ You must never use the synchronous functions from within an asio event-queue.
     <span class="k">using</span> <span class="n">executor_type</span> <span class="o">=</span> <span class="n">Executor</span><span class="p">;</span>
 
     <span class="c1">/// A constructor. @param exec The executor to be used by the condition variable</span>
-    <span class="k">explicit</span> <span class="n">basic_condition_variable</span><span class="p">(</span><span class="n">executor_type</span> <span class="n">exec</span><span class="p">);</span>
+    <span class="k">explicit</span> <span class="n">basic_condition_variable</span><span class="p">(</span><span class="n">executor_type</span> <span class="n">exec</span><span class="p">,</span>
+                           <span class="kt">int</span> <span class="n">concurrency_hint</span> <span class="o">=</span> <span class="n">BOOST_SAM_CONCURRENCY_HINT_DEFAULT</span><span class="p">);</span>
 
     <span class="c1">/// Construct from an execution context, which is to be used by the condition variable.</span>
     <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">ExecutionContext</span><span class="p">&gt;</span>
-    <span class="k">explicit</span> <span class="n">basic_condition_variable</span><span class="p">(</span><span class="n">ExecutionContext</span> <span class="o">&amp;</span> <span class="n">ctx</span><span class="p">);</span>
+    <span class="k">explicit</span> <span class="n">basic_condition_variable</span><span class="p">(</span><span class="n">ExecutionContext</span> <span class="o">&amp;</span> <span class="n">ctx</span><span class="p">,</span>
+                           <span class="kt">int</span> <span class="n">concurrency_hint</span> <span class="o">=</span> <span class="n">BOOST_SAM_CONCURRENCY_HINT_DEFAULT</span><span class="p">);</span>
 
     <span class="c1">/// Rebind a condition_variable to a new executor.</span>
     <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">Executor_</span><span class="p">&gt;</span>
@@ -1046,11 +1053,13 @@ The predicate will be invoked from within the executor provided to the condition
     <span class="k">using</span> <span class="n">executor_type</span> <span class="o">=</span> <span class="n">Executor</span><span class="p">;</span>
 
     <span class="c1">/// Construct from an executor to be used by the mutex.</span>
-    <span class="k">explicit</span> <span class="n">basic_mutex</span><span class="p">(</span><span class="n">executor_type</span> <span class="n">exec</span><span class="p">);</span>
+    <span class="k">explicit</span> <span class="n">basic_mutex</span><span class="p">(</span><span class="n">executor_type</span> <span class="n">exec</span><span class="p">,</span>
+                         <span class="kt">int</span> <span class="n">concurrency_hint</span> <span class="o">=</span> <span class="n">BOOST_SAM_CONCURRENCY_HINT_DEFAULT</span><span class="p">);</span>
 
     <span class="c1">/// Consturct a mutex from an execution context to be used by the mutex.</span>
     <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">ExecutionContext</span><span class="p">&gt;</span>
-    <span class="k">explicit</span> <span class="n">basic_mutex</span><span class="p">(</span><span class="n">ExecutionContext</span> <span class="o">&amp;</span> <span class="n">ctx</span><span class="p">);</span>
+    <span class="k">explicit</span> <span class="n">basic_mutex</span><span class="p">(</span><span class="n">ExecutionContext</span> <span class="o">&amp;</span> <span class="n">ctx</span><span class="p">,</span>
+                         <span class="kt">int</span> <span class="n">concurrency_hint</span> <span class="o">=</span> <span class="n">BOOST_SAM_CONCURRENCY_HINT_DEFAULT</span><span class="p">);</span>
 
     <span class="c1">/// Rebind a mutex to a new executor.</span>
     <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">Executor_</span><span class="p">&gt;</span>
@@ -1156,7 +1165,8 @@ You must never use the synchronous functions from within an asio event-queue.
     <span class="c1">/// Construct a semaphore</span>
     <span class="c1">/// `exec` is the default executor associated with the async_semaphore</span>
     <span class="c1">/// `initial_count` is the initial value of the internal counter. ( 0 =&lt; initial_count =&lt; MAX_INT)</span>
-    <span class="n">basic_semaphore</span><span class="p">(</span><span class="n">executor_type</span> <span class="n">exec</span><span class="p">,</span> <span class="kt">int</span> <span class="n">initial_count</span> <span class="o">=</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="n">basic_semaphore</span><span class="p">(</span><span class="n">executor_type</span> <span class="n">exec</span><span class="p">,</span> <span class="kt">int</span> <span class="n">initial_count</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="kt">int</span> <span class="n">concurrency_hint</span> <span class="o">=</span> <span class="n">BOOST_SAM_CONCURRENCY_HINT_DEFAULT</span><span class="p">);</span>
 
     <span class="c1">/// Rebind a semaphore to a new executor.</span>
     <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">Executor_</span><span class="p">&gt;</span>
@@ -1173,14 +1183,15 @@ You must never use the synchronous functions from within an asio event-queue.
     <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">ExecutionContext</span><span class="p">&gt;</span>
     <span class="k">explicit</span> <span class="n">basic_semaphore</span><span class="p">(</span>
             <span class="n">ExecutionContext</span> <span class="o">&amp;</span> <span class="n">ctx</span><span class="p">,</span>
-            <span class="kt">int</span> <span class="n">initial_count</span> <span class="o">=</span> <span class="mi">1</span><span class="p">);</span>
+            <span class="kt">int</span> <span class="n">initial_count</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="kt">int</span> <span class="n">concurrency_hint</span> <span class="o">=</span> <span class="n">BOOST_SAM_CONCURRENCY_HINT_DEFAULT</span><span class="p">);</span>
 
     <span class="c1">/// return the default executor.</span>
     <span class="n">executor_type</span> <span class="n">get_executor</span><span class="p">()</span> <span class="k">const</span> <span class="k">noexcept</span><span class="p">;</span>
 
     <span class="c1">/// Initiate an asynchronous acquire of the semaphore </span><b class="conum">(1)</b>
     <span class="k">template</span> <span class="o">&lt;</span> <span class="n">net</span><span class="o">::</span><span class="n">completion_token_for</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="n">error_code</span><span class="p">)&gt;</span> <span class="n">CompletionHandler</span> <span class="o">&gt;</span>
-    <span class="k">auto</span> <span class="n">async_acquire</span><span class="p">(</span> <span class="n">CompletionHandler</span> <span class="o">&amp;&amp;</span><span class="n">token</span> <span class="o">=</span> <span class="n">net</span><span class="o">::</span><span class="n">default_token</span><span class="o">&lt;</span><span class="n">executor_type</span><span class="o">&gt;</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="n">async_acquire</span><span class="p">(</span><span class="n">CompletionHandler</span> <span class="o">&amp;&amp;</span><span class="n">token</span> <span class="o">=</span> <span class="n">net</span><span class="o">::</span><span class="n">default_token</span><span class="o">&lt;</span><span class="n">executor_type</span><span class="o">&gt;</span><span class="p">);</span>
 
     <span class="c1">/// Acquire synchronously. This may fail depending on the implementation. </span><b class="conum">(2)</b>
     <span class="kt">void</span> <span class="n">acquire</span><span class="p">(</span><span class="n">error_code</span> <span class="o">&amp;</span> <span class="n">ec</span><span class="p">);</span>
@@ -1553,7 +1564,7 @@ the <a href="http://www.boost.org/LICENSE_1_0.txt">Boost Software License, Versi
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-03-07 11:01:08 +0800
+Last updated 2023-04-01 14:41:24 +0800
 </div>
 </div>
 </body>

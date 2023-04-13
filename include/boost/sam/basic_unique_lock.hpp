@@ -88,7 +88,7 @@ struct basic_unique_lock
   }
 
   template <typename Executor_>
-  basic_unique_lock(basic_mutex<Executor> &mtx,
+  basic_unique_lock(basic_mutex<Executor_> &mtx,
                     typename std::enable_if<std::is_convertible<Executor_, executor_type>::value>::type * = nullptr)
       : mtx_(&mtx.impl_), executor_(mtx.get_executor())
   {
@@ -225,7 +225,7 @@ struct basic_unique_lock
     return res;
   }
 
-  executor_type get_executor() {return executor_;}
+  executor_type get_executor() const noexcept {return executor_;}
 
 private:
   detail::mutex_impl *mtx_ = nullptr;

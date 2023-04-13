@@ -18,6 +18,8 @@
 #endif
 
 #include <boost/sam/condition_variable.hpp>
+#include <boost/sam/mutex.hpp>
+#include <boost/sam/unique_lock.hpp>
 #include <chrono>
 #include <atomic>
 #include <random>
@@ -32,7 +34,7 @@
 #include <boost/asio/deferred.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
-
+#include <thread>
 #endif
 
 #include "doctest.h"
@@ -123,28 +125,6 @@ TEST_CASE_TEMPLATE("notify_one" * doctest::timeout(10.), T, net::io_context, net
   CHECK_GT(cnt, 2);
 }
 
-TEST_CASE_TEMPLATE("notify_some" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
-{
-  T     ioc{init<T>()};
-  std::unique_ptr<condition_variable> store{new condition_variable(ioc.get_executor())};
-  auto &cv    = *store;
-
-    std::atomic<int> cnt{0};
-    cv.async_wait([]{return false;}, [&](error_code ec){if (!ec) cnt |= 1; CHECK(ec == net::error::operation_aborted);});
-    cv.async_wait([]{return true;},  [&](error_code ec){if (!ec) cnt |= 2; CHECK(!ec);});
-    cv.async_wait([]{return false;}, [&](error_code ec){if (!ec) cnt |= 4; CHECK(ec == net::error::operation_aborted);});
-    cv.async_wait([]{return true;},  [&](error_code ec){if (!ec) cnt |= 8; CHECK(!ec);});
-
-  cv.notify_all();
-
-  net::steady_timer tim{ioc, std::chrono::milliseconds{100}};
-  tim.async_wait([&](error_code ec) { store.reset(); });
-
-  run_impl(ioc);
-
-  CHECK(cnt == 10);
-}
-
 TEST_CASE_TEMPLATE("notify_some_more" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
     T ioc{init<T>()};
@@ -192,17 +172,15 @@ TEST_CASE_TEMPLATE("cancel_" * doctest::timeout(10.), T, net::io_context, net::t
   auto smtx = std::make_shared<condition_variable>(ctx);
 
   net::cancellation_signal csig;
-  smtx->async_wait([] { return true; },
-                   [&](error_code ec)
+  smtx->async_wait([&](error_code ec)
                    {
                      CHECK(!ec);
                      csig.emit(net::cancellation_type::all);
                    });
-  smtx->async_wait([] { return false; },
-                   net::bind_cancellation_slot(csig.slot(), [&](error_code ec)
+  smtx->async_wait(net::bind_cancellation_slot(csig.slot(), [&](error_code ec)
                                                { CHECK(ec == net::error::operation_aborted); }));
 
-  net::post(ctx, [&] { smtx->notify_all(); });
+  net::post(ctx, [&] { smtx->notify_one(); });
   run_impl(ctx);
 }
 
@@ -217,6 +195,21 @@ TEST_CASE_TEMPLATE("cancel_2" * doctest::timeout(10.), T, net::io_context, net::
 
   net::post(ctx, [&] { csig.emit(net::cancellation_type::all); });
   run_impl(ctx);
+}
+
+TEST_CASE("wait" * doctest::timeout(10.))
+{
+  net::io_context ctx;
+  condition_variable cv{ctx};
+  std::atomic<bool> inited{false};
+  std::thread thr{[&]{inited = true; cv.wait();}};
+
+  while(!inited)
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  cv.notify_one();
+  thr.join();
+
 }
 
 TEST_SUITE_END();

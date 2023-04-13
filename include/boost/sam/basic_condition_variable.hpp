@@ -7,6 +7,7 @@
 
 #include <boost/sam/detail/config.hpp>
 #include <boost/sam/detail/condition_variable_impl.hpp>
+#include <boost/sam/detail/exception.hpp>
 
 #if defined(BOOST_SAM_STANDALONE)
 #include <asio/any_io_executor.hpp>
@@ -67,23 +68,15 @@ struct basic_condition_variable
     return net::async_initiate<CompletionToken, void(error_code)>(async_wait_op{this}, token);
   }
 
-  /** Wait for the condition_variable to become notified & the predicate to return true.
-   *
-   * The async_wait will always invoke the predicate from the executor.
-   *
-   * @tparam CompletionToken The completion token type.
-   * @param token The token for completion.
-   * @return Deduced from the token.
-   */
-  template <typename Predicate, BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code))
-                                    CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type)>
-  BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
-  async_wait(
-      Predicate &&predicate, CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(executor_type),
-      typename std::enable_if<std::is_same<decltype(std::declval<Predicate>()()), bool>::value>::type * = nullptr)
+  void wait(error_code &ec) { impl_.wait(ec); }
+
+  /// Throwing @overload lock(error_code &);
+  void wait()
   {
-    return net::async_initiate<CompletionToken, void(error_code)>(
-        async_predicate_wait_op<typename std::decay<Predicate>::type>{this, std::forward<Predicate>(predicate)}, token);
+    error_code ec;
+    wait(ec);
+    if (ec)
+      detail::throw_error(ec, "wait");
   }
 
   /// Move assign a condition_variable.
@@ -125,9 +118,9 @@ private:
   Executor                        exec_;
   detail::condition_variable_impl impl_;
 
-  template <typename Predicate>
-  struct async_predicate_wait_op;
   struct async_wait_op;
+  template<typename Lock, typename Predicate>
+  struct async_wait_predicate_op;
 };
 
 BOOST_SAM_END_NAMESPACE

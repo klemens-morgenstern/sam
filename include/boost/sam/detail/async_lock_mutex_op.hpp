@@ -30,18 +30,34 @@ namespace detail
 
 struct async_lock_mutex_op
 {
-  detail::mutex_impl &impl_;
+  detail::mutex_impl *impl_;
 
   template <typename Handler, typename Executor>
-  void operator()(Handler &&handler, Executor executor)
+  void operator()(Handler &&handler, Executor executor, bool locked = false)
   {
+    if (impl_ == nullptr)
+    {
+      auto ie = net::get_associated_immediate_executor(handler, executor);
+      error_code ec;
+      BOOST_SAM_ASSIGN_EC(ec, net::error::operation_not_supported);
+      return net::dispatch(ie, net::append(std::forward<Handler>(handler), ec));
+    }
+
+    if (locked)
+    {
+      auto ie = net::get_associated_immediate_executor(handler, executor);
+      error_code ec;
+      BOOST_SAM_ASSIGN_EC(ec, net::error::no_permission);
+      return net::dispatch(ie, net::append(std::forward<Handler>(handler), ec));
+    }
+
     auto e = get_associated_executor(handler, executor);
-    detail::op_list_service::lock_type l{impl_.mtx_};
+    detail::op_list_service::lock_type l{impl_->mtx_};
     ignore_unused(l);
 
-    if (!impl_.is_locked())
+    if (!impl_->is_locked())
     {
-      impl_.locked_ = true;
+      impl_->locked_ = true;
       auto ie             = net::get_associated_immediate_executor(handler, executor);
       return net::dispatch(ie, net::append(std::forward<Handler>(handler), error_code()));
     }
@@ -52,7 +68,7 @@ struct async_lock_mutex_op
     auto slot = model->get_cancellation_slot();
     if (slot.is_connected())
     {
-      auto &impl = impl_;
+      auto &impl = *impl_;
       slot.assign(
           [model, &impl](net::cancellation_type type)
           {
@@ -65,7 +81,7 @@ struct async_lock_mutex_op
             }
           });
     }
-    impl_.add_waiter(model);
+    impl_->add_waiter(model);
   }
 };
 

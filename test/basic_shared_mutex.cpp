@@ -10,6 +10,7 @@
 #endif
 
 #include <algorithm>
+#include <boost/sam/lock.hpp>
 #include <boost/sam/shared_mutex.hpp>
 #include <boost/sam/unique_lock.hpp>
 #include <chrono>

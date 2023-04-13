@@ -9,9 +9,10 @@
 #define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
 #endif
 
-#include <boost/sam/shared_lock_guard.hpp>
-#include <boost/sam/shared_mutex.hpp>
 #include <boost/sam/guarded.hpp>
+#include <boost/sam/lock.hpp>
+#include <boost/sam/mutex.hpp>
+#include <boost/sam/unique_lock.hpp>
 
 #include <chrono>
 #include <random>
@@ -46,25 +47,25 @@ inline void run_impl(io_context &ctx) { ctx.run(); }
 
 inline void run_impl(thread_pool &ctx) { ctx.join(); }
 
-static std::atomic<int> concurrent = 0;
+static int concurrent = 0;
 
 struct impl : net::coroutine
 {
   int                                 id;
-  shared_mutex                              &mtx;
+  mutex                              &mtx;
   std::shared_ptr<net::steady_timer> tim{std::make_shared<net::steady_timer>(mtx.get_executor())};
 
-  impl(int id, bool &active, shared_mutex &mtx) : id(id), mtx(mtx) {}
+  impl(int id, bool &active, mutex &mtx) : id(id), mtx(mtx) {}
 
   template <typename Self>
-  void operator()(Self &&self, error_code ec = {}, shared_lock_guard lock = {})
+  void operator()(Self &&self, error_code ec = {}, unique_lock lock = {})
   {
     reenter(this)
     {
       printf("Entered %d\n", id);
-      yield async_lock_shared(this->mtx, std::move(self));
+      yield async_lock(this->mtx, std::move(self));
       concurrent++;
-      CHECK(concurrent > 0);
+      CHECK(concurrent == 1);
       printf("Acquired lock %d\n", id);
       assert(tim);
       tim->expires_after(std::chrono::milliseconds{10});
@@ -73,7 +74,7 @@ struct impl : net::coroutine
         p->async_wait(net::append(std::move(self), std::move(lock)));
       };
       concurrent--;
-      CHECK(concurrent >= 0);
+      CHECK(concurrent == 0);
       CHECK(!ec);
       printf("Exited %d %d\n", id, ec.value());
       self.complete(ec);
@@ -83,12 +84,12 @@ struct impl : net::coroutine
 
 template <typename CompletionToken>
 BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
-  async_impl(shared_mutex &mtx, int i, bool &active, CompletionToken &&completion_token)
+  async_impl(mutex &mtx, int i, bool &active, CompletionToken &&completion_token)
 {
   return net::async_compose<CompletionToken, void(error_code)>(impl(i, active, mtx), completion_token, mtx);
 }
 
-void test_sync(shared_mutex &mtx, std::vector<int> &order)
+void test_sync(mutex &mtx, std::vector<int> &order)
 {
   bool active = false;
 
@@ -104,35 +105,35 @@ void test_sync(shared_mutex &mtx, std::vector<int> &order)
   async_impl(mtx, i++, active, net::detached);
 }
 
-TEST_CASE_TEMPLATE("shared_lock_guard_t" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
+TEST_CASE_TEMPLATE("lock_guard_t" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T                ctx;
   std::vector<int> order;
-  shared_mutex            mtx{ctx.get_executor()};
+  mutex            mtx{ctx.get_executor()};
   test_sync(mtx, order);
   run_impl(ctx);
 }
 
 struct impl_t : net::coroutine
 {
-  shared_mutex &mtx;
+  mutex &mtx;
 
-  impl_t(shared_mutex &mtx) : mtx(mtx) {}
+  impl_t(mutex &mtx) : mtx(mtx) {}
 
   template <typename Self>
-  void operator()(Self &&self, error_code ec = {}, shared_lock_guard lock = {})
+  void operator()(Self &&self, error_code ec = {}, unique_lock lock = {})
   {
     reenter(this)
     {
-      yield async_lock_shared(this->mtx, std::move(self));
+      yield async_lock(this->mtx, std::move(self));
       CHECK(!ec);
-      yield async_lock_shared(this->mtx, std::move(self));
+      yield async_lock(this->mtx, std::move(self));
       CHECK(!ec);
-      yield async_lock_shared(this->mtx, std::move(self));
+      yield async_lock(this->mtx, std::move(self));
       CHECK(!ec);
-      yield async_lock_shared(this->mtx, std::move(self));
+      yield async_lock(this->mtx, std::move(self));
       CHECK(!ec);
-      yield async_lock_shared(this->mtx, std::move(self));
+      yield async_lock(this->mtx, std::move(self));
       CHECK(!ec);
       self.complete(ec);
     }
@@ -141,7 +142,7 @@ struct impl_t : net::coroutine
 
 template <typename CompletionToken>
 BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
-  async_impl(shared_mutex &mtx, CompletionToken &&completion_token)
+  async_impl(mutex &mtx, CompletionToken &&completion_token)
 {
   return net::async_compose<CompletionToken, void(error_code)>(impl_t(mtx), completion_token, mtx);
 }
@@ -149,7 +150,7 @@ BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
 TEST_CASE_TEMPLATE("lock_series_t" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T     ctx;
-  shared_mutex mtx{ctx.get_executor()};
+  mutex mtx{ctx.get_executor()};
   bool  called = false;
   async_impl(mtx,
              [&](error_code ec)
@@ -167,22 +168,22 @@ TEST_CASE_TEMPLATE("lock_series_t" * doctest::timeout(10.), T, net::io_context, 
 TEST_CASE_TEMPLATE("lock_sync" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
 {
   T     ctx;
-  shared_mutex mtx{ctx.get_executor()};
+  mutex mtx{ctx.get_executor()};
 
-  ignore_unused(lock_shared(mtx));
+  ignore_unused(lock(mtx));
 
   error_code ec;
-  ignore_unused(lock_shared(mtx, ec));
+  ignore_unused(lock(mtx, ec));
   REQUIRE(!ec);
 }
 
 TEST_CASE("async_lock_cancel" * doctest::timeout(10.))
 {
   net::io_context ctx;
-  shared_mutex mtx{ctx.get_executor()};
+  mutex mtx{ctx.get_executor()};
   mtx.lock();
   net::cancellation_signal sig;
-  async_lock_shared(mtx, net::bind_cancellation_slot(sig.slot(), net::detached));
+  async_lock(mtx, net::bind_cancellation_slot(sig.slot(), net::detached));
 
   net::post(ctx, [&] {sig.emit(net::cancellation_type::all); });
   ctx.run();
@@ -192,14 +193,20 @@ TEST_CASE("async_lock_cancel" * doctest::timeout(10.))
 TEST_CASE("lock_sync_fail")
 {
   net::io_context ctx{BOOST_SAM_CONCURRENCY_HINT_1};
-  shared_mutex mtx{ctx};
-  shared_lock_guard l1 = lock_shared(mtx);
-  CHECK_NOTHROW(lock_shared(mtx));
+  mutex mtx{ctx};
+  unique_lock     l1 = lock(mtx);
+  CHECK_THROWS(lock(mtx));
 
   error_code ec;
-  lock_shared(mtx, ec);
-  CHECK(!ec);
-  mtx.lock(ec);
+  lock(mtx, ec);
   CHECK(ec == net::error::in_progress);
-  CHECK_THROWS(mtx.lock());
+}
+
+
+TEST_CASE("lock_rebind")
+{
+  net::io_context ctx{BOOST_SAM_CONCURRENCY_HINT_1};
+  basic_mutex<typename net::io_context::executor_type> mtx{ctx};
+  basic_unique_lock<typename net::io_context::executor_type> l1 = lock(mtx);
+  unique_lock sl{std::move(l1)};
 }

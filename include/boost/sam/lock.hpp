@@ -1,25 +1,15 @@
-// Copyright (c) 2022 Klemens D. Morgenstern
+//
+// Copyright (c) 2023 Klemens Morgenstern (klemens.morgenstern@gmx.net)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-#ifndef BOOST_SAM_LOCK_GUARD_HPP
-#define BOOST_SAM_LOCK_GUARD_HPP
+//
+
+#ifndef BOOST_SAM_LOCK_HPP
+#define BOOST_SAM_LOCK_HPP
 
 #include <boost/sam/detail/config.hpp>
-#include <boost/sam/detail/mutex_impl.hpp>
-#include <mutex>
-#include <utility>
-
-#if defined(BOOST_SAM_STANDALONE)
-#include <asio/async_result.hpp>
-#include <asio/compose.hpp>
-#include <asio/deferred.hpp>
-
-#else
-#include <boost/asio/async_result.hpp>
-#include <boost/asio/compose.hpp>
-#include <boost/asio/deferred.hpp>
-#endif
+#include <boost/sam/basic_unique_lock.hpp>
 
 BOOST_SAM_BEGIN_NAMESPACE
 
@@ -28,45 +18,6 @@ struct basic_mutex;
 
 template <typename Executor>
 struct basic_shared_mutex;
-
-/** A lock-guard used as an RAII object that automatically unlocks on destruction
- *
- * To use with with async_clock.
- */
-struct lock_guard
-{
-  /// Construct an empty lock_guard.
-  lock_guard()                   = default;
-  lock_guard(const lock_guard &) = delete;
-  lock_guard(lock_guard &&lhs) : mtx_(lhs.mtx_) { lhs.mtx_ = nullptr; }
-
-  lock_guard &operator=(const lock_guard &) = delete;
-  lock_guard &operator=(lock_guard &&lhs)
-  {
-    std::swap(lhs.mtx_, mtx_);
-    return *this;
-  }
-
-  /// Unlock the underlying mutex.
-  ~lock_guard()
-  {
-    if (mtx_ != nullptr)
-      mtx_->unlock();
-  }
-
-  template <typename Executor>
-  lock_guard(basic_mutex<Executor> &mtx, const std::adopt_lock_t &) : mtx_(&mtx.impl_)
-  {
-  }
-
-  template <typename Executor>
-  lock_guard(basic_shared_mutex<Executor> &mtx, const std::adopt_lock_t &) : mtx_(&mtx.impl_)
-  {
-  }
-
-private:
-  detail::mutex_impl *mtx_ = nullptr;
-};
 
 /** Acquire a lock_guard synchronously.
  *
@@ -78,10 +29,10 @@ private:
  * @throws May throw a system_error if locking is not possible without a deadlock.
  */
 template <typename Executor>
-lock_guard lock(basic_mutex<Executor> &mtx)
+basic_unique_lock<Executor> lock(basic_mutex<Executor> &mtx)
 {
   mtx.lock();
-  return lock_guard(mtx, std::adopt_lock);
+  return basic_unique_lock(mtx, std::adopt_lock);
 }
 
 /** Acquire a lock_guard synchronously.
@@ -92,30 +43,30 @@ lock_guard lock(basic_mutex<Executor> &mtx)
  * @returns The lock_guard. It might be default constructed if locking  wasn't possible.
  */
 template <typename Executor>
-lock_guard lock(basic_mutex<Executor> &mtx, error_code &ec)
+basic_unique_lock<Executor> lock(basic_mutex<Executor> &mtx, error_code &ec)
 {
   mtx.lock(ec);
   if (ec)
-    return lock_guard();
+    return basic_unique_lock(mtx, std::defer_lock);
   else
-    return lock_guard(mtx, std::adopt_lock);
+    return basic_unique_lock(mtx, std::adopt_lock);
 }
 
 template <typename Executor>
-lock_guard lock(basic_shared_mutex<Executor> &mtx)
+basic_unique_lock<Executor> lock(basic_shared_mutex<Executor> &mtx)
 {
   mtx.lock();
-  return lock_guard(mtx, std::adopt_lock);
+  return basic_unique_lock(mtx, std::adopt_lock);
 }
 
 template <typename Executor>
-lock_guard lock(basic_shared_mutex<Executor> &mtx, error_code &ec)
+basic_unique_lock<Executor> lock(basic_shared_mutex<Executor> &mtx, error_code &ec)
 {
   mtx.lock(ec);
   if (ec)
-    return lock_guard();
+    return basic_unique_lock(mtx, std::defer_lock);
   else
-    return lock_guard(mtx, std::adopt_lock);
+    return basic_unique_lock(mtx, std::adopt_lock);
 }
 
 namespace detail
@@ -136,9 +87,9 @@ struct async_lock_op
   void operator()(Self && self, error_code ec)
   {
     if (ec)
-      self.complete(ec, lock_guard{});
+      self.complete(ec, basic_unique_lock<typename Mutex::executor_type>{mtx, std::defer_lock});
     else
-      self.complete(ec, lock_guard{mtx, std::adopt_lock});
+      self.complete(ec, basic_unique_lock<typename Mutex::executor_type>{mtx, std::adopt_lock});
   }
 };
 
@@ -170,13 +121,13 @@ struct async_lock_op
  *
  */
 template <typename Executor,
-    BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard))
-                                   CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
-BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock_guard))
-    async_lock(basic_mutex<Executor> &mtx, CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
+          BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code, basic_unique_lock<Executor>))
+              CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
+BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, basic_unique_lock<Executor>))
+async_lock(basic_mutex<Executor> &mtx, CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
   return net::async_compose<
-      CompletionToken, void(error_code, lock_guard)>
+      CompletionToken, void(error_code, basic_unique_lock<Executor>)>
       (
           detail::async_lock_op<basic_mutex<Executor>>{mtx},
           token, mtx
@@ -190,7 +141,7 @@ BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock_guard))
 async_lock(basic_shared_mutex<Executor> &mtx, CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
   return net::async_compose<
-      CompletionToken, void(error_code, lock_guard)>
+      CompletionToken, void(error_code, basic_unique_lock<Executor>)>
       (
           detail::async_lock_op<basic_shared_mutex<Executor>>{mtx},
           token, mtx
@@ -199,4 +150,4 @@ async_lock(basic_shared_mutex<Executor> &mtx, CompletionToken &&token BOOST_SAM_
 
 BOOST_SAM_END_NAMESPACE
 
-#endif // BOOST_SAM_LOCK_GUARD_HPP
+#endif // BOOST_SAM_LOCK_HPP

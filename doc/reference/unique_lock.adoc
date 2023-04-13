@@ -1,0 +1,140 @@
+== `unique_lock`
+
+The `unique_lock` can be used similar to a `std::unique_lock`.
+
+[source,cpp]
+----
+/// A lock-guard used as an RAII object that automatically unlocks on destruction
+template<typename Executor>
+struct basic_unique_lock
+{
+      using executor_type = net::any_io_executor;
+
+
+    /// Construct an empty unique_lock.
+    basic_unique_lock() = default;
+    /// Move constructor.
+    basic_unique_lock(basic_unique_lock &&lhs);
+    /// Move assignable (unlike std::unique_lock)
+    basic_unique_lock & operator=(basic_unique_lock &&lhs);
+    /// Unlock the underlying mutex.
+    ~basic_unique_lock();
+    // Lock a mutex
+    template<typename Executor>
+    basic_unique_lock(basic_mutex<Executor> & mtx);
+
+    // Adopt an already locked mutex
+    template<typename Executor>
+    unique_lock(basic_mutex<Executor> & mtx, std::adopt_lock_t);
+    // Capture a lock but don't lock it.
+    template<typename Executor>
+    unique_lock(basic_mutex<Executor> & mtx, std::defer_lock_t);
+    // Adopt an already locked mutex
+    template<typename Executor>
+    unique_lock(basic_mutex<Executor> & mtx, std::try_lock_t);
+
+
+    // Adopt an already locked mutex
+    template<typename Executor>
+    basic_unique_lock(basic_shared_mutex<Executor> & mtx, std::adopt_lock_t);
+    // Capture a lock but don't lock it.
+    template<typename Executor>
+    basic_unique_lock(basic_shared_mutex<Executor> & mtx, std::defer_lock_t);
+    // Adopt an already locked mutex
+    template<typename Executor>
+    basic_unique_lock(basic_shared_mutex<Executor> & mtx, std::try_lock_t);
+
+
+    /// Wait for the mutex to become lockable & lock it.
+    template < net::completion_token_for<void(error_code)> CompletionToken >)
+    auto async_lock(CompletionToken &&token = net::default_token<executor_type>);.
+
+    void lock();
+    void lock(error_code & ec);
+
+    void try_lock();
+    void try_lock(error_code & ec);
+
+    void unlock();
+    void release();
+    void owns_lock() const noexcept;
+    explicit operator bool() const noexcept;
+
+    executor_type get_executor() const;
+};
+----
+
+.lock
+****
+Acquire a unique_lock synchronously.
+
+* mtx The mutex to lock.
+* token The Completion Token.
+
+`returns`: The unique_lock. It might be default constructed if locking wasn't possible.
+[source,cpp]
+----
+template<typename Executor>
+basic_unique_lock<Executor> lock(basic_mutex<Executor> & mtx, error_code & ec);
+
+// throwing overload
+template<typename Executor>
+basic_unique_lock<Executor> lock(basic_mutex<Executor> & mtx);
+
+template<typename Executor>
+basic_unique_lock<Executor> lock(basic_shared_mutex<Executor> & mtx, error_code & ec);
+
+// throwing overload
+template<typename Executor>
+basic_unique_lock<Executor> lock(basic_shared_mutex<Executor> & mtx);
+----
+****
+
+
+.async_lock
+****
+Acquire a unique_lock asynchronously.
+
+*Type parameters:*
+
+ * Implementation The mutex implementation
+ * Executor The executor type of the mutex
+ * CompletionToken The completion token.
+
+*Parameters:*
+
+ * mtx The mutex to lock.
+ * token The Completion Token.
+
+*Returns:*
+
+ * The async_result deduced from the token.
+
+[source,cpp]
+----
+template<typename Executor,
+         net::completion_token_for<void(error_code, basic_unique_lock<Executor>)> CompletionToken >
+auto async_lock(basic_mutex<Executor> &mtx,
+                CompletionToken && token = default_token<Executor> );
+
+template<typename Executor,
+         net::completion_token_for<void(error_code, basic_unique_lock<Executor>)> CompletionToken >
+auto async_lock(basic_shared_mutex<Executor> &mtx,
+                CompletionToken && token = default_token<Executor> );
+----
+
+
+*Example:*
+
+[source,cpp]
+----
+net::awaitable<std::string> protected_read(st::mutex & mtx, tcp::socket & sock)
+{
+    std::string buf;
+    auto l = co_await async_lock(mtx);
+    co_await socket.async_read(dynamic_buffer(buf), use_awaitable);
+}
+----
+
+NOTE: Consider using <<guarded>> instead.
+****

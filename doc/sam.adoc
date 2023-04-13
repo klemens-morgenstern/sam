@@ -28,7 +28,8 @@ include::reference/mutex.adoc[]
 include::reference/shared_mutex.adoc[]
 include::reference/semaphore.adoc[]
 include::reference/guarded.adoc[]
-include::reference/lock_guard.adoc[]
+include::reference/unique_lock.adoc[]
+include::reference/shared_lock.adoc[]
 
 [#copyright]
 = Copyright and License

@@ -7,10 +7,11 @@
 
 #include <boost/sam/barrier.hpp>
 #include <boost/sam/condition_variable.hpp>
-#include <boost/sam/lock_guard.hpp>
+#include <boost/sam/lock.hpp>
 #include <boost/sam/mutex.hpp>
 #include <boost/sam/semaphore.hpp>
+#include <boost/sam/shared_lock.hpp>
 #include <boost/sam/shared_mutex.hpp>
-#include <boost/sam/shared_lock_guard.hpp>
+#include <boost/sam/unique_lock.hpp>
 
 #endif // BOOST_SAM_HPP

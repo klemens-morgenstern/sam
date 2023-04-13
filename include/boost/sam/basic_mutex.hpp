@@ -68,7 +68,7 @@ struct basic_mutex
   async_lock(CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(executor_type))
   {
     return net::async_initiate<CompletionToken, void(std::error_code)>(
-        detail::async_lock_mutex_op{impl_}, token, get_executor());
+        detail::async_lock_mutex_op{&impl_}, token, get_executor());
   }
 
   /// Move assign a mutex.
@@ -127,7 +127,10 @@ struct basic_mutex
 private:
   template <typename>
   friend struct basic_mutex;
-  friend struct lock_guard;
+  template <typename>
+  friend struct basic_unique_lock;
+  template <typename>
+  friend struct basic_shared_lock;
 
   Executor           exec_;
   detail::mutex_impl impl_;

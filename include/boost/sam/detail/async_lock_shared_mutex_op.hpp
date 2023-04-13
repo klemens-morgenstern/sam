@@ -8,7 +8,7 @@
 #ifndef BOOST_SAM_ASYNC_LOCK_SHARED_MUTEX_OP_HPP
 #define BOOST_SAM_ASYNC_LOCK_SHARED_MUTEX_OP_HPP
 
-#include <boost/sam/basic_shared_mutex.hpp>
+#include <boost/sam/detail/config.hpp>
 #include <boost/sam/detail/shared_mutex_impl.hpp>
 
 #if defined(BOOST_SAM_STANDALONE)
@@ -28,17 +28,33 @@ namespace detail
 
 struct async_lock_shared_mutex_op
 {
-  detail::shared_mutex_impl &impl_;
+  detail::shared_mutex_impl *impl_;
 
   template <typename Handler, typename Executor>
-  void operator()(Handler &&handler, Executor executor)
+  void operator()(Handler &&handler, Executor executor, bool locked = false)
   {
-    auto e = get_associated_executor(handler, executor);
-    detail::op_list_service::lock_type l{impl_.mtx_};
-    ignore_unused(l);
-    if (!impl_.locked_)
+    if (impl_ == nullptr)
     {
-      impl_.locked_shared_ ++;
+      auto ie             = net::get_associated_immediate_executor(handler, executor);
+      error_code ec;
+      BOOST_SAM_ASSIGN_EC(ec, net::error::operation_not_supported);
+      return net::dispatch(ie, net::append(std::forward<Handler>(handler), ec));
+    }
+
+    if (locked)
+    {
+      auto ie = net::get_associated_immediate_executor(handler, executor);
+      error_code ec;
+      BOOST_SAM_ASSIGN_EC(ec, net::error::no_permission);
+      return net::dispatch(ie, net::append(std::forward<Handler>(handler), ec));
+    }
+
+    auto e = get_associated_executor(handler, executor);
+    detail::op_list_service::lock_type l{impl_->mtx_};
+    ignore_unused(l);
+    if (!impl_->locked_)
+    {
+      impl_->locked_shared_ ++;
       auto ie             = net::get_associated_immediate_executor(handler, executor);
       return net::dispatch(ie, net::append(std::forward<Handler>(handler), error_code()));
     }
@@ -49,7 +65,7 @@ struct async_lock_shared_mutex_op
     auto slot = model->get_cancellation_slot();
     if (slot.is_connected())
     {
-      auto &impl = impl_;
+      auto &impl = *impl_;
       slot.assign(
           [model, &impl](net::cancellation_type type)
           {
@@ -62,7 +78,7 @@ struct async_lock_shared_mutex_op
             }
           });
     }
-    impl_.add_shared_waiter(model);
+    impl_->add_shared_waiter(model);
   }
 };
 

@@ -26,7 +26,6 @@ struct basic_mutex;
 template <typename>
 struct basic_shared_mutex;
 
-struct unique_lock;
 
 namespace detail
 {

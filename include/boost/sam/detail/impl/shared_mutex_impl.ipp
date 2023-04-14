@@ -14,7 +14,7 @@ BOOST_SAM_BEGIN_NAMESPACE
 namespace detail
 {
 
-void shared_mutex_impl::add_shared_waiter(detail::wait_op *waiter) noexcept { waiter->link_before(&shared_waiters_); }
+void shared_mutex_impl::add_shared_waiter(detail::basic_op *waiter) noexcept { waiter->link_before(&shared_waiters_); }
 
 void shared_mutex_impl::lock(error_code &ec)
 {
@@ -51,7 +51,7 @@ void shared_mutex_impl::unlock()
     while (shared_waiters_.next_ != &shared_waiters_)
     {
       locked_shared_++;
-      static_cast<detail::wait_op *>(shared_waiters_.next_)->complete(std::error_code());
+      static_cast<detail::basic_op *>(shared_waiters_.next_)->complete(std::error_code());
     }
     return ;
   }
@@ -63,7 +63,7 @@ void shared_mutex_impl::unlock()
     return;
   }
   assert(waiters_.next_ != nullptr);
-  static_cast<detail::wait_op *>(waiters_.next_)->complete(std::error_code());
+  static_cast<detail::basic_op *>(waiters_.next_)->complete(std::error_code());
 }
 
 
@@ -103,7 +103,7 @@ void shared_mutex_impl::unlock_shared()
     if (waiters_.next_ != &waiters_)
     {
       locked_ = true;
-      static_cast<detail::wait_op *>(waiters_.next_)->complete(std::error_code());
+      static_cast<detail::basic_op *>(waiters_.next_)->complete(std::error_code());
     }
 
   }

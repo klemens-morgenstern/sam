@@ -22,7 +22,7 @@ semaphore_impl::semaphore_impl(net::execution_context &ctx,
 {
 }
 
-void semaphore_impl::add_waiter(detail::wait_op *waiter) noexcept { waiter->link_before(&waiters_); }
+void semaphore_impl::add_waiter(detail::basic_op *waiter) noexcept { waiter->link_before(&waiters_); }
 
 int semaphore_impl::count() const noexcept { return count_; }
 
@@ -36,10 +36,10 @@ void semaphore_impl::release()
     return;
 
   decrement();
-  static_cast<detail::wait_op *>(waiters_.next_)->complete(std::error_code());
+  static_cast<detail::basic_op *>(waiters_.next_)->complete(std::error_code());
 }
 
-struct semaphore_impl::acquire_op_t final : detail::wait_op
+struct semaphore_impl::acquire_op_t final : detail::basic_op
 {
   error_code   &ec;
   bool          done = false;

@@ -27,7 +27,7 @@ bool barrier_impl::try_arrive()
   return false;
 }
 
-struct barrier_impl::arrive_op_t final : detail::wait_op
+struct barrier_impl::arrive_op_t final : detail::basic_op
 {
   error_code   &ec;
   bool          done = false;
@@ -85,7 +85,7 @@ void barrier_impl::arrive(error_code &ec)
   op.wait(lock);
 }
 
-void barrier_impl::add_waiter(detail::wait_op *waiter) noexcept { waiter->link_before(&waiters_); }
+void barrier_impl::add_waiter(detail::basic_op *waiter) noexcept { waiter->link_before(&waiters_); }
 
 } // namespace detail
 BOOST_SAM_END_NAMESPACE

@@ -32,7 +32,7 @@ template <typename Executor>
 basic_unique_lock<Executor> lock(basic_mutex<Executor> &mtx)
 {
   mtx.lock();
-  return basic_unique_lock(mtx, std::adopt_lock);
+  return basic_unique_lock<Executor>(mtx, std::adopt_lock);
 }
 
 /** Acquire a lock_guard synchronously.
@@ -47,16 +47,16 @@ basic_unique_lock<Executor> lock(basic_mutex<Executor> &mtx, error_code &ec)
 {
   mtx.lock(ec);
   if (ec)
-    return basic_unique_lock(mtx, std::defer_lock);
+    return basic_unique_lock<Executor>(mtx, std::defer_lock);
   else
-    return basic_unique_lock(mtx, std::adopt_lock);
+    return basic_unique_lock<Executor>(mtx, std::adopt_lock);
 }
 
 template <typename Executor>
 basic_unique_lock<Executor> lock(basic_shared_mutex<Executor> &mtx)
 {
   mtx.lock();
-  return basic_unique_lock(mtx, std::adopt_lock);
+  return basic_unique_lock<Executor>(mtx, std::adopt_lock);
 }
 
 template <typename Executor>
@@ -64,9 +64,9 @@ basic_unique_lock<Executor> lock(basic_shared_mutex<Executor> &mtx, error_code &
 {
   mtx.lock(ec);
   if (ec)
-    return basic_unique_lock(mtx, std::defer_lock);
+    return basic_unique_lock<Executor>(mtx, std::defer_lock);
   else
-    return basic_unique_lock(mtx, std::adopt_lock);
+    return basic_unique_lock<Executor>(mtx, std::adopt_lock);
 }
 
 namespace detail
@@ -135,9 +135,9 @@ async_lock(basic_mutex<Executor> &mtx, CompletionToken &&token BOOST_SAM_DEFAULT
 }
 
 template <typename Executor,
-          BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code, lock_guard))
+          BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code, basic_unique_lock<Executor>))
               CompletionToken BOOST_SAM_DEFAULT_COMPLETION_TOKEN_TYPE(Executor)>
-BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, lock_guard))
+BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code, basic_unique_lock<Executor>))
 async_lock(basic_shared_mutex<Executor> &mtx, CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(Executor))
 {
   return net::async_compose<

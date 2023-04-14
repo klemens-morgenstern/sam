@@ -28,11 +28,11 @@ BOOST_SAM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template <class Executor, class Handler, class Signature>
+template <class Executor, class Handler>
 struct basic_op_model;
 
-template <class Executor, class Handler, class... Ts>
-struct basic_op_model<Executor, Handler, void(Ts...)> final : basic_op<void(Ts...)>
+template <class Executor, class Handler>
+struct basic_op_model final : basic_op
 {
   using executor_type          = Executor;
   using cancellation_slot_type = net::associated_cancellation_slot_t<Handler>;
@@ -50,7 +50,7 @@ struct basic_op_model<Executor, Handler, void(Ts...)> final : basic_op<void(Ts..
 
   basic_op_model(Executor e, Handler handler);
 
-  virtual void complete(Ts... ec) override;
+  virtual void complete(error_code ec) override;
   virtual void shutdown() override;
 
 private:

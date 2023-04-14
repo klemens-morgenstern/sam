@@ -33,7 +33,7 @@ struct mutex_impl : detail::service_member
   }
   virtual bool is_locked() { return locked_; }
 
-  BOOST_SAM_DECL void add_waiter(detail::wait_op *waiter) noexcept;
+  BOOST_SAM_DECL void add_waiter(detail::basic_op *waiter) noexcept;
 
   void shutdown() override
   {
@@ -45,7 +45,7 @@ struct mutex_impl : detail::service_member
 
   bool locked_;
 
-  detail::basic_bilist_holder<void(error_code)> waiters_;
+  detail::basic_bilist_holder waiters_;
 
   mutex_impl()                   = delete;
   mutex_impl(const mutex_impl &) = delete;

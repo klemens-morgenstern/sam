@@ -17,44 +17,35 @@ BOOST_SAM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template <typename Signature>
-struct basic_op;
-
-template <typename... Ts>
-struct basic_op<void(Ts...)> : detail::bilist_node
+struct basic_op : detail::bilist_node
 {
   virtual void shutdown()      = 0;
-  virtual void complete(Ts...) = 0;
+  virtual void complete(error_code ec) = 0;
 };
 
-using wait_op = basic_op<void(error_code)>;
 
-template <typename Signature>
-struct basic_bilist_holder;
-
-template <typename... Ts>
-struct basic_bilist_holder<void(error_code, Ts...)> : bilist_node
+struct basic_bilist_holder : bilist_node
 {
   ~basic_bilist_holder()
   {
-    using op      = basic_op<void(error_code, Ts...)>;
+    using op      = basic_op;
     auto      &nx = this->next_;
     error_code ec = asio::error::operation_aborted;
     while (nx != this)
-      static_cast<op *>(nx)->complete(ec, Ts{}...);
+      static_cast<op *>(nx)->complete(ec);
   }
 
-  void complete_all(error_code ec, Ts... ts)
+  void complete_all(error_code ec)
   {
-    using op = basic_op<void(error_code, Ts...)>;
+    using op = basic_op;
     auto &nx = this->next_;
     while (nx != this)
-      static_cast<op *>(nx)->complete(ec, std::move(ts)...);
+      static_cast<op *>(nx)->complete(ec);
   }
 
   void shutdown()
   {
-    using op = basic_op<void(error_code, Ts...)>;
+    using op = basic_op;
     bilist_node bn{std::move(*this)};
 
     auto &nx = bn.next_;

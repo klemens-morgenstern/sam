@@ -49,10 +49,10 @@ struct condition_variable_impl : detail::service_member
   BOOST_SAM_DECL void notify_all();
   BOOST_SAM_DECL void wait(error_code &ec) ;
 
-  BOOST_SAM_DECL void add_waiter(detail::wait_op *waiter) noexcept;
+  BOOST_SAM_DECL void add_waiter(detail::basic_op *waiter) noexcept;
 
 private:
-  detail::basic_bilist_holder<void(error_code)> waiters_;
+  detail::basic_bilist_holder waiters_;
   struct wait_op_t;
 };
 

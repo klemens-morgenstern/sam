@@ -57,7 +57,7 @@ struct basic_semaphore<Executor>::async_aquire_op
     }
 
     using handler_type = typename std::decay<Handler>::type;
-    using model_type   = detail::basic_op_model<decltype(e), handler_type, void(error_code)>;
+    using model_type   = detail::basic_op_model<decltype(e), handler_type>;
     model_type *model  = model_type ::construct(std::move(e), std::forward<Handler>(handler));
     auto        slot   = model->get_cancellation_slot();
     if (slot.is_connected())

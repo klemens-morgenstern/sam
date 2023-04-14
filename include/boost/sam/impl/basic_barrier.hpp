@@ -47,7 +47,7 @@ struct basic_barrier<Executor>::async_arrive_op
     self->impl_.decrement();
     ignore_unused(l);
     using handler_type = typename std::decay<Handler>::type;
-    using model_type   = detail::basic_op_model<decltype(e), handler_type, void(error_code)>;
+    using model_type   = detail::basic_op_model<decltype(e), handler_type>;
     model_type *model  = model_type::construct(std::move(e), std::forward<Handler>(handler));
 
     auto slot = model->get_cancellation_slot();

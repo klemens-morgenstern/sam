@@ -15,9 +15,9 @@ BOOST_SAM_BEGIN_NAMESPACE
 namespace detail
 {
 
-void mutex_impl::add_waiter(detail::wait_op *waiter) noexcept { waiter->link_before(&waiters_); }
+void mutex_impl::add_waiter(detail::basic_op *waiter) noexcept { waiter->link_before(&waiters_); }
 
-struct mutex_impl::lock_op_t final : detail::wait_op
+struct mutex_impl::lock_op_t final : detail::basic_op
 {
   error_code   &ec;
   bool          done = false;
@@ -81,7 +81,7 @@ void mutex_impl::unlock()
     return;
   }
   assert(waiters_.next_ != nullptr);
-  static_cast<detail::wait_op *>(waiters_.next_)->complete(std::error_code());
+  static_cast<detail::basic_op *>(waiters_.next_)->complete(std::error_code());
 }
 
 mutex_impl::mutex_impl(net::execution_context &ctx, int concurrency_hint)

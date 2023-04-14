@@ -18,7 +18,7 @@ condition_variable_impl::condition_variable_impl(net::execution_context &ctx,
 {
 }
 
-void condition_variable_impl::add_waiter(detail::wait_op *waiter) noexcept
+void condition_variable_impl::add_waiter(detail::basic_op *waiter) noexcept
 {
   waiter->link_before(&waiters_);
 }
@@ -29,7 +29,7 @@ void condition_variable_impl::notify_one()
   // release a pending operations
   if (waiters_.next_ == &waiters_)
     return;
-  auto op = static_cast<detail::wait_op *>(waiters_.next_);
+  auto op = static_cast<detail::basic_op *>(waiters_.next_);
   op->complete(error_code());
 }
 
@@ -39,14 +39,14 @@ void condition_variable_impl::notify_all()
   // release a pending operations
   for (auto c = waiters_.next_; c != &waiters_;)
   {
-    auto op = static_cast<detail::wait_op *>(c);
+    auto op = static_cast<detail::basic_op *>(c);
     c       = c->next_;
     op->complete(error_code());
   }
 }
 
 
-struct condition_variable_impl::wait_op_t final : detail::wait_op
+struct condition_variable_impl::wait_op_t final : detail::basic_op
 {
   error_code   &ec;
   bool          done = false;

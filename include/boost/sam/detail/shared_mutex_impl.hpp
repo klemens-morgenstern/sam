@@ -52,7 +52,7 @@ struct shared_mutex_impl : mutex_impl
 
 
 
-  BOOST_SAM_DECL void add_shared_waiter(detail::wait_op *waiter) noexcept;
+  BOOST_SAM_DECL void add_shared_waiter(detail::basic_op *waiter) noexcept;
 
   void shutdown() override
   {
@@ -65,7 +65,7 @@ struct shared_mutex_impl : mutex_impl
   }
 
   std::uintptr_t locked_shared_{0u};
-  detail::basic_bilist_holder<void(error_code)> shared_waiters_;
+  detail::basic_bilist_holder shared_waiters_;
 
   shared_mutex_impl()                   = delete;
   shared_mutex_impl(const shared_mutex_impl &) = delete;

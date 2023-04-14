@@ -93,7 +93,7 @@ struct service_member : bilist_node
       if (service != nullptr)
         service->unregister_queue(this);
     }
-    catch(std::system_error & se)
+    catch(std::system_error &)
     {
       if (service != nullptr)
         service->unregister_queue(this);

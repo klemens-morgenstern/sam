@@ -61,25 +61,8 @@ struct basic_semaphore<Executor>::async_aquire_op
     model_type *model  = model_type ::construct(std::move(e), std::forward<Handler>(handler));
     auto        slot   = model->get_cancellation_slot();
     if (slot.is_connected())
-    {
-      auto &impl = self->impl_;
-      slot.assign(
-          [model, &impl, slot](net::cancellation_type type)
-          {
-            if (type != net::cancellation_type::none)
-            {
-              auto sl   = slot;
-              detail::op_list_service::lock_type lock {impl.mtx_};
-              ignore_unused(lock);
-              // completed already
-              if (!sl.is_connected())
-                return;
+      slot.template emplace<detail::cancel_handler>(model, self->impl_.mtx_);
 
-              auto *self = model;
-              self->complete(net::error::operation_aborted);
-            }
-          });
-    }
     self->impl_.add_waiter(model);
   }
 };

@@ -10,8 +10,15 @@
 #ifndef BOOST_SAM_DETAIL_SEMAPHORE_WAIT_OP
 #define BOOST_SAM_DETAIL_SEMAPHORE_WAIT_OP
 
-#include <boost/sam/detail/bilist_node.hpp>
 #include <boost/sam/detail/config.hpp>
+#include <boost/sam/detail/bilist_node.hpp>
+#include <boost/sam/detail/conditionally_enabled_mutex.hpp>
+
+#if defined(BOOST_SAM_STANDALONE)
+#include <asio/cancellation_type.hpp>
+#else
+#include <boost/asio/cancellation_type.hpp>
+#endif
 
 BOOST_SAM_BEGIN_NAMESPACE
 
@@ -62,6 +69,26 @@ struct basic_bilist_holder : bilist_node
   basic_bilist_holder(basic_bilist_holder const &)            = delete;
   basic_bilist_holder &operator=(basic_bilist_holder &&)      = default;
   basic_bilist_holder &operator=(basic_bilist_holder const &) = delete;
+};
+
+
+struct cancel_handler
+{
+  basic_op * model;
+  detail::conditionally_enabled_mutex &mtx;
+
+  cancel_handler(detail::basic_op * model,
+                 detail::conditionally_enabled_mutex &mutex) : model(model), mtx(mutex) {}
+
+  void operator()(net::cancellation_type type) const
+  {
+    if (type != net::cancellation_type::none)
+    {
+      detail::conditionally_enabled_mutex::scoped_lock lock{mtx};
+      auto *self = model;
+      self->complete(net::error::operation_aborted);
+    }
+  }
 };
 
 } // namespace detail

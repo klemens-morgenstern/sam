@@ -64,20 +64,8 @@ struct async_lock_shared_mutex_op
 
     auto slot = model->get_cancellation_slot();
     if (slot.is_connected())
-    {
-      auto &impl = *impl_;
-      slot.assign(
-          [model, &impl](net::cancellation_type type)
-          {
-            if (type != net::cancellation_type::none)
-            {
-              detail::op_list_service::lock_type lock{impl.mtx_};
-              ignore_unused(lock);
-              auto *self = model;
-              self->complete(net::error::operation_aborted);
-            }
-          });
-    }
+      slot.template emplace<detail::cancel_handler>(model, impl_->mtx_);
+
     impl_->add_shared_waiter(model);
   }
 };

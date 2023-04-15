@@ -9,9 +9,8 @@
 #define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
 #endif
 
-
-#include <boost/sam/lock_guard.hpp>
 #include <boost/sam/barrier.hpp>
+#include <boost/sam/unique_lock.hpp>
 
 #include "doctest.h"
 

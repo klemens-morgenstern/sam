@@ -70,6 +70,16 @@ struct tcondvar
         async_wait_op<typename std::decay<Predicate>::type>(std::move(p), tim), h, tim);
   }
 
+  struct true_predicate {bool operator()() const {return true;}};
+
+  template <typename Handler>
+  void async_wait(Handler &&h)
+  {
+    return net::async_compose<Handler, void(error_code)>(
+        async_wait_op<true_predicate>(true_predicate{}, tim), h, tim);
+  }
+
+
   void notify_one() { tim.cancel_one(); }
 
   void notify_all() { tim.cancel(); }
@@ -86,7 +96,7 @@ void run_benchmark(net::io_context::executor_type exec, std::size_t n)
     void     operator()(error_code ec, std::size_t i)
     {
       if (i != 0u)
-        cv.async_wait([i] { return i % 4 == 0; }, net::detached);
+        cv.async_wait(net::detached);
 
       if (i % 100 == 0)
         cv.notify_all();

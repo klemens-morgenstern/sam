@@ -6,64 +6,22 @@
 #define BOOST_SAM_IMPL_BASIC_CONDITION_VARIABLE_HPP
 
 #include <boost/sam/basic_condition_variable.hpp>
-#include <boost/sam/detail/predicate_op_model.hpp>
+#include <boost/sam/detail/basic_op_model.hpp>
+
+#if defined(BOOST_SAM_STANDALONE)
+#include <asio/dispatch.hpp>
+#else
+#include <boost/asio/dispatch.hpp>
+#endif
+
 
 BOOST_SAM_BEGIN_NAMESPACE
-
-template <class Executor>
-template <class Predicate>
-struct basic_condition_variable<Executor>::async_predicate_wait_op
-{
-  basic_condition_variable<Executor> *self;
-  Predicate                           predicate;
-  template <class Handler>
-  void operator()(Handler &&handler)
-  {
-    auto e = get_associated_executor(handler, self->get_executor());
-    detail::op_list_service::lock_type l{self->impl_.mtx_};
-    ignore_unused(l);
-
-    using handler_type   = typename std::decay<Handler>::type;
-    using predicate_type = Predicate;
-    using model_type     = detail::predicate_op_model<decltype(e), handler_type, predicate_type, void(error_code)>;
-    model_type *model    = model_type::construct(std::move(e), std::forward<Handler>(handler), std::move(predicate));
-
-    auto slot = model->get_cancellation_slot();
-    if (slot.is_connected())
-    {
-      auto &impl = self->impl_;
-      slot.assign(
-          [model, &impl, slot](net::cancellation_type type)
-          {
-            if (type != net::cancellation_type::none)
-            {
-              auto sl   = slot;
-              detail::op_list_service::lock_type lock{impl.mtx_};
-              ignore_unused(lock);
-              // completed already
-              if (!sl.is_connected())
-                return;
-
-              auto *self = model;
-              self->complete(net::error::operation_aborted);
-            }
-          });
-    }
-
-    self->impl_.add_waiter(model);
-  }
-};
 
 template <class Executor>
 struct basic_condition_variable<Executor>::async_wait_op
 {
   basic_condition_variable<Executor> *self;
 
-  struct true_predicate
-  {
-    constexpr bool operator()() const noexcept { return true; }
-  };
-
   template <class Handler>
   void operator()(Handler &&handler)
   {
@@ -72,30 +30,11 @@ struct basic_condition_variable<Executor>::async_wait_op
     ignore_unused(l);
 
     using handler_type   = typename std::decay<Handler>::type;
-    using predicate_type = true_predicate;
-    using model_type     = detail::predicate_op_model<decltype(e), handler_type, predicate_type, void(error_code)>;
-    model_type *model    = model_type::construct(std::move(e), std::forward<Handler>(handler), true_predicate{});
+    using model_type     = detail::basic_op_model<decltype(e), handler_type>;
+    model_type *model    = model_type::construct(std::move(e), std::forward<Handler>(handler));
     auto        slot     = model->get_cancellation_slot();
     if (slot.is_connected())
-    {
-      auto &impl = self->impl_;
-      slot.assign(
-          [model, &impl, slot](net::cancellation_type type)
-          {
-            if (type != net::cancellation_type::none)
-            {
-              auto sl   = slot;
-              detail::op_list_service::lock_type lock{impl.mtx_};
-              ignore_unused(lock);
-              // completed already
-              if (!sl.is_connected())
-                return;
-
-              auto *self = model;
-              self->complete(net::error::operation_aborted);
-            }
-          });
-    }
+      slot.template emplace<detail::cancel_handler>(model, self->impl_.mtx_);
     self->impl_.add_waiter(model);
   }
 };

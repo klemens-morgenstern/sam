@@ -6,7 +6,7 @@
 #define BOOST_SAM_DETAIL_CONDITION_VARIABLE_IMPL_HPP
 
 #include <boost/sam/detail/config.hpp>
-#include <boost/sam/detail/predicate_op.hpp>
+#include <boost/sam/detail/basic_op.hpp>
 #include <boost/sam/detail/service.hpp>
 #include <mutex>
 
@@ -28,8 +28,10 @@ struct condition_variable_impl : detail::service_member
 
   condition_variable_impl &operator=(condition_variable_impl const &) = delete;
 
-  condition_variable_impl &operator=(condition_variable_impl &&lhs) noexcept
+  condition_variable_impl &operator=(condition_variable_impl &&lhs)
   {
+    lock_type _{mtx_};
+
     detail::service_member::operator=(std::move(lhs));
     std::swap(lhs.waiters_, waiters_);
     return *this;
@@ -45,11 +47,13 @@ struct condition_variable_impl : detail::service_member
 
   BOOST_SAM_DECL void notify_one();
   BOOST_SAM_DECL void notify_all();
+  BOOST_SAM_DECL void wait(error_code &ec) ;
 
-  BOOST_SAM_DECL void add_waiter(detail::predicate_wait_op *waiter) noexcept;
+  BOOST_SAM_DECL void add_waiter(detail::basic_op *waiter) noexcept;
 
 private:
-  detail::predicate_bilist_holder<void(error_code)> waiters_;
+  detail::basic_bilist_holder waiters_;
+  struct wait_op_t;
 };
 
 } // namespace detail

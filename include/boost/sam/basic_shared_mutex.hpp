@@ -9,6 +9,8 @@
 #define BOOST_SAM_BASIC_SHARED_MUTEX_HPP
 
 #include <boost/sam/detail/config.hpp>
+#include <boost/sam/detail/async_lock_mutex_op.hpp>
+#include <boost/sam/detail/async_lock_shared_mutex_op.hpp>
 #include <boost/sam/detail/exception.hpp>
 #include <boost/sam/detail/shared_mutex_impl.hpp>
 
@@ -69,7 +71,8 @@ struct basic_shared_mutex
   BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
   async_lock(CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(executor_type))
   {
-    return net::async_initiate<CompletionToken, void(std::error_code)>(async_lock_op{this}, token);
+    return net::async_initiate<CompletionToken, void(std::error_code)>(
+        detail::async_lock_mutex_op{&impl_}, token, get_executor());
   }
 
   template <BOOST_SAM_COMPLETION_TOKEN_FOR(void(error_code))
@@ -77,7 +80,8 @@ struct basic_shared_mutex
   BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
   async_lock_shared(CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(executor_type))
   {
-    return net::async_initiate<CompletionToken, void(std::error_code)>(async_lock_shared_op{this}, token);
+    return net::async_initiate<CompletionToken, void(std::error_code)>(
+        detail::async_lock_shared_mutex_op{&impl_}, token, get_executor());
   }
 
   /// Move assign a mutex.
@@ -153,16 +157,15 @@ struct basic_shared_mutex
 private:
   template <typename>
   friend struct basic_shared_mutex;
-  friend struct lock_guard;
+  template <typename>
+  friend struct basic_unique_lock;
+  template <typename>
+  friend struct basic_shared_lock;
 
   Executor           exec_;
   detail::shared_mutex_impl impl_;
-  struct async_lock_op;
-  struct async_lock_shared_op;
 };
 
 BOOST_SAM_END_NAMESPACE
-
-#include <boost/sam/impl/basic_shared_mutex.hpp>
 
 #endif // BOOST_SAM_BASIC_SHARED_MUTEX_HPP

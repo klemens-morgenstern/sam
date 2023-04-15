@@ -25,8 +25,9 @@ BOOST_SAM_BEGIN_NAMESPACE
 
 namespace detail
 {
-template <class Executor, class Handler, class... Ts>
-auto basic_op_model<Executor, Handler, void(Ts...)>::construct(Executor e, Handler handler) -> basic_op_model *
+
+template <class Executor, class Handler>
+auto basic_op_model<Executor, Handler>::construct(Executor e, Handler handler) -> basic_op_model *
 {
   auto halloc  = net::get_associated_allocator(handler);
   auto alloc   = typename std::allocator_traits<decltype(halloc)>::template rebind_alloc<basic_op_model>(halloc);
@@ -44,9 +45,9 @@ auto basic_op_model<Executor, Handler, void(Ts...)>::construct(Executor e, Handl
   }
 }
 
-template <class Executor, class Handler, class... Ts>
-auto basic_op_model<Executor, Handler, void(Ts...)>::destroy(basic_op_model                      *self,
-                                                             net::associated_allocator_t<Handler> halloc) -> void
+template <class Executor, class Handler>
+auto basic_op_model<Executor, Handler>::destroy(basic_op_model                      *self,
+                                                net::associated_allocator_t<Handler> halloc) -> void
 {
   auto alloc = typename std::allocator_traits<decltype(halloc)>::template rebind_alloc<basic_op_model>(halloc);
   self->~basic_op_model();
@@ -54,25 +55,25 @@ auto basic_op_model<Executor, Handler, void(Ts...)>::destroy(basic_op_model     
   traits.deallocate(alloc, self, 1);
 }
 
-template <class Executor, class Handler, class... Ts>
-basic_op_model<Executor, Handler, void(Ts...)>::basic_op_model(Executor e, Handler handler)
+template <class Executor, class Handler>
+basic_op_model<Executor, Handler>::basic_op_model(Executor e, Handler handler)
     : work_guard_(std::move(e)), handler_(std::move(handler))
 {
 }
 
-template <class Executor, class Handler, class... Ts>
-void basic_op_model<Executor, Handler, void(Ts...)>::complete(Ts... args)
+template <class Executor, class Handler>
+void basic_op_model<Executor, Handler>::complete(error_code ec)
 {
   get_cancellation_slot().clear();
   auto g = std::move(work_guard_);
   auto h = std::move(handler_);
   this->unlink();
   destroy(this, net::get_associated_allocator(h));
-  net::post(g.get_executor(), net::append(std::move(h), std::move(args)...));
+  net::post(g.get_executor(), net::append(std::move(h), ec));
 }
 
-template <class Executor, class Handler, class... Ts>
-void basic_op_model<Executor, Handler, void(Ts...)>::shutdown()
+template <class Executor, class Handler>
+void basic_op_model<Executor, Handler>::shutdown()
 {
   get_cancellation_slot().clear();
   this->unlink();

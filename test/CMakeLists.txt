@@ -21,5 +21,6 @@ boost_sam_standalone_test(basic_condition_variable)
 boost_sam_standalone_test(basic_barrier)
 boost_sam_standalone_test(concurrency_hint)
 boost_sam_standalone_test(guarded)
-boost_sam_standalone_test(lock_guard)
+boost_sam_standalone_test(unique_lock)
+boost_sam_standalone_test(shared_lock)
 

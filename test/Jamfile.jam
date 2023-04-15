@@ -33,6 +33,7 @@ test-suite standalone :
     [ run basic_semaphore.cpp test_impl ]
     [ run basic_condition_variable.cpp test_impl ]
     [ run guarded.cpp test_impl ]
-    [ run lock_guard.cpp test_impl ]
+    [ run unique_lock.cpp test_impl ]
+    [ run shared_lock.cpp test_impl ]
     [ run concurrency_hint.cpp test_impl ]
     ;

@@ -32,8 +32,10 @@ struct barrier_impl : detail::service_member
   {
   }
 
-  barrier_impl &operator=(barrier_impl &&rhs) noexcept
+  barrier_impl &operator=(barrier_impl &&rhs)
   {
+    lock_type l{mtx_};
+
     detail::service_member::operator=(std::move(rhs));
     init_    = rhs.init_;
     waiters_ = std::move(rhs.waiters_);
@@ -45,7 +47,7 @@ struct barrier_impl : detail::service_member
   std::ptrdiff_t counter_{init_};
 
   BOOST_SAM_DECL bool try_arrive();
-  BOOST_SAM_DECL void add_waiter(detail::wait_op *waiter) noexcept;
+  BOOST_SAM_DECL void add_waiter(detail::basic_op *waiter) noexcept;
   BOOST_SAM_DECL void arrive(error_code &ec);
 
   void decrement() { counter_--; }
@@ -56,7 +58,7 @@ struct barrier_impl : detail::service_member
     l.unlock();
     w.shutdown();
   }
-  detail::basic_bilist_holder<void(error_code)> waiters_;
+  detail::basic_bilist_holder waiters_;
 
   struct arrive_op_t;
 };

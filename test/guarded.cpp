@@ -12,6 +12,7 @@
 #include <boost/sam/guarded.hpp>
 #include <boost/sam/mutex.hpp>
 #include <boost/sam/semaphore.hpp>
+#include <boost/sam/shared_mutex.hpp>
 
 #include <chrono>
 #include <random>
@@ -19,11 +20,13 @@
 
 #if !defined(BOOST_SAM_STANDALONE)
 #include <boost/asio/compose.hpp>
+#include <boost/asio/deferred.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
 #else
 #include <asio/compose.hpp>
+#include <asio/deferred.hpp>
 #include <asio/detached.hpp>
 #include <asio/steady_timer.hpp>
 #include <asio/thread_pool.hpp>
@@ -56,7 +59,7 @@ struct impl
   template <typename Self>
   void operator()(Self &&self)
   {
-    CHECK(concurrent <= cmp);
+    CHECK(concurrent.load() <= cmp.load());
     concurrent++;
     printf("Entered %d\n", id);
     tim->expires_after(std::chrono::milliseconds{10});
@@ -101,8 +104,8 @@ struct op_t
 template <typename T>
 void test_sync(T &se2, std::vector<int> &order)
 {
-    std::atomic<bool> active{false};
-    op_t<T> op{se2, active};
+  std::atomic<bool> active{false};
+  op_t<T> op{se2, active};
 
   guarded(se2, op, net::detached);
   guarded(se2, op, net::detached);
@@ -131,6 +134,37 @@ TEST_CASE_TEMPLATE("guarded_mutex_test" * doctest::timeout(10.), T, net::io_cont
   mutex            mtx{ctx.get_executor()};
   cmp = 1;
   test_sync<mutex>(mtx, order);
+  run_impl(ctx);
+}
+
+TEST_CASE_TEMPLATE("guarded_shared_mutex_test" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
+{
+  T                ctx;
+  std::vector<int> order;
+  shared_mutex     mtx{ctx.get_executor()};
+  cmp = 1;
+  test_sync<shared_mutex>(mtx, order);
+  run_impl(ctx);
+}
+
+TEST_CASE_TEMPLATE("guarded_shared_mutex_shared_test" * doctest::timeout(10.), T, net::io_context, net::thread_pool)
+{
+  T                ctx;
+  shared_mutex     mtx{ctx.get_executor()};
+  std::atomic<bool> active{false};
+
+  op_t<T> op{ctx, active};
+
+  cmp = 8;
+  guarded_shared(mtx, op, net::detached);
+  guarded_shared(mtx, op, net::detached);
+  guarded_shared(mtx, op, net::detached);
+  guarded_shared(mtx, op, net::detached);
+  guarded_shared(mtx, op, net::detached);
+  guarded_shared(mtx, op, net::detached);
+  guarded_shared(mtx, op, net::detached);
+  guarded_shared(mtx, op, net::detached);
+
   run_impl(ctx);
 }
 

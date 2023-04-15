@@ -10,9 +10,6 @@ project(boost_sam VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 add_library(boost_sam STATIC src/src.cpp)
 add_library(Boost::sam ALIAS boost_sam)
 
-add_link_options(--coverage)
-add_compile_options(--coverage)
-
 set(BOOST_SAM_IS_ROOT OFF)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -64,8 +61,14 @@ else()
   else()
     target_link_libraries(boost_sam PUBLIC Boost::system)
   endif()
-
 endif()
+
+file(GLOB_RECURSE BOOST_SAM_ADOC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.adoc)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/doc/index.html
+        COMMAND asciidoctor ${CMAKE_CURRENT_SOURCE_DIR}/doc/sam.adoc --require asciidoctor-diagram -o ${CMAKE_CURRENT_BINARY_DIR}/doc/index.html
+        DEPENDS ${BOOST_SAM_ADOC_FILES})
+
+add_custom_target(doc DEPENDS  ${CMAKE_CURRENT_BINARY_DIR}/doc/index.html)
 
 target_include_directories(boost_sam PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

@@ -9,6 +9,8 @@
 #include <boost/sam/detail/exception.hpp>
 #include <boost/sam/detail/mutex_impl.hpp>
 
+#include <boost/sam/detail/async_lock_mutex_op.hpp>
+
 #if defined(BOOST_SAM_STANDALONE)
 #include <asio/any_io_executor.hpp>
 #include <asio/compose.hpp>
@@ -65,7 +67,8 @@ struct basic_mutex
   BOOST_SAM_INITFN_AUTO_RESULT_TYPE(CompletionToken, void(error_code))
   async_lock(CompletionToken &&token BOOST_SAM_DEFAULT_COMPLETION_TOKEN(executor_type))
   {
-    return net::async_initiate<CompletionToken, void(std::error_code)>(async_lock_op{this}, token);
+    return net::async_initiate<CompletionToken, void(std::error_code)>(
+        detail::async_lock_mutex_op{&impl_}, token, get_executor());
   }
 
   /// Move assign a mutex.
@@ -124,15 +127,15 @@ struct basic_mutex
 private:
   template <typename>
   friend struct basic_mutex;
-  friend struct lock_guard;
+  template <typename>
+  friend struct basic_unique_lock;
+  template <typename>
+  friend struct basic_shared_lock;
 
   Executor           exec_;
   detail::mutex_impl impl_;
-  struct async_lock_op;
 };
 
 BOOST_SAM_END_NAMESPACE
-
-#include <boost/sam/impl/basic_mutex.hpp>
 
 #endif // BOOST_SAM_BASIC_MUTEX_HPP

@@ -52,3 +52,54 @@ auto guarded(basic_mutex<Executor> & mtx, Op && op,
              CompletionToken && token = net::default_token<Executor>);
 ----
 ****
+
+.shared_mutex
+****
+Function to run OPs only when the <<shared_mutex>> can be locked.
+Unlocks the shared_mutex on completion.
+
+*Type Parameters*
+
+*  `Executor`        The executor of the semaphore.
+*  `CompletionToken` The completion token
+
+*Parameters*
+
+*  `mtx` The shared_mutex to guard the protection
+*  `op`  The operation to guard.
+*  `completion_token` The completion token to use for the async completion.
+
+[source,cpp]
+----
+template<typename Executor, typename Op,
+         net::completion_token_for<net::completion_signature_of_t<Op>> CompletionToken>
+auto guarded(basic_shared_mutex<Executor> & mtx, Op && op,
+             CompletionToken && token = net::default_token<Executor>);
+----
+****
+
+.shared_mutex
+****
+Function to run OPs only when the <<shared_mutex>> can be locked in shared mode.
+Unlocks the shared_mutex on completion.
+
+*Type Parameters*
+
+*  `Executor`        The executor of the semaphore.
+*  `CompletionToken` The completion token
+
+*Parameters*
+
+*  `mtx` The shared_mutex to guard the protection
+*  `op`  The operation to guard.
+*  `completion_token` The completion token to use for the async completion.
+
+[source,cpp]
+----
+template<typename Executor, typename Op,
+         net::completion_token_for<net::completion_signature_of_t<Op>> CompletionToken>
+auto guarded_shared(basic_shared_mutex<Executor> & mtx, Op && op,
+                    CompletionToken && token = net::default_token<Executor>);
+----
+****
+

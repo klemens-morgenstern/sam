@@ -29,12 +29,6 @@ struct basic_condition_variable
     template < net::completion_token_for<void(error_code)> CompletionToken >
     auto async_wait(CompletionToken &&token = net::default_token<executor_type>);
 
-    /// Wait for the condition_variable to become notified & the predicate to return true. <2>
-    template < typename Predicate,
-               net::completion_token_for<void(error_code)> CompletionToken >
-    auto async_wait(Predicate && predicate,
-                    CompletionToken &&token = net::default_token<executor_type>);
-
     /// Move assign a condition_variable.
     basic_condition_variable& operator=(basic_condition_variable&&) noexcept = default;
 

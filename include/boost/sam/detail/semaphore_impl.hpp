@@ -28,7 +28,7 @@ struct semaphore_impl : detail::service_member
   }
 
   semaphore_impl &operator=(const semaphore_impl &) = delete;
-  semaphore_impl &operator=(semaphore_impl &&lhs) noexcept
+  semaphore_impl &operator=(semaphore_impl &&lhs)
   {
     lock_type _{mtx_};
     count_ = lhs.count_;
@@ -50,9 +50,9 @@ struct semaphore_impl : detail::service_member
 
   BOOST_SAM_DECL void release();
 
-  BOOST_SAM_NODISCARD BOOST_SAM_DECL int value() const noexcept;
+  BOOST_SAM_NODISCARD BOOST_SAM_DECL int value() const;
 
-  BOOST_SAM_DECL void add_waiter(detail::wait_op *waiter) noexcept;
+  BOOST_SAM_DECL void add_waiter(detail::basic_op *waiter) noexcept;
 
   BOOST_SAM_DECL int decrement();
 
@@ -60,7 +60,7 @@ struct semaphore_impl : detail::service_member
 
 private:
   int                                           count_;
-  detail::basic_bilist_holder<void(error_code)> waiters_;
+  detail::basic_bilist_holder waiters_;
   struct acquire_op_t;
 };
 

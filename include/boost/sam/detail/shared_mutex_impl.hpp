@@ -34,7 +34,7 @@ struct shared_mutex_impl : mutex_impl
       return locked_ = true;
   }
   BOOST_SAM_DECL void unlock() override;
-
+  bool is_locked() override { return locked_ || locked_shared_ != 0u; }
 
   BOOST_SAM_DECL void lock_shared(error_code &ec);
   bool                try_lock_shared()
@@ -50,7 +50,9 @@ struct shared_mutex_impl : mutex_impl
   }
   BOOST_SAM_DECL void unlock_shared();
 
-  BOOST_SAM_DECL void add_shared_waiter(detail::wait_op *waiter) noexcept;
+
+
+  BOOST_SAM_DECL void add_shared_waiter(detail::basic_op *waiter) noexcept;
 
   void shutdown() override
   {
@@ -63,7 +65,7 @@ struct shared_mutex_impl : mutex_impl
   }
 
   std::uintptr_t locked_shared_{0u};
-  detail::basic_bilist_holder<void(error_code)> shared_waiters_;
+  detail::basic_bilist_holder shared_waiters_;
 
   shared_mutex_impl()                   = delete;
   shared_mutex_impl(const shared_mutex_impl &) = delete;
@@ -76,7 +78,7 @@ struct shared_mutex_impl : mutex_impl
   }
 
   shared_mutex_impl &operator=(const shared_mutex_impl &lhs) = delete;
-  shared_mutex_impl &operator=(shared_mutex_impl &&lhs) noexcept
+  shared_mutex_impl &operator=(shared_mutex_impl &&lhs)
   {
     lock_type _{lhs.mtx_};
     locked_      = lhs.locked_;

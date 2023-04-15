@@ -9,9 +9,10 @@
 #define BOOST_ASIO_DISABLE_BOOST_DATE_TIME 1
 #endif
 
-#include <boost/sam/lock_guard.hpp>
-#include <boost/sam/mutex.hpp>
 #include <boost/sam/guarded.hpp>
+#include <boost/sam/lock.hpp>
+#include <boost/sam/mutex.hpp>
+#include <boost/sam/unique_lock.hpp>
 
 #include <chrono>
 #include <random>
@@ -57,7 +58,7 @@ struct impl : net::coroutine
   impl(int id, bool &active, mutex &mtx) : id(id), mtx(mtx) {}
 
   template <typename Self>
-  void operator()(Self &&self, error_code ec = {}, lock_guard lock = {})
+  void operator()(Self &&self, error_code ec = {}, unique_lock lock = {})
   {
     reenter(this)
     {
@@ -120,7 +121,7 @@ struct impl_t : net::coroutine
   impl_t(mutex &mtx) : mtx(mtx) {}
 
   template <typename Self>
-  void operator()(Self &&self, error_code ec = {}, lock_guard lock = {})
+  void operator()(Self &&self, error_code ec = {}, unique_lock lock = {})
   {
     reenter(this)
     {
@@ -193,10 +194,19 @@ TEST_CASE("lock_sync_fail")
 {
   net::io_context ctx{BOOST_SAM_CONCURRENCY_HINT_1};
   mutex mtx{ctx};
-  lock_guard l1 = lock(mtx);
+  unique_lock     l1 = lock(mtx);
   CHECK_THROWS(lock(mtx));
 
   error_code ec;
   lock(mtx, ec);
   CHECK(ec == net::error::in_progress);
+}
+
+
+TEST_CASE("lock_rebind")
+{
+  net::io_context ctx{BOOST_SAM_CONCURRENCY_HINT_1};
+  basic_mutex<typename net::io_context::executor_type> mtx{ctx};
+  basic_unique_lock<typename net::io_context::executor_type> l1 = lock(mtx);
+  unique_lock sl{std::move(l1)};
 }

@@ -33,7 +33,7 @@ struct basic_shared_mutex
 {
   /// The executor type.
   using executor_type = Executor;
-  
+
   /// A constructor. @param exec The executor to be used by the mutex.
   explicit basic_shared_mutex(executor_type exec,
                        int concurrency_hint = BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
@@ -154,6 +154,7 @@ private:
   template <typename>
   friend struct basic_shared_mutex;
   friend struct lock_guard;
+  friend struct shared_lock_guard;
 
   Executor           exec_;
   detail::shared_mutex_impl impl_;

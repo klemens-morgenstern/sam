@@ -16,9 +16,11 @@
 #if defined(BOOST_SAM_STANDALONE)
 #include <asio/experimental/append.hpp>
 #include <asio/post.hpp>
+#include <asio/strand.hpp>
 #else
 #include <boost/asio/experimental/append.hpp>
 #include <boost/asio/post.hpp>
+#include <boost/asio/strand.hpp>
 #endif
 
 BOOST_SAM_BEGIN_NAMESPACE
@@ -57,11 +59,35 @@ auto predicate_op_model<Executor, Handler, Predicate, void(error_code ec, Ts...)
   traits.deallocate(alloc, self, 1);
 }
 
+template <typename T>
+struct is_strand : std::false_type {};
+
+template <typename T>
+struct is_strand<net::strand<T>> : std::true_type {};
+
+template <class Executor>
+std::enable_if_t<
+  is_strand<Executor>::value,
+  typename Executor::inner_executor_type
+>
+get_inner_executor(Executor e) {
+  return e.get_inner_executor();
+}
+
+template <class Executor>
+std::enable_if_t<
+  !is_strand<Executor>::value,
+  Executor
+>
+get_inner_executor(Executor e) {
+  return e;
+}
+
 template <class Executor, class Handler, class Predicate, class... Ts>
 predicate_op_model<Executor, Handler, Predicate, void(error_code ec, Ts...)>::predicate_op_model(Executor  e,
                                                                                                  Handler   handler,
                                                                                                  Predicate predicate)
-    : work_guard_(std::move(e)), handler_(std::move(handler)), predicate_(std::move(predicate))
+    : work_guard_(get_inner_executor(std::move(e))), handler_(std::move(handler)), predicate_(std::move(predicate))
 {
 }
 

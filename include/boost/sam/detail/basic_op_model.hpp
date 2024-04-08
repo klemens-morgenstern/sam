@@ -17,10 +17,12 @@
 #include <asio/associated_allocator.hpp>
 #include <asio/associated_cancellation_slot.hpp>
 #include <asio/executor_work_guard.hpp>
+#include <asio/strand.hpp>
 #else
 #include <boost/asio/associated_allocator.hpp>
 #include <boost/asio/associated_cancellation_slot.hpp>
 #include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/strand.hpp>
 #endif
 
 
@@ -54,8 +56,16 @@ struct basic_op_model<Executor, Handler, void(Ts...)> final : basic_op<void(Ts..
   virtual void shutdown() override;
 
 private:
-  net::executor_work_guard<Executor> work_guard_;
-  Handler                            handler_;
+  template <class StrandOrExecutor>
+  struct inner_executor_type {
+    using type = StrandOrExecutor;
+  };
+  template <class StrandOrExecutor>
+  struct inner_executor_type<net::strand<StrandOrExecutor>> {
+    using type = StrandOrExecutor;
+  };
+  net::executor_work_guard<typename inner_executor_type<Executor>::type> work_guard_;
+  Handler                                                                handler_;
 };
 
 } // namespace detail

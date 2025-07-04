@@ -35,7 +35,6 @@
 
 using namespace BOOST_SAM_NAMESPACE;
 using namespace net;
-using namespace net::experimental;
 
 inline void run_impl(io_context &ctx) { ctx.run(); }
 

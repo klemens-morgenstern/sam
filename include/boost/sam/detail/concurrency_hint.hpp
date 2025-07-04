@@ -24,12 +24,8 @@ inline bool is_single_threaded(net::execution_context &ctx,
   if (concurrency_hint != BOOST_SAM_CONCURRENCY_HINT_DEFAULT)
     return BOOST_SAM_CONCURRENCY_HINT_1 == concurrency_hint;
 
-  if (net::has_service<net::detail::scheduler>(ctx))
-    return net::use_service<net::detail::scheduler>(ctx).concurrency_hint() == BOOST_SAM_CONCURRENCY_HINT_1;
-  else if (net::has_service<net::detail::io_context_impl>(ctx))
-    return net::use_service<net::detail::io_context_impl>(ctx).concurrency_hint() == BOOST_SAM_CONCURRENCY_HINT_1;
-  else
-    return false;
+  const int cc = net::config(ctx).get("scheduler", "concurrency_hint", BOOST_SAM_CONCURRENCY_HINT_DEFAULT);
+  return cc == BOOST_SAM_CONCURRENCY_HINT_1;
 }
 
 // only io_context or strands can be thread-safe

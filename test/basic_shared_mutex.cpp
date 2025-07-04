@@ -95,8 +95,8 @@ struct basic_main : net::coroutine
 
   std::unique_ptr<basic_main_impl<T>> impl_;
 
-  static auto f(std::vector<int> &v, shared_mutex &mtx, int i) -> net::deferred_async_operation<
-      void(error_code), net::detail::initiate_composed_op<void(error_code), void(net::any_io_executor)>, step_impl>
+  static auto f(std::vector<int> &v, shared_mutex &mtx, int i) /*-> net::deferred_async_operation<
+      void(error_code), net::detail::initiate_composed_op<void(error_code), void(net::any_io_executor)>, step_impl>*/
   {
     return async_compose<const net::deferred_t &, void(error_code)>(step_impl{v, mtx, i}, net::deferred, mtx);
   }

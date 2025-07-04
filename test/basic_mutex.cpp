@@ -95,8 +95,8 @@ struct basic_main : net::coroutine
 
   std::unique_ptr<basic_main_impl<T>> impl_;
 
-  static auto f(std::vector<int> &v, mutex &mtx, int i) -> net::deferred_async_operation<
-      void(error_code), net::detail::initiate_composed_op<void(error_code), void(net::any_io_executor)>, step_impl>
+  static auto f(std::vector<int> &v, mutex &mtx, int i) //->
+      //decltype(net::async_initiate<void(error_code), net::detail::initiate_composed<void(error_code), void(net::any_io_executor)>, step_impl>())
   {
     return async_compose<const net::deferred_t &, void(error_code)>(step_impl{v, mtx, i}, net::deferred, mtx);
   }
@@ -174,7 +174,8 @@ TEST_CASE("sync_lock_mt" * doctest::timeout(10.))
 
   mtx.lock();
   locked = true;
-  thr.join();
+  if (thr.joinable())
+    thr.join();
 }
 
 TEST_CASE_TEMPLATE("multi_lock" * doctest::timeout(10.), T, io_context, thread_pool)

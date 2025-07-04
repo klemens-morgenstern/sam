@@ -14,10 +14,10 @@
 #include <exception>
 
 #if defined(BOOST_SAM_STANDALONE)
-#include <asio/experimental/append.hpp>
+#include <asio/append.hpp>
 #include <asio/post.hpp>
 #else
-#include <boost/asio/experimental/append.hpp>
+#include <boost/asio/append.hpp>
 #include <boost/asio/post.hpp>
 #endif
 
